@@ -1,0 +1,13 @@
+[project]
+name = "whisper-app"
+version = "0.1.0"
+description = "Push-to-talk speech-to-text that types what you say"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.pyright]
+pythonVersion = "3.11"
+include = ["src"]

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip --version)",
+      "Bash(python -m venv .venv)",
+      "Bash(.venv\\\\Scripts\\\\pip install *)",
+      "PowerShell(Get-Process *)"
+    ]
+  }
+}
