@@ -4,6 +4,7 @@ Entry point: python -m whisper_app  (run from src/)
 """
 
 import math
+import platform
 import sys
 import threading
 import time
@@ -26,7 +27,10 @@ class WhisperApp:
         self._recording = False
         self._vu_running = False
         self._finishing = False
+        self._pasting = False
         self._lock = threading.Lock()
+        self._listener: kb.Listener | None = None
+        self._quit_event = threading.Event()
 
         self._settings_win = SettingsWindow(on_save=self._on_settings_saved)
         self._tray = TrayIcon(
@@ -39,14 +43,20 @@ class WhisperApp:
 
     def run(self) -> None:
         print("[Whisper] Loading model…")
-        load_model(self._conf["model"], self._conf["device"])
+        actual_device = load_model(self._conf["model"], self._conf["device"])
+        if actual_device != self._conf["device"]:
+            print(f"[Whisper] Device set to '{actual_device}' (requested '{self._conf['device']}' was unavailable).")
         print(f"[Whisper] Ready. Hold {self._conf['hotkey'].upper()} to record.")
 
         self._tray.start()
         self._start_hotkey_listener()
+        self._quit_event.wait()
 
     def _quit(self) -> None:
         print("[Whisper] Goodbye.")
+        if self._listener is not None:
+            self._listener.stop()
+        self._quit_event.set()
         sys.exit(0)
 
     # ------------------------------------------------------------------
@@ -59,7 +69,7 @@ class WhisperApp:
 
         def on_press(key):
             with self._lock:
-                if self._recording or self._finishing:
+                if self._recording or self._finishing or self._pasting:
                     return
                 if _key_matches(key, target_key):
                     self._recording = True
@@ -85,8 +95,8 @@ class WhisperApp:
             if should_finish:
                 threading.Thread(target=self._finish_recording, daemon=True).start()
 
-        with kb.Listener(on_press=on_press, on_release=on_release) as listener:
-            listener.join()
+        self._listener = kb.Listener(on_press=on_press, on_release=on_release)
+        self._listener.start()
 
     def _vu_meter_loop(self) -> None:
         """Console VU meter showing real-time audio level while recording."""
@@ -134,7 +144,14 @@ class WhisperApp:
             text = transcribe(wav, language=self._conf.get("language"))
             print(f"[Whisper] → {text!r}")
             self._overlay.show_result(text)
-            paste_text(text)
+            with self._lock:
+                self._finishing = False
+                self._pasting = True
+            try:
+                paste_text(text)
+            finally:
+                with self._lock:
+                    self._pasting = False
         finally:
             with self._lock:
                 self._finishing = False
@@ -143,9 +160,17 @@ class WhisperApp:
     # Settings
 
     def _on_settings_saved(self, new_conf: dict) -> None:
+        old_hotkey = self._conf["hotkey"]
         self._conf = new_conf
-        load_model(new_conf["model"], new_conf["device"])
-        print(f"[Whisper] Settings saved. Hotkey: {new_conf['hotkey'].upper()}, Model: {new_conf['model']}")
+        actual_device = load_model(new_conf["model"], new_conf["device"])
+        if actual_device != new_conf["device"]:
+            print(f"[Whisper] GPU unavailable — using {actual_device}. Install NVIDIA CUDA 12 to enable GPU.")
+            new_conf["device"] = actual_device
+            cfg.save(new_conf)
+        print(f"[Whisper] Settings saved. Hotkey: {new_conf['hotkey'].upper()}, Model: {new_conf['model']}, Device: {actual_device}")
+        if new_conf["hotkey"] != old_hotkey and self._listener is not None:
+            self._listener.stop()
+            self._start_hotkey_listener()
 
 
 # ------------------------------------------------------------------
@@ -163,7 +188,17 @@ def _resolve_key(name: str):
     try:
         return kb.Key[name]
     except KeyError:
+        pass
+    if name == "fn":
+        if platform.system() == "Darwin":
+            return kb.KeyCode.from_vk(63)
+        raise ValueError(
+            "Fn key is handled at the hardware level and is not detectable "
+            "on this platform. Use Ctrl, Alt, or Tab instead."
+        )
+    if len(name) == 1:
         return kb.KeyCode.from_char(name)
+    raise ValueError(f"Cannot resolve key: {name!r}")
 
 
 def _key_matches(pressed, target) -> bool:

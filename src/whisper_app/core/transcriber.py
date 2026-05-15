@@ -7,12 +7,26 @@ _model_name: str = ""
 _device: str = ""
 
 
-def load_model(model_name: str, device: str = "cpu") -> None:
+def load_model(model_name: str, device: str = "cpu") -> str:
+    """Load the Whisper model. Returns the actual device used (may fall back to CPU)."""
     global _model, _model_name, _device
-    if _model is None or _model_name != model_name or _device != device:
-        _model = WhisperModel(model_name, device=device, compute_type="int8")
-        _model_name = model_name
-        _device = device
+    if _model is not None and _model_name == model_name and _device == device:
+        return _device
+
+    if device == "cuda":
+        try:
+            _model = WhisperModel(model_name, device="cuda", compute_type="int8_float16")
+        except RuntimeError as e:
+            print(f"[Whisper] GPU init failed: {e}")
+            print("[Whisper] Falling back to CPU — install NVIDIA CUDA 12 to use GPU.")
+            device = "cpu"
+
+    if device == "cpu":
+        _model = WhisperModel(model_name, device="cpu", compute_type="int8")
+
+    _model_name = model_name
+    _device = device
+    return _device
 
 
 def transcribe(wav_bytes: bytes, language: Optional[str] = None) -> str:

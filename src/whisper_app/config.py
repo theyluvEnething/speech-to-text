@@ -7,7 +7,7 @@ _CONFIG_DIR = Path.home() / ".whisper_app"
 _CONFIG_FILE = _CONFIG_DIR / "config.json"
 
 _DEFAULTS = {
-    "hotkey": "alt",
+    "hotkey": "ctrl_r",
     "model": "base",
     "language": None,
     "device": "cpu",
