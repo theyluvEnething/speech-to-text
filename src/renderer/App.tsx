@@ -22,39 +22,16 @@ const LANGUAGES = [
   { code: "auto", name: "Auto-detect" },
 ];
 
-const MODELS = [
-  { value: "nova-2", label: "Nova-2" },
-  { value: "nova", label: "Nova" },
-  { value: "whisper", label: "Whisper Cloud" },
-  { value: "enhanced", label: "Enhanced" },
-  { value: "base", label: "Base" },
-];
-
 const NOVA2_TIERS = [
   { value: "", label: "Standard (nova-2)" },
-  { value: "general", label: "General" },
-  { value: "medical", label: "Medical" },
-  { value: "meeting", label: "Meeting" },
+  { value: "general", label: "General (nova-2-general)" },
+  { value: "medical", label: "Medical (nova-2-medical)" },
+  { value: "meeting", label: "Meeting (nova-2-meeting)" },
 ];
-
-const WHISPER_TIERS = [
-  { value: "tiny", label: "Tiny" },
-  { value: "base", label: "Base" },
-  { value: "small", label: "Small" },
-  { value: "medium", label: "Medium" },
-  { value: "large", label: "Large" },
-];
-
-function getTiers(model: string): { value: string; label: string }[] {
-  if (model === "nova-2") return NOVA2_TIERS;
-  if (model === "whisper") return WHISPER_TIERS;
-  return [];
-}
 
 function App(): React.ReactElement {
   const [hotkey, setHotkey] = useState("alt");
   const [language, setLanguage] = useState("en");
-  const [model, setModel] = useState("nova-2");
   const [modelTier, setModelTier] = useState("");
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
@@ -63,7 +40,6 @@ function App(): React.ReactElement {
     window.whisper.getSettings().then((settings) => {
       setHotkey(settings.hotkey || "alt");
       setLanguage(settings.language || "en");
-      setModel(settings.model || "nova-2");
       setModelTier(settings.modelTier || "");
       setLoading(false);
       initialLoad.current = false;
@@ -76,7 +52,7 @@ function App(): React.ReactElement {
 
   function save(updated: Record<string, string>): void {
     window.whisper
-      .setSettings(updated)
+      .setSettings({ model: "nova-2", ...updated })
       .then(() => {
         const entries = Object.entries(updated).map(([k, v]) => `${k}=${v}`);
         console.log(`[Whisper UI] Saved: ${entries.join(", ")}`);
@@ -98,17 +74,6 @@ function App(): React.ReactElement {
     if (!initialLoad.current) save({ language: value });
   }
 
-  function handleModelChange(e: ChangeEvent<HTMLSelectElement>): void {
-    const value = e.target.value;
-    setModel(value);
-    const tiers = getTiers(value);
-    const newTier = tiers.length > 0 ? (tiers[0]?.value ?? "") : "";
-    setModelTier(newTier);
-    if (!initialLoad.current) {
-      save({ model: value, modelTier: newTier });
-    }
-  }
-
   function handleModelTierChange(e: ChangeEvent<HTMLSelectElement>): void {
     const value = e.target.value;
     setModelTier(value);
@@ -118,8 +83,6 @@ function App(): React.ReactElement {
   function closeWindow(): void {
     window.whisper.closeWindow();
   }
-
-  const tiers = getTiers(model);
 
   if (loading) {
     return (
@@ -188,47 +151,23 @@ function App(): React.ReactElement {
 
         <section>
           <label className="block text-xs font-medium text-surface-400 uppercase tracking-wider mb-2">
-            Model
+            Nova-2 Model Tier
           </label>
           <select
-            value={model}
-            onChange={handleModelChange}
+            value={modelTier}
+            onChange={handleModelTierChange}
             className="w-full bg-surface-800 border border-surface-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent transition-colors"
           >
-            {MODELS.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
+            {NOVA2_TIERS.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
               </option>
             ))}
           </select>
           <p className="mt-1.5 text-xs text-surface-500">
-            Nova-2 is the fastest and most accurate model.
+            Domain-specific models optimize for medical or meeting scenarios.
           </p>
         </section>
-
-        {tiers.length > 0 && (
-          <section>
-            <label className="block text-xs font-medium text-surface-400 uppercase tracking-wider mb-2">
-              {model === "whisper" ? "Whisper Size" : "Model Tier"}
-            </label>
-            <select
-              value={modelTier}
-              onChange={handleModelTierChange}
-              className="w-full bg-surface-800 border border-surface-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent transition-colors"
-            >
-              {tiers.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-            {model === "whisper" && (
-              <p className="mt-1.5 text-xs text-surface-500">
-                Larger models are more accurate but slower.
-              </p>
-            )}
-          </section>
-        )}
 
         <button
           onClick={closeWindow}
