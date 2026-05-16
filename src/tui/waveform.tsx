@@ -2,90 +2,82 @@ import React, { useState, useEffect, useRef } from "react";
 import { Box, Text } from "ink";
 import type { ReactNode } from "react";
 
-const COLS = 30;
-const ROWS = 8;
+const ROWS = 6;
 
-function colorForAmp(amp: number): string {
-  if (amp < 0.33) return "green";
-  if (amp < 0.66) return "yellow";
-  return "red";
+function generateAmps(prev: number[], active: boolean, level: number): number[] {
+  return prev.map((p, i) => {
+    if (!active) return p * 0.88;
+    const center = 1 - Math.abs(i / prev.length - 0.5) * 1.3;
+    const noise = 0.5 + Math.random() * 0.5;
+    const boosted = Math.pow(level, 0.55);
+    const target = center * noise * Math.max(boosted, 0.08);
+    return p + (target - p) * 0.3;
+  });
 }
 
-function generateAmplitudes(): number[] {
-  return Array.from({ length: COLS }, () => Math.random());
-}
+const CHARS = [" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"];
 
 interface WaveformProps {
   width: number;
   isRecording: boolean;
+  level?: number;
 }
 
-export default function Waveform({ width, isRecording }: WaveformProps): ReactNode {
+export default function Waveform({ width, isRecording, level = 0 }: WaveformProps): ReactNode {
+  const cols = Math.min(width - 3, 80);
   const [amps, setAmps] = useState<number[]>(() =>
-    Array.from({ length: COLS }, () => 0),
+    Array.from({ length: cols }, () => 0),
   );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const levelRef = useRef(level);
 
   useEffect(() => {
-    if (isRecording) {
-      setAmps(generateAmplitudes());
-      intervalRef.current = setInterval(() => {
-        setAmps((prev) => {
-          const next = [...prev.slice(1), Math.random()];
-          // smooth: blend toward previous neighbor
-          for (let i = 0; i < COLS - 1; i++) {
-            next[i] = next[i]! * 0.6 + prev[i + 1]! * 0.4;
-          }
-          return next as number[];
-        });
-      }, 80);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
+    levelRef.current = level;
+  }, [level]);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setAmps((prev) => generateAmps(prev, isRecording, levelRef.current));
+    }, 60);
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [isRecording]);
 
+  const maxAmp = Math.max(...amps);
+
+  const rows = Array.from({ length: ROWS }, (_, row) => {
+    const threshold = (ROWS - row) / ROWS;
+    return amps
+      .map((amp) => {
+        const normalized = amp / threshold;
+        const idx = Math.min(
+          CHARS.length - 1,
+          Math.floor(normalized * CHARS.length),
+        );
+        return CHARS[idx] ?? " ";
+      })
+      .join("");
+  });
+
+  if (!isRecording && maxAmp < 0.01) {
+    const idleLine = CHARS[1]!.repeat(cols);
+    return (
+      <Box flexDirection="column" paddingLeft={2}>
+        {Array.from({ length: ROWS }, (_, i) => (
+          <Text key={i} dimColor>
+            {idleLine}
+          </Text>
+        ))}
+      </Box>
+    );
+  }
+
   return (
-    <Box
-      borderStyle="round"
-      borderColor="gray"
-      flexDirection="column"
-      height={ROWS + 2}
-      width={width}
-      paddingX={1}
-    >
-      {!isRecording ? (
-        <Box height={ROWS} justifyContent="center" alignItems="center">
-          <Text dimColor>{"──  no audio  ──"}</Text>
-        </Box>
-      ) : (
-        <Box flexDirection="column" height={ROWS}>
-          {Array.from({ length: ROWS }, (_, row) => {
-            const threshold = (ROWS - 1 - row) / ROWS;
-            return (
-              <Box key={row} flexDirection="row">
-                {amps.map((amp, col) => {
-                  const filled = amp >= threshold;
-                  const char = filled ? "█" : " ";
-                  return (
-                    <Text key={col} color={filled ? colorForAmp(amp) : undefined}>
-                      {char}
-                    </Text>
-                  );
-                })}
-              </Box>
-            );
-          })}
-        </Box>
-      )}
+    <Box flexDirection="column" paddingLeft={2}>
+      {rows.map((line, i) => (
+        <Text key={i}>{line}</Text>
+      ))}
     </Box>
   );
 }

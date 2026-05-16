@@ -3,7 +3,6 @@ interface WhisperSettings {
     hotkey: string;
     language: string;
     model: string;
-    modelTier: string;
   }>;
   setSettings(settings: Record<string, string>): Promise<{ success: boolean }>;
   hideWindow(): void;
@@ -21,7 +20,8 @@ interface LevelData {
 interface AudioApi {
   onStart(callback: () => void): void;
   onStop(callback: () => void): void;
-  sendBuffer(buffer: ArrayBuffer): void;
+  onApiKey(callback: (key: string) => void): void;
+  sendTranscript(text: string): void;
   sendLevels(data: LevelData): void;
 }
 
@@ -29,6 +29,7 @@ interface OverlayApi {
   onState(callback: (state: string) => void): void;
   onResult(callback: (text: string) => void): void;
   onError(callback: (msg: string) => void): void;
+  onLevels(callback: (data: LevelData) => void): void;
 }
 
 declare global {

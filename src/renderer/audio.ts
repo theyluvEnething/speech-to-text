@@ -1,11 +1,15 @@
-let mediaRecorder: MediaRecorder | null = null;
-let chunks: Blob[] = [];
 let stream: MediaStream | null = null;
 let audioContext: AudioContext | null = null;
 let analyser: AnalyserNode | null = null;
+let ws: WebSocket | null = null;
 let levelTimer: ReturnType<typeof setInterval> | null = null;
 let sampleCount = 0;
 let startTime = 0;
+let apiKey: string | null = null;
+
+window.audio.onApiKey((key: string) => {
+  apiKey = key;
+});
 
 function computeLevels(): { rms: number; peak: number } {
   if (!analyser) return { rms: 0, peak: 0 };
@@ -55,8 +59,48 @@ function stopLevelUpdates(): void {
   }
 }
 
+function sendFinalLevels(): void {
+  const { rms, peak } = computeLevels();
+  const rmsDb = toDb(rms);
+  const peakDb = toDb(peak);
+  const duration = (Date.now() - startTime) / 1000;
+
+  window.audio.sendLevels({ rms: rmsDb, peak: peakDb, elapsed: duration, samples: sampleCount, final: true });
+}
+
+function cleanup(): void {
+  stopLevelUpdates();
+
+  if (ws) {
+    try {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "CloseStream" }));
+      }
+      ws.close();
+    } catch {
+      // ignore
+    }
+    ws = null;
+  }
+
+  if (audioContext) {
+    audioContext.close().catch(() => {});
+    audioContext = null;
+  }
+
+  analyser = null;
+
+  if (stream) {
+    stream.getTracks().forEach((t) => t.stop());
+    stream = null;
+  }
+}
+
 async function startRecording(): Promise<void> {
-  chunks = [];
+  if (!apiKey) {
+    window.audio.sendTranscript("");
+    return;
+  }
 
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -67,64 +111,85 @@ async function startRecording(): Promise<void> {
         noiseSuppression: true,
       },
     });
+  } catch {
+    window.audio.sendTranscript("");
+    return;
+  }
 
+  try {
     audioContext = new AudioContext({ sampleRate: 16000 });
     const source = audioContext.createMediaStreamSource(stream);
+
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 512;
     source.connect(analyser);
 
-    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-      ? "audio/webm;codecs=opus"
-      : "audio/webm";
+    const processor = audioContext.createScriptProcessor(2048, 1, 1);
+    source.connect(processor);
+    processor.connect(audioContext.destination);
 
-    mediaRecorder = new MediaRecorder(stream, { mimeType });
-
-    mediaRecorder.ondataavailable = (event: BlobEvent) => {
-      if (event.data.size > 0) {
-        chunks.push(event.data);
-      }
-    };
-
-    mediaRecorder.onstop = async () => {
-      stopLevelUpdates();
-
-      const { rms, peak } = computeLevels();
-      const rmsDb = toDb(rms);
-      const peakDb = toDb(peak);
-      const duration = (Date.now() - startTime) / 1000;
-
-      window.audio.sendLevels({ rms: rmsDb, peak: peakDb, elapsed: duration, samples: sampleCount, final: true });
-
-      const blob = new Blob(chunks, { type: mimeType });
-      const buffer = await blob.arrayBuffer();
-      window.audio.sendBuffer(buffer);
-
-      if (audioContext) {
-        await audioContext.close();
-        audioContext = null;
-        analyser = null;
-      }
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-        stream = null;
-      }
-    };
-
-    mediaRecorder.start(100);
     startLevelUpdates();
-  } catch (err) {
-    console.error("Failed to start recording:", err);
-    stopLevelUpdates();
-    window.audio.sendBuffer(new ArrayBuffer(0));
+
+    ws = new WebSocket(
+      `wss://api.deepgram.com/v1/listen?token=${encodeURIComponent(apiKey)}`,
+    );
+
+    ws.onopen = () => {
+      ws!.send(JSON.stringify({
+        type: "Configure",
+        features: {
+          model: "nova-2",
+          smart_format: true,
+          punctuate: true,
+          interim_results: false,
+          utterances: true,
+          encoding: "linear16",
+          sample_rate: 16000,
+          channels: 1,
+        },
+      }));
+    };
+
+    ws.onmessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data as string);
+        if (data.type === "Results") {
+          const transcript: string | undefined =
+            data.channel?.alternatives?.[0]?.transcript;
+          if (transcript && data.is_final) {
+            window.audio.sendTranscript(transcript.trim());
+          }
+        }
+      } catch {
+        // ignore non-JSON frames
+      }
+    };
+
+    ws.onerror = () => {
+      window.audio.sendTranscript("");
+      cleanup();
+    };
+
+    processor.onaudioprocess = (event: AudioProcessingEvent) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const inputData = event.inputBuffer.getChannelData(0);
+        const pcm = new Int16Array(inputData.length);
+        for (let i = 0; i < inputData.length; i++) {
+          const sample = Math.max(-1, Math.min(1, inputData[i] ?? 0));
+          pcm[i] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+        }
+        ws.send(pcm.buffer);
+      }
+    };
+  } catch {
+    window.audio.sendTranscript("");
+    cleanup();
   }
 }
 
 function stopRecording(): void {
-  if (mediaRecorder && mediaRecorder.state !== "inactive") {
-    mediaRecorder.stop();
-    mediaRecorder = null;
-  }
+  sendFinalLevels();
+  cleanup();
 }
 
 window.audio.onStart(() => {

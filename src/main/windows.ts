@@ -18,7 +18,7 @@ export function createSettingsWindow(): BrowserWindow {
 
   settingsWindow = new BrowserWindow({
     width: 520,
-    height: 440,
+    height: 460,
     resizable: false,
     frame: true,
     titleBarStyle: "hidden",
@@ -48,10 +48,10 @@ export function createOverlayWindow(): BrowserWindow {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
 
   overlayWindow = new BrowserWindow({
-    width: 360,
-    height: 72,
-    x: Math.round((screenWidth - 360) / 2),
-    y: screenHeight - 120,
+    width: 400,
+    height: 100,
+    x: Math.round((screenWidth - 400) / 2),
+    y: screenHeight - 140,
     frame: false,
     transparent: true,
     alwaysOnTop: true,

@@ -23,41 +23,20 @@ interface LogPanelProps {
 }
 
 export default function LogPanel({ height, width, logs }: LogPanelProps): ReactNode {
-  const visibleLines = Math.max(height - 2, 1);
-  const visible = logs.slice(-visibleLines);
-  const padTop = visibleLines - visible.length;
+  const visible = logs.slice(-height);
 
   return (
-    <Box
-      borderStyle="round"
-      borderColor="gray"
-      flexDirection="column"
-      height={height}
-      width={width}
-      paddingX={1}
-    >
-      <Box flexDirection="column">
-        {padTop > 0 &&
-          Array.from({ length: padTop }, (_, i) => (
-            <Box key={`pad-${i}`}>
-              <Text> </Text>
-            </Box>
-          ))}
-        {visible.map((entry) => (
-          <Box key={entry.id} flexDirection="row">
-            <Text dimColor>{entry.timestamp}</Text>
-            <Text> </Text>
-            <Text color={TAG_COLORS[entry.tag]} bold>
-              {entry.tag.padEnd(7)}
-            </Text>
-            <Text> </Text>
-            <Text>{entry.message}</Text>
-          </Box>
-        ))}
-        {visible.length === 0 && (
-          <Text dimColor>  -- no log entries --</Text>
-        )}
-      </Box>
+    <Box flexDirection="column" height={height} width={width} paddingLeft={2}>
+      {visible.map((entry) => (
+        <Box key={entry.id} flexDirection="row">
+          <Text dimColor>{entry.timestamp}</Text>
+          <Text>  </Text>
+          <Text color={TAG_COLORS[entry.tag]} bold>
+            {entry.tag.padEnd(8)}
+          </Text>
+          <Text>{entry.message}</Text>
+        </Box>
+      ))}
     </Box>
   );
 }
