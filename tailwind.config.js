@@ -1,0 +1,30 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./src/renderer/**/*.{html,tsx,ts}"],
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        surface: {
+          50: "#f8f9fa",
+          100: "#f1f3f5",
+          200: "#e9ecef",
+          300: "#dee2e6",
+          400: "#ced4da",
+          500: "#adb5bd",
+          600: "#868e96",
+          700: "#495057",
+          800: "#343a40",
+          900: "#212529",
+          950: "#0d1117",
+        },
+        accent: {
+          DEFAULT: "#6c5ce7",
+          light: "#a29bfe",
+          dark: "#4c3fd9",
+        },
+      },
+    },
+  },
+  plugins: [],
+};

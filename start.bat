@@ -1,53 +1,86 @@
 @echo off
-setlocal
-
-cd /d "%~dp0"
-
-echo ========================================
-echo   Whisper — Push-to-Talk Speech-to-Text
-echo ========================================
+setlocal enabledelayedexpansion
+title Whisper PTT
+echo ================================================
+echo   Whisper PTT v2.0.0
+echo   Push-to-Talk Speech-to-Text (Deepgram)
+echo ================================================
 echo.
 
-REM --- Check Python -------------------------------------------------
-where python >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Python is not installed or not in PATH.
-    echo         Install Python 3.11+ from https://python.org
-    pause
-    exit /b 1
+#:: Check Node.js
+# echo [STEP 1] Checking Node.js...
+# where node >nul 2>&1
+# if errorlevel 1 (
+#    echo [ERROR] Node.js is not installed or not in PATH.
+#    echo         Download from https://nodejs.org/ (LTS recommended)
+#    goto :fail
+# )
+# for /f "tokens=*" %%i in ('node -v') do set NODE_VER=%%i
+# echo [OK] Node.js found: %NODE_VER%
+
+
+:: Check npm
+echo [STEP 2] Checking npm...
+where npm >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] npm not found.
+    goto :fail
+)
+for /f "tokens=*" %%i in ('npm -v') do set NPM_VER=%%i
+echo [OK] npm found: v%NPM_VER%
+echo.
+
+:: Check .env
+echo [STEP 3] Checking .env file...
+if not exist ".env" (
+    echo [INFO] No .env file found. Creating template...
+    echo DEEPGRAM_API_KEY=your_key_here > .env
+    echo [WARN] Edit .env and add your Deepgram API key before continuing.
+    echo        Get one at https://console.deepgram.com
+    goto :fail
+) else (
+    echo [OK] .env file found.
 )
 
-for /f "tokens=2" %%v in ('python --version 2^>^&1') do set PYVER=%%v
-echo [INFO]  Python %PYVER%
-
-REM --- Create virtual environment if missing -------------------------
-if not exist ".venv\Scripts\python.exe" (
-    echo [INFO]  Creating virtual environment...
-    python -m venv .venv
-    if %errorlevel% neq 0 (
-        echo [ERROR] Failed to create virtual environment.
-        pause
-        exit /b 1
+:: Check node_modules
+echo [STEP 4] Checking node_modules...
+if not exist "node_modules\" (
+    echo [INFO] node_modules not found. Running npm install...
+    call npm install
+    set INSTALL_CODE=!errorlevel!
+    echo [INFO] npm install exited with code: !INSTALL_CODE!
+    if !INSTALL_CODE! neq 0 (
+        echo [ERROR] npm install failed with code !INSTALL_CODE!.
+        goto :fail
     )
+    echo [OK] npm install succeeded.
+) else (
+    echo [OK] node_modules found.
 )
-
-REM --- Install / update dependencies ---------------------------------
-echo [INFO]  Installing dependencies...
-.venv\Scripts\pip install -q -r requirements.txt
-if %errorlevel% neq 0 (
-    echo [ERROR] Failed to install dependencies.
-    pause
-    exit /b 1
-)
-
-REM --- Launch --------------------------------------------------------
-echo [INFO]  Starting Whisper...
 echo.
-cd src
-"%~dp0.venv\Scripts\python.exe" -m whisper_app
 
-if %errorlevel% neq 0 (
-    echo.
-    echo [ERROR] Whisper exited with code %errorlevel%.
-    pause
+:: Launch
+echo [STEP 5] Running: npm run dev
+echo ------------------------------------------------
+call npm run dev
+set DEV_CODE=%errorlevel%
+echo ------------------------------------------------
+echo [INFO] npm run dev exited with code: %DEV_CODE%
+if %DEV_CODE% neq 0 (
+    echo [ERROR] App exited with an error (code %DEV_CODE%).
+) else (
+    echo [OK] App exited cleanly.
 )
+goto :done
+
+:fail
+echo.
+echo ================================================
+echo   Whisper PTT stopped due to an error above.
+echo ================================================
+
+:done
+echo.
+echo Press any key to close this window...
+pause >nul
+endlocal
