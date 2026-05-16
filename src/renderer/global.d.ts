@@ -2,7 +2,8 @@ interface WhisperSettings {
   getSettings(): Promise<{
     hotkey: string;
     language: string;
-    apiKey: string;
+    model: string;
+    modelTier: string;
   }>;
   setSettings(settings: Record<string, string>): Promise<{ success: boolean }>;
   hideWindow(): void;

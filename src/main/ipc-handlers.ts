@@ -5,10 +5,14 @@ import { updateHotkey } from "./hotkey";
 export const store = new Store<{
   hotkey: string;
   language: string;
+  model: string;
+  modelTier: string;
 }>({
   defaults: {
     hotkey: "alt",
     language: "en",
+    model: "nova-2",
+    modelTier: "",
   },
 });
 
@@ -20,25 +24,34 @@ export function registerIpcHandlers(
     const settings = {
       hotkey: store.get("hotkey"),
       language: store.get("language"),
-      apiKey: process.env['DEEPGRAM_API_KEY'] || "",
+      model: store.get("model"),
+      modelTier: store.get("modelTier"),
     };
-    console.log(`[Whisper] Settings loaded: hotkey=${settings.hotkey}, language=${settings.language}`);
+    console.log(`[Whisper] Settings loaded: hotkey=${settings.hotkey}, language=${settings.language}, model=${settings.model}${settings.modelTier ? `-${settings.modelTier}` : ""}`);
     return settings;
   });
 
   ipcMain.handle("settings:set", (_event, settings: Record<string, string>) => {
     const oldHotkey = store.get("hotkey");
-    const oldLanguage = store.get("language");
 
     if (settings['hotkey'] !== undefined && settings['hotkey'] !== oldHotkey) {
       store.set("hotkey", settings['hotkey']);
       updateHotkey(settings['hotkey']);
-      console.log(`[Whisper] Hotkey saved & re-registered: ${oldHotkey} → ${settings['hotkey']}`);
+      console.log(`[Whisper] Hotkey saved: ${oldHotkey} -> ${settings['hotkey']}`);
     }
 
-    if (settings['language'] !== undefined && settings['language'] !== oldLanguage) {
+    if (settings['language'] !== undefined) {
       store.set("language", settings['language']);
-      console.log(`[Whisper] Language saved: ${oldLanguage} → ${settings['language']}`);
+    }
+
+    if (settings['model'] !== undefined) {
+      store.set("model", settings['model']);
+      console.log(`[Whisper] Model saved: ${settings['model']}`);
+    }
+
+    if (settings['modelTier'] !== undefined) {
+      store.set("modelTier", settings['modelTier']);
+      console.log(`[Whisper] Model tier saved: ${settings['modelTier'] || "default"}`);
     }
 
     return { success: true };
@@ -65,10 +78,5 @@ export function registerIpcHandlers(
 
   ipcMain.on("audio:levels", (_event, data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }) => {
     onLevels(data);
-  });
-
-  ipcMain.handle("audio:get-api-key", () => {
-    const apiKey = process.env['DEEPGRAM_API_KEY'] || "";
-    return apiKey && apiKey !== "your_key_here" ? apiKey : null;
   });
 }

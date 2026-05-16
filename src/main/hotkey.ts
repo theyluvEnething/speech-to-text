@@ -62,7 +62,7 @@ function startPolling(): void {
 
     if (wasPressed && !isPressed) {
       state.isPressed = false;
-      console.log(`[Whisper] Push-to-talk key released → stopping…`);
+      console.log(`[Whisper] Push-to-talk key released -> stopping...`);
       state.onKeyUp();
       stopPolling();
     }
@@ -115,7 +115,7 @@ export function registerHotkey(
       if (event.keycode === expectedKeycode && !state?.isPressed) {
         if (state) state.isPressed = true;
         const keyName = UiohookKey[event.keycode] ?? event.keycode;
-        console.log(`[Whisper] Push-to-talk key pressed (${keyName}) → recording…`);
+        console.log(`[Whisper] Push-to-talk key pressed (${keyName}) -> recording...`);
         onKeyDown();
       }
     });
@@ -124,7 +124,7 @@ export function registerHotkey(
       if (event.keycode === expectedKeycode && state?.isPressed) {
         if (state) state.isPressed = false;
         const keyName = UiohookKey[event.keycode] ?? event.keycode;
-        console.log(`[Whisper] Push-to-talk key released (${keyName}) → stopping…`);
+        console.log(`[Whisper] Push-to-talk key released (${keyName}) -> stopping...`);
         onKeyUp();
       }
     });
@@ -163,7 +163,7 @@ function registerGlobalShortcutFallback(key: string): void {
 export function updateHotkey(key: string): void {
   if (state) {
     const { onKeyDown, onKeyUp } = state;
-    console.log(`[Whisper] Hotkey changed to: ${key} → re-registering…`);
+    console.log(`[Whisper] Hotkey changed to: ${key} -> re-registering...`);
     registerHotkey(key, onKeyDown, onKeyUp);
   }
 }

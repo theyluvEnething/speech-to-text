@@ -14,33 +14,29 @@ let isRecording = false;
 
 function ensureApiKey(): void {
   if (!process.env['DEEPGRAM_API_KEY'] || process.env['DEEPGRAM_API_KEY'] === "your_key_here") {
-    console.warn("[Whisper] Deepgram API key not set — add DEEPGRAM_API_KEY to .env file.");
+    console.warn("[Whisper] Deepgram API key not set. Add DEEPGRAM_API_KEY to .env file.");
   }
 }
 
 function printHeader(): void {
-  console.log("==================================================");
-  console.log("[Whisper]  RECORDING — speak now…");
-  console.log("==================================================");
+  console.log("--- Recording ---");
 }
 
-function printLevels(rms: number, peak: number, elapsed: number, samples: number): void {
-  const barWidth = 40;
+function printLevels(rms: number, peak: number, elapsed: number, _samples: number): void {
+  const barWidth = 30;
   const normalized = Math.min(Math.max((rms + 60) / 60, 0), 1);
   const filled = Math.round(normalized * barWidth);
   const empty = barWidth - filled;
-  const bar = "█".repeat(filled) + "░".repeat(empty);
-
-  const elapsedStr = elapsed.toFixed(1).padStart(4, " ");
-  const samplesStr = `${samples} samples`;
+  const bar = "#".repeat(filled) + "-".repeat(empty);
 
   process.stdout.write(
-    `\r  [${bar}]  ${rms.toFixed(1)} dB  peak ${peak.toFixed(1)} dB  |  ${elapsedStr}s  (${samplesStr})`,
+    `\r  [${bar}]  ${rms.toFixed(1)} dB  |  ${elapsed.toFixed(1)}s`,
   );
 }
 
 function printSummary(duration: number, peak: number, rms: number): void {
-  console.log(`\n[Whisper] Stopped after ${duration.toFixed(1)}s. Peak: ${peak.toFixed(1)} dB, RMS: ${rms.toFixed(1)} dB`);
+  process.stdout.write("\n");
+  console.log(`  Stopped after ${duration.toFixed(1)}s  |  peak ${peak.toFixed(1)} dB  |  RMS ${rms.toFixed(1)} dB`);
 }
 
 function startRecording(): void {
@@ -84,12 +80,17 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
   }
 
   const durationS = (buffer.byteLength / 16000).toFixed(1);
-  console.log(`[Whisper] Captured ${durationS}s of audio. Transcribing…`);
+  const model = store.get("model");
+  const modelTier = store.get("modelTier");
+  const language = store.get("language");
+  const modelLabel = `${model}${modelTier ? `-${modelTier}` : ""}`;
 
-  transcribe(buffer)
+  console.log(`[Whisper] Captured ${durationS}s of audio. Transcribing with ${modelLabel}...`);
+
+  transcribe(buffer, model, modelTier, language)
     .then((text) => {
       if (text) {
-        console.log(`[Whisper] → "${text}"\n`);
+        console.log(`[Whisper] -> "${text}"\n`);
         overlay?.webContents.send("overlay:result", text);
         pasteText(text);
       } else {
@@ -106,15 +107,15 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
 app.whenReady().then(() => {
   const savedHotkey = store.get("hotkey");
   const savedLanguage = store.get("language");
+  const savedModel = store.get("model");
+  const savedModelTier = store.get("modelTier");
   const apiKey = process.env['DEEPGRAM_API_KEY'];
+  const modelLabel = `${savedModel}${savedModelTier ? `-${savedModelTier}` : ""}`;
 
-  console.log("╔══════════════════════════════════════════╗");
-  console.log("║         Whisper PTT v2.0.0               ║");
-  console.log("╚══════════════════════════════════════════╝");
-  console.log(`[Whisper] Hotkey: ${savedHotkey} (from saved settings)`);
-  console.log(`[Whisper] Language: ${savedLanguage}`);
-  console.log(`[Whisper] Deepgram API key: ${apiKey && apiKey !== "your_key_here" ? "configured" : "MISSING"}`);
-  console.log("[Whisper] Platform:", process.platform);
+  console.log("--- Whisper PTT v2.0.0 ---");
+  console.log(`  Hotkey: ${savedHotkey}  |  Language: ${savedLanguage}  |  Model: ${modelLabel}`);
+  console.log(`  Deepgram API key: ${apiKey && apiKey !== "your_key_here" ? "configured" : "MISSING"}`);
+  console.log(`  Platform: ${process.platform}`);
 
   ensureApiKey();
 
