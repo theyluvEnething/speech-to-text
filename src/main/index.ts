@@ -5,18 +5,38 @@ import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverla
 import { createTray } from "./tray";
 import { registerHotkey, unregisterAll } from "./hotkey";
 import { registerIpcHandlers, store } from "./ipc-handlers";
+import { transcribe } from "./transcriber";
 import { pasteText } from "./paste";
-import { events } from "./events";
-import { getApiKey } from "./transcriber";
 
 config({ path: join(app.getAppPath(), ".env") });
 
 let isRecording = false;
 
 function ensureApiKey(): void {
-  if (!getApiKey()) {
-    events.log("WARN", "Deepgram API key not set. Add DEEPGRAM_API_KEY to .env file.");
+  if (!process.env['DEEPGRAM_API_KEY'] || process.env['DEEPGRAM_API_KEY'] === "your_key_here") {
+    console.warn("[Whisper] Deepgram API key not set. Add DEEPGRAM_API_KEY to .env file.");
   }
+}
+
+function printHeader(): void {
+  console.log("--- Recording ---");
+}
+
+function printLevels(rms: number, peak: number, elapsed: number, _samples: number): void {
+  const barWidth = 30;
+  const normalized = Math.min(Math.max((rms + 60) / 60, 0), 1);
+  const filled = Math.round(normalized * barWidth);
+  const empty = barWidth - filled;
+  const bar = "#".repeat(filled) + "-".repeat(empty);
+
+  process.stdout.write(
+    `\r  [${bar}]  ${rms.toFixed(1)} dB  |  ${elapsed.toFixed(1)}s`,
+  );
+}
+
+function printSummary(duration: number, peak: number, rms: number): void {
+  process.stdout.write("\n");
+  console.log(`  Stopped after ${duration.toFixed(1)}s  |  peak ${peak.toFixed(1)} dB  |  RMS ${rms.toFixed(1)} dB`);
 }
 
 function startRecording(): void {
@@ -26,7 +46,7 @@ function startRecording(): void {
   const overlay = getOverlayWindow();
   const audio = getAudioWindow();
 
-  events.phase("recording");
+  printHeader();
   overlay?.webContents.send("overlay:state", "recording");
   audio?.webContents.send("audio:start");
 }
@@ -38,61 +58,74 @@ function stopRecording(): void {
   const overlay = getOverlayWindow();
   const audio = getAudioWindow();
 
-  events.phase("transcribing");
   overlay?.webContents.send("overlay:state", "processing");
   audio?.webContents.send("audio:stop");
 }
 
 function handleLevels(data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }): void {
-  if (!data.final) {
-    events.levels({ rms: data.rms, peak: data.peak, elapsed: data.elapsed });
+  if (data.final) {
+    printSummary(data.elapsed, data.peak, data.rms);
+  } else {
+    printLevels(data.rms, data.peak, data.elapsed, data.samples);
   }
-
-  const overlay = getOverlayWindow();
-  overlay?.webContents.send("overlay:levels", data);
 }
 
-function handleTranscript(text: string): void {
+function handleAudioBuffer(buffer: ArrayBuffer): void {
   const overlay = getOverlayWindow();
 
-  if (!text) {
-    events.log("WARN", "No transcript returned.");
-    events.phase("idle");
+  if (buffer.byteLength === 0) {
+    console.log("[Whisper] No audio captured.");
     overlay?.webContents.send("overlay:state", "idle");
     return;
   }
 
-  events.log("SUCCESS", `Transcription: "${text}"`);
-  events.phase("idle");
-  overlay?.webContents.send("overlay:result", text);
-  pasteText(text);
+  const durationS = (buffer.byteLength / 16000).toFixed(1);
+  const model = store.get("model");
+  const modelTier = store.get("modelTier");
+  const language = store.get("language");
+  const modelLabel = `${model}${modelTier ? `-${modelTier}` : ""}`;
+
+  console.log(`[Whisper] Captured ${durationS}s of audio. Transcribing with ${modelLabel}...`);
+
+  transcribe(buffer, model, modelTier, language)
+    .then((text) => {
+      if (text) {
+        console.log(`[Whisper] -> "${text}"\n`);
+        overlay?.webContents.send("overlay:result", text);
+        pasteText(text);
+      } else {
+        console.log("[Whisper] No transcript returned.\n");
+        overlay?.webContents.send("overlay:state", "idle");
+      }
+    })
+    .catch((err: Error) => {
+      console.error(`[Whisper] Transcription failed: ${err.message}\n`);
+      overlay?.webContents.send("overlay:error", err.message);
+    });
 }
 
 app.whenReady().then(() => {
   const savedHotkey = store.get("hotkey");
   const savedLanguage = store.get("language");
   const savedModel = store.get("model");
-  const apiKey = getApiKey();
+  const savedModelTier = store.get("modelTier");
+  const apiKey = process.env['DEEPGRAM_API_KEY'];
+  const modelLabel = `${savedModel}${savedModelTier ? `-${savedModelTier}` : ""}`;
 
-  events.log("INFO", "Whisper PTT v2.0.0");
-  events.log("INFO", `Hotkey: ${savedHotkey} | Language: ${savedLanguage} | Model: ${savedModel}`);
-  events.log("INFO", `Deepgram API key: ${apiKey ? "configured" : "MISSING"}`);
-  events.log("INFO", `Platform: ${process.platform}`);
-  events.config({ model: savedModel, language: savedLanguage, hotkey: savedHotkey });
+  console.log("--- Whisper PTT v2.0.0 ---");
+  console.log(`  Hotkey: ${savedHotkey}  |  Language: ${savedLanguage}  |  Model: ${modelLabel}`);
+  console.log(`  Deepgram API key: ${apiKey && apiKey !== "your_key_here" ? "configured" : "MISSING"}`);
+  console.log(`  Platform: ${process.platform}`);
 
   ensureApiKey();
 
-  registerIpcHandlers(handleTranscript, handleLevels);
+  registerIpcHandlers(handleAudioBuffer, handleLevels);
 
-  const audioWindow = createAudioWindow();
+  createAudioWindow();
   createOverlayWindow();
 
-  if (apiKey) {
-    audioWindow.webContents.send("audio:apikey", apiKey);
-  }
-
   createTray(() => {
-    events.log("INFO", "Settings opened from tray.");
+    console.log("[Whisper] Settings opened from tray.");
     createSettingsWindow();
   });
 
@@ -102,17 +135,7 @@ app.whenReady().then(() => {
     createSettingsWindow();
   });
 
-  events.log("INFO", "System tray created. Ready.");
-
-  if (process.argv.includes("--console")) {
-    import("ink").then(({ render }) => {
-      import("react").then((React) => {
-        import("../tui/app").then(({ default: App }) => {
-          render(React.createElement(App, { events: events as unknown as import("events").EventEmitter }));
-        });
-      });
-    });
-  }
+  console.log("[Whisper] System tray created. Ready.\n");
 });
 
 app.on("window-all-closed", () => {
@@ -120,6 +143,6 @@ app.on("window-all-closed", () => {
 });
 
 app.on("will-quit", () => {
-  events.log("INFO", "Shutting down.");
   unregisterAll();
+  console.log("[Whisper] Shutting down.");
 });

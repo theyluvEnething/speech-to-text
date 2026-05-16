@@ -59,50 +59,17 @@ if not exist "node_modules\" (
 )
 echo.
 
-:: Clean dist
-echo [STEP 5] Cleaning dist directory...
-if exist "dist\" (
-    rmdir /s /q "dist"
-    echo [OK] dist directory removed.
-) else (
-    echo [OK] dist directory does not exist — nothing to clean.
-)
-echo.
-
-:: Build
-echo [STEP 6] Building application...
-call npm run build
-set BUILD_CODE=!errorlevel!
-if !BUILD_CODE! neq 0 (
-    echo [ERROR] Build failed with code !BUILD_CODE!.
-    goto :fail
-)
-echo [OK] Build succeeded.
-echo.
-
-:: Launch Electron in background
-echo [STEP 7] Starting Electron backend (minimized)...
-start "Whisper PTT Backend" /MIN cmd /c npm run dev
-echo [OK] Electron backend launched in background window.
-echo.
-
-:: Wait for Vite + WebSocket
-echo [STEP 8] Waiting for backend to initialize...
-timeout /t 3 /nobreak >nul
-echo [OK] Backend should be ready.
-echo.
-
-:: Run TUI in foreground
-echo [STEP 9] Starting TUI...
+:: Launch
+echo [STEP 5] Running: npm run dev
 echo ------------------------------------------------
-call npm run tui
-set TUI_CODE=%errorlevel%
+call npm run dev
+set DEV_CODE=%errorlevel%
 echo ------------------------------------------------
-echo [INFO] TUI exited with code: %TUI_CODE%
-if %TUI_CODE% neq 0 (
-    echo [WARN] TUI exited with an error (code %TUI_CODE%).
+echo [INFO] npm run dev exited with code: %DEV_CODE%
+if %DEV_CODE% neq 0 (
+    echo [ERROR] App exited with an error (code %DEV_CODE%).
 ) else (
-    echo [OK] TUI exited cleanly.
+    echo [OK] App exited cleanly.
 )
 goto :done
 

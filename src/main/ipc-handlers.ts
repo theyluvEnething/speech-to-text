@@ -1,22 +1,23 @@
 import { ipcMain, BrowserWindow } from "electron";
 import Store from "electron-store";
 import { updateHotkey } from "./hotkey";
-import { events } from "./events";
 
 export const store = new Store<{
   hotkey: string;
   language: string;
   model: string;
+  modelTier: string;
 }>({
   defaults: {
     hotkey: "alt",
     language: "en",
     model: "nova-2",
+    modelTier: "",
   },
 });
 
 export function registerIpcHandlers(
-  onTranscript: (text: string) => void,
+  onAudioBuffer: (buffer: ArrayBuffer) => void,
   onLevels: (data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }) => void,
 ): void {
   ipcMain.handle("settings:get", () => {
@@ -24,8 +25,9 @@ export function registerIpcHandlers(
       hotkey: store.get("hotkey"),
       language: store.get("language"),
       model: store.get("model"),
+      modelTier: store.get("modelTier"),
     };
-    events.log("INFO", `Settings loaded: hotkey=${settings.hotkey}, language=${settings.language}, model=${settings.model}`);
+    console.log(`[Whisper] Settings loaded: hotkey=${settings.hotkey}, language=${settings.language}, model=${settings.model}${settings.modelTier ? `-${settings.modelTier}` : ""}`);
     return settings;
   });
 
@@ -35,12 +37,7 @@ export function registerIpcHandlers(
     if (settings['hotkey'] !== undefined && settings['hotkey'] !== oldHotkey) {
       store.set("hotkey", settings['hotkey']);
       updateHotkey(settings['hotkey']);
-      events.log("INFO", `Hotkey saved: ${oldHotkey} -> ${settings['hotkey']}`);
-      events.config({
-        model: store.get("model"),
-        language: store.get("language"),
-        hotkey: settings['hotkey'],
-      });
+      console.log(`[Whisper] Hotkey saved: ${oldHotkey} -> ${settings['hotkey']}`);
     }
 
     if (settings['language'] !== undefined) {
@@ -49,12 +46,12 @@ export function registerIpcHandlers(
 
     if (settings['model'] !== undefined) {
       store.set("model", settings['model']);
-      events.log("INFO", `Model saved: ${settings['model']}`);
-      events.config({
-        model: settings['model'],
-        language: store.get("language"),
-        hotkey: store.get("hotkey"),
-      });
+      console.log(`[Whisper] Model saved: ${settings['model']}`);
+    }
+
+    if (settings['modelTier'] !== undefined) {
+      store.set("modelTier", settings['modelTier']);
+      console.log(`[Whisper] Model tier saved: ${settings['modelTier'] || "default"}`);
     }
 
     return { success: true };
@@ -63,20 +60,20 @@ export function registerIpcHandlers(
   ipcMain.on("settings:hide", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
-      events.log("INFO", "Settings window hidden to tray.");
+      console.log("[Whisper] Settings window hidden to tray.");
       win.hide();
     }
   });
 
   ipcMain.on("settings:close", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    events.log("INFO", "Settings window closed.");
+    console.log("[Whisper] Settings window closed.");
     win?.close();
   });
 
-  ipcMain.on("audio:transcript", (_event, text: string) => {
-    events.log("INFO", `Transcript received: "${text}" (${text.length} chars)`);
-    onTranscript(text);
+  ipcMain.on("audio:buffer", (_event, buffer: ArrayBuffer) => {
+    console.log(`[Whisper] Audio buffer received: ${buffer.byteLength} bytes`);
+    onAudioBuffer(buffer);
   });
 
   ipcMain.on("audio:levels", (_event, data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }) => {

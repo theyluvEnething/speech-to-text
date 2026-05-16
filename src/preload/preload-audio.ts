@@ -17,12 +17,8 @@ contextBridge.exposeInMainWorld("audio", {
     ipcRenderer.on("audio:stop", () => callback());
   },
 
-  onApiKey: (callback: (key: string) => void): void => {
-    ipcRenderer.once("audio:apikey", (_event, key: string) => callback(key));
-  },
-
-  sendTranscript: (text: string): void => {
-    ipcRenderer.send("audio:transcript", text);
+  sendBuffer: (buffer: ArrayBuffer): void => {
+    ipcRenderer.send("audio:buffer", buffer);
   },
 
   sendLevels: (data: LevelData): void => {

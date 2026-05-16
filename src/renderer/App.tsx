@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import type { ChangeEvent } from "react";
-import Combobox from "./Combobox";
-
-const MODELS = [
-  { value: "nova-2", label: "nova-2" },
-  { value: "nova-2-medical", label: "nova-2-medical" },
-  { value: "nova-2-meeting", label: "nova-2-meeting" },
-];
 
 const HOTKEYS = [
   { value: "alt", label: "Alt (Left)" },
@@ -29,36 +22,39 @@ const LANGUAGES = [
   { code: "auto", name: "Auto-detect" },
 ];
 
+const NOVA2_TIERS = [
+  { value: "", label: "Standard (nova-2)" },
+  { value: "general", label: "General (nova-2-general)" },
+  { value: "medical", label: "Medical (nova-2-medical)" },
+  { value: "meeting", label: "Meeting (nova-2-meeting)" },
+];
+
 function App(): React.ReactElement {
   const [hotkey, setHotkey] = useState("alt");
   const [language, setLanguage] = useState("en");
-  const [model, setModel] = useState("nova-2");
+  const [modelTier, setModelTier] = useState("");
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
 
   useEffect(() => {
-    window.whisper
-      .getSettings()
-      .then((settings) => {
-        setHotkey(settings.hotkey || "alt");
-        setLanguage(settings.language || "en");
-        setModel(settings.model || "nova-2");
-        setLoading(false);
-        initialLoad.current = false;
-      })
-      .catch((err) => {
-        console.error("[Whisper UI] Failed to load settings:", err);
-        setLoading(false);
-        initialLoad.current = false;
-      });
+    window.whisper.getSettings().then((settings) => {
+      setHotkey(settings.hotkey || "alt");
+      setLanguage(settings.language || "en");
+      setModelTier(settings.modelTier || "");
+      setLoading(false);
+      initialLoad.current = false;
+    }).catch((err) => {
+      console.error("[Whisper UI] Failed to load settings:", err);
+      setLoading(false);
+      initialLoad.current = false;
+    });
   }, []);
 
   function save(updated: Record<string, string>): void {
     window.whisper
-      .setSettings(updated)
+      .setSettings({ model: "nova-2", ...updated })
       .then(() => {
-        const entries = Object.entries(updated)
-          .map(([k, v]) => `${k}=${v}`);
+        const entries = Object.entries(updated).map(([k, v]) => `${k}=${v}`);
         console.log(`[Whisper UI] Saved: ${entries.join(", ")}`);
       })
       .catch((err) => {
@@ -78,9 +74,10 @@ function App(): React.ReactElement {
     if (!initialLoad.current) save({ language: value });
   }
 
-  function handleModelChange(value: string): void {
-    setModel(value);
-    if (!initialLoad.current) save({ model: value });
+  function handleModelTierChange(e: ChangeEvent<HTMLSelectElement>): void {
+    const value = e.target.value;
+    setModelTier(value);
+    if (!initialLoad.current) save({ modelTier: value });
   }
 
   function closeWindow(): void {
@@ -108,14 +105,7 @@ function App(): React.ReactElement {
             transition-colors focus:outline-none"
           aria-label="Close"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M1 7h12" />
           </svg>
         </button>
@@ -161,15 +151,21 @@ function App(): React.ReactElement {
 
         <section>
           <label className="block text-xs font-medium text-surface-400 uppercase tracking-wider mb-2">
-            Model
+            Nova-2 Model Tier
           </label>
-          <Combobox
-            value={model}
-            options={MODELS}
-            onChange={handleModelChange}
-          />
+          <select
+            value={modelTier}
+            onChange={handleModelTierChange}
+            className="w-full bg-surface-800 border border-surface-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-accent transition-colors"
+          >
+            {NOVA2_TIERS.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
           <p className="mt-1.5 text-xs text-surface-500">
-            Domain-specific models for medical or meeting scenarios.
+            Domain-specific models optimize for medical or meeting scenarios.
           </p>
         </section>
 

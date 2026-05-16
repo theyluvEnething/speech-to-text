@@ -2,13 +2,27 @@ import React from "react";
 import { Box, Text } from "ink";
 import type { ReactNode } from "react";
 
+interface BadgeProps {
+  label: string;
+  value: string;
+  color: string;
+}
+
+function Badge({ label, value, color }: BadgeProps): ReactNode {
+  return (
+    <Text>
+      <Text dimColor>{label}:</Text>
+      <Text color={color}> {value}</Text>
+    </Text>
+  );
+}
+
 interface HeaderProps {
   width: number;
   model: string;
   language: string;
   hotkey: string;
   isRecording: boolean;
-  elapsed: number;
 }
 
 export default function Header({
@@ -17,46 +31,35 @@ export default function Header({
   language,
   hotkey,
   isRecording,
-  elapsed,
 }: HeaderProps): ReactNode {
-  const cwd = process.cwd();
+  const innerWidth = Math.max(width - 4, 40);
 
   return (
-    <Box flexDirection="column" paddingLeft={2}>
-      <Box>
-        <Text bold color="#c084fc">{"▐"}<Text color="#e9d5ff">{"▛"}</Text><Text color="white">{"██"}</Text><Text color="#e9d5ff">{"█"}</Text><Text color="#c084fc">{"▜"}</Text><Text color="#a78bfa">{"▌"}</Text></Text>
-        <Text>   </Text>
-        <Text bold color="white">Whispr Flow</Text>
-        <Text> </Text>
-        <Text dimColor>v2.0.0</Text>
-      </Box>
+    <Box
+      borderStyle="round"
+      borderColor="gray"
+      flexDirection="column"
+      width={width}
+      paddingX={1}
+    >
+      <Box width={innerWidth} justifyContent="space-between">
+        <Text>
+          <Text bold color="white">
+            {"🎙  Whispr Flow"}
+          </Text>
+        </Text>
 
-      <Box>
-        <Text bold color="#c084fc">{"▝"}<Text color="#e9d5ff">{"▜"}</Text><Text color="white">{"███"}</Text><Text color="#e9d5ff">{"██"}</Text><Text color="#c084fc">{"▛"}</Text><Text color="#a78bfa">{"▘"}</Text></Text>
-        <Text>  </Text>
-        <Text color="cyan">{model}</Text>
-        <Text dimColor> · </Text>
-        <Text color="yellow">{language}</Text>
-        <Text dimColor> · </Text>
-        <Text color="#c084fc">{hotkey}</Text>
-        {isRecording && (
-          <>
-            <Text dimColor> · </Text>
-            <Text color="red" bold>{"●"}</Text>
-            <Text color="white"> {elapsed.toFixed(1)}s</Text>
-          </>
-        )}
-      </Box>
-
-      <Box>
-        <Text dimColor>  </Text>
-        <Text color="#7c3aed">▘</Text>
-        <Text color="#a78bfa">▘</Text>
-        <Text dimColor> </Text>
-        <Text color="#7c3aed">▝</Text>
-        <Text color="#a78bfa">▝</Text>
-        <Text>    </Text>
-        <Text dimColor>{cwd}</Text>
+        <Box gap={2}>
+          <Badge label="Model" value={model} color="cyan" />
+          <Text dimColor>|</Text>
+          <Badge label="Lang" value={language} color="yellow" />
+          <Text dimColor>|</Text>
+          <Badge
+            label="Hotkey"
+            value={hotkey}
+            color={isRecording ? "green" : "magenta"}
+          />
+        </Box>
       </Box>
     </Box>
   );
