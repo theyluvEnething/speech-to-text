@@ -4,6 +4,55 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+      },
+      colors: {
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        // Keep old surface palette for the overlay window (out of scope)
+        surface: {
+          50: "#f8f9fa",
+          100: "#f1f3f5",
+          200: "#e9ecef",
+          300: "#dee2e6",
+          400: "#ced4da",
+          500: "#adb5bd",
+          600: "#868e96",
+          700: "#495057",
+          800: "#343a40",
+          900: "#212529",
+          950: "#0d1117",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
       animation: {
         "fade-in": "fadeIn 200ms ease-out",
         "zoom-in": "zoomIn 200ms ease-out",
@@ -23,27 +72,7 @@ module.exports = {
           "50%": { boxShadow: "0 0 24px rgba(239,68,68,0.3)" },
         },
       },
-      colors: {
-        surface: {
-          50: "#f8f9fa",
-          100: "#f1f3f5",
-          200: "#e9ecef",
-          300: "#dee2e6",
-          400: "#ced4da",
-          500: "#adb5bd",
-          600: "#868e96",
-          700: "#495057",
-          800: "#343a40",
-          900: "#212529",
-          950: "#0d1117",
-        },
-        accent: {
-          DEFAULT: "#6c5ce7",
-          light: "#a29bfe",
-          dark: "#4c3fd9",
-        },
-      },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };
