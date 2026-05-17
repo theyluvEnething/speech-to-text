@@ -16,6 +16,22 @@ let state: AppState = "idle";
 let audioActive = false;
 let lastDurationSec = 0;
 
+const overlayLabels: Record<string, Record<string, string>> = {
+  en: { recording: "Recording", processing: "Transcribing…", idle: "" },
+  de: { recording: "Aufzeichnen…", processing: "Transkribiere…", idle: "" },
+  it: { recording: "Registrazione…", processing: "Trascrizione…", idle: "" },
+  es: { recording: "Grabando…", processing: "Transcribiendo…", idle: "" },
+  ja: { recording: "録音中…", processing: "文字起こし中…", idle: "" },
+};
+
+function sendOverlayState(newState: string): void {
+  const overlay = getOverlayWindow();
+  const lang = store.get("appLanguage") || "en";
+  const labels = overlayLabels[lang] ?? overlayLabels["en"]!;
+  const label = labels[newState] ?? "";
+  overlay?.webContents.send("overlay:state", newState, label);
+}
+
 function ensureApiKey(): void {
   if (!process.env['DEEPGRAM_API_KEY'] || process.env['DEEPGRAM_API_KEY'] === "your_key_here") {
     console.warn("[Wavely] Deepgram API key not set. Add DEEPGRAM_API_KEY to .env file.");
@@ -39,11 +55,10 @@ function startRecording(): void {
   audioActive = true;
   state = "recording";
 
-  const overlay = getOverlayWindow();
   const audio = getAudioWindow();
 
   console.log("[Wavely] Recording started...");
-  overlay?.webContents.send("overlay:state", "recording");
+  sendOverlayState("recording");
   audio?.webContents.send("audio:start");
 }
 
@@ -86,7 +101,7 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
   if (buffer.byteLength === 0) {
     console.log("[Wavely] No audio captured.");
     state = "idle";
-    overlay?.webContents.send("overlay:state", "idle");
+    sendOverlayState("idle");
     return;
   }
 
@@ -100,7 +115,7 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
   console.log(`[Wavely] Captured ${durationS}s of audio. Transcribing with ${modelLabel} in ${langLabel}...`);
 
   state = "processing";
-  overlay?.webContents.send("overlay:state", "processing");
+  sendOverlayState("processing");
 
   transcribe(buffer, model, modelTier, language)
     .then((text) => {
@@ -123,7 +138,7 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
       } else {
         console.log("[Wavely] No transcript returned.\n");
         state = "idle";
-        overlay?.webContents.send("overlay:state", "idle");
+        sendOverlayState("idle");
       }
     })
     .catch((err: Error) => {

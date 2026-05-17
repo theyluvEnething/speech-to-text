@@ -64,7 +64,7 @@ declare global {
   }
 
   interface OverlayApi {
-    onState(callback: (state: string) => void): void;
+    onState(callback: (state: string, label: string) => void): void;
     onResult(callback: (text: string) => void): void;
     onError(callback: (msg: string) => void): void;
     sendIdle(): void;

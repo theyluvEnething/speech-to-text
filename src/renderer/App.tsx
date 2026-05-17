@@ -53,13 +53,16 @@ function App(): React.ReactElement {
     });
   }, []);
 
+  // To make concentric borders, OuterRadius = InnerRadius + Padding
+  // Inner container is rounded-2xl (16px). Padding is p-2 (8px).
+  // 16px + 8px = 24px. So the outer container should be rounded-[24px].
   return (
-    <div className="flex flex-col h-screen bg-background rounded-[10px] overflow-hidden window-enter">
+    <div className="flex flex-col h-screen bg-background rounded-[20px] overflow-hidden window-enter">
       <TitleBar />
       <div className="flex flex-1 min-h-0 p-2 pt-0 gap-0">
         <Sidebar />
         <div className="w-px shrink-0 bg-border" />
-        <main className="flex-1 min-w-0 bg-gradient-to-t from-[#121314] to-[#121314] rounded-lg overflow-hidden">
+        <main className="flex-1 min-w-0 bg-gradient-to-t from-neutral-900 to-neutral-800 rounded-2xl overflow-hidden ml-2">
           <div className="h-full px-8 py-6 overflow-y-auto">
             {activeTab === "conversations" && <ConversationsView />}
             {activeTab === "profiles" && <ProfilesView />}

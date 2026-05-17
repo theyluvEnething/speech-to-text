@@ -39,15 +39,15 @@ function Sidebar(): React.ReactElement {
       {/* App identity */}
       <div
         className={cn(
-          "flex items-center h-12 shrink-0",
-          collapsed ? "justify-center px-0" : "gap-3 px-4",
+          "flex items-center shrink-0",
+          collapsed ? "h-12 justify-center px-0" : "h-16 gap-3 px-4",
         )}
       >
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-foreground shrink-0">
           <Mic className="h-5 w-5 text-background" />
         </div>
         {!collapsed && (
-          <span className="text-[15px] font-semibold tracking-[-0.01em] text-foreground/95 whitespace-nowrap">
+          <span className="text-[32px] leading-none font-bold tracking-[-0.01em] text-foreground/95 whitespace-nowrap">
             Wavely
           </span>
         )}

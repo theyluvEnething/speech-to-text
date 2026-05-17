@@ -41,6 +41,7 @@ function AudioBars({ active }: { active: boolean }): React.ReactElement {
 
 function OverlayApp(): React.ReactElement {
   const [state, setState] = useState<OverlayState>("idle");
+  const [label, setLabel] = useState("");
   const [text, setText] = useState("");
   const [visible, setVisible] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -67,7 +68,8 @@ function OverlayApp(): React.ReactElement {
   }
 
   useEffect(() => {
-    window.overlay.onState((newState: string) => {
+    window.overlay.onState((newState: string, displayLabel: string) => {
+      setLabel(displayLabel || "");
       if (newState === "recording") {
         clearResultTimer();
         setExiting(false);
@@ -178,11 +180,11 @@ function OverlayApp(): React.ReactElement {
         <div className="flex-1 min-w-0">
           {isRecording ? (
             <div className="flex items-baseline gap-2 animate-fade-in">
-              <span className="text-sm font-semibold text-white">Recording</span>
+              <span className="text-sm font-semibold text-white">{label || "Recording"}</span>
               <span className="text-xs text-surface-400 tabular-nums">{elapsed.toFixed(1)}s</span>
             </div>
           ) : isProcessing ? (
-            <p className="text-sm font-medium text-amber-300/90 animate-fade-in">Transcribing…</p>
+            <p className="text-sm font-medium text-amber-300/90 animate-fade-in">{label || "Transcribing…"}</p>
           ) : isError ? (
             <p className="text-sm text-red-400/90 truncate leading-snug animate-fade-in">{text}</p>
           ) : (
