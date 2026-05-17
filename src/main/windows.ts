@@ -17,13 +17,18 @@ export function createSettingsWindow(): BrowserWindow {
     return settingsWindow;
   }
 
+  const isMac = process.platform === "darwin";
+
   settingsWindow = new BrowserWindow({
-    width: 520,
-    height: 440,
-    resizable: false,
-    frame: true,
-    titleBarStyle: "hidden",
-    backgroundColor: "#0d1117",
+    width: 900,
+    height: 620,
+    minWidth: 760,
+    minHeight: 520,
+    resizable: true,
+    frame: false,
+    titleBarStyle: isMac ? "hiddenInset" : "default",
+    transparent: true,
+    backgroundColor: "#00000000",
     webPreferences: {
       preload: PRELOAD_SETTINGS,
       contextIsolation: true,
@@ -33,6 +38,10 @@ export function createSettingsWindow(): BrowserWindow {
 
   settingsWindow.loadFile(join(RENDERER_BASE, "index.html"));
   settingsWindow.setMenuBarVisibility(false);
+
+  if (!isMac) {
+    settingsWindow.setBackgroundColor("#0a0a0a");
+  }
 
   settingsWindow.on("closed", () => {
     settingsWindow = null;

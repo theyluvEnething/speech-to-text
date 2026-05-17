@@ -4,7 +4,7 @@ import { config } from "dotenv";
 import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow } from "./windows";
 import { createTray } from "./tray";
 import { registerHotkey, unregisterAll } from "./hotkey";
-import { registerIpcHandlers, store } from "./ipc-handlers";
+import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } from "./ipc-handlers";
 import { transcribe } from "./transcriber";
 import { pasteText } from "./paste";
 
@@ -15,6 +15,8 @@ type AppState = "idle" | "recording" | "processing" | "showing-result";
 let state: AppState = "idle";
 let audioActive = false;
 let savedResult: string | null = null;
+let savedResultMeta: { language: string; model: string; profileId: string; durationSec: number } | null = null;
+let lastDurationSec = 0;
 
 function ensureApiKey(): void {
   if (!process.env['DEEPGRAM_API_KEY'] || process.env['DEEPGRAM_API_KEY'] === "your_key_here") {
@@ -61,8 +63,23 @@ function stopRecording(): void {
 
 function handleLevels(data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }): void {
   if (data.final) {
+    lastDurationSec = data.elapsed;
     console.log(`[Wavely] Audio levels — duration: ${data.elapsed.toFixed(1)}s, peak: ${data.peak.toFixed(1)} dB, RMS: ${data.rms.toFixed(1)} dB`);
   }
+}
+
+function resolveTranscribeOptions(): { language: string; model: string; modelTier: string; profileId: string } {
+  const profile = getActiveProfile();
+  const globalModel = store.get("model");
+  const globalModelTier = store.get("modelTier");
+  const globalLanguage = store.get("language");
+
+  return {
+    language: profile.language || globalLanguage,
+    model: profile.model || globalModel,
+    modelTier: profile.model ? "" : globalModelTier,
+    profileId: profile.id,
+  };
 }
 
 function handleAudioBuffer(buffer: ArrayBuffer): void {
@@ -77,12 +94,12 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
     return;
   }
 
-  const durationS = (buffer.byteLength / 16000).toFixed(1);
-  const model = store.get("model");
-  const modelTier = store.get("modelTier");
-  const language = store.get("language");
+  const { language, model, modelTier, profileId } = resolveTranscribeOptions();
   const modelLabel = `${model}${modelTier ? `-${modelTier}` : ""}`;
+  const durationSec = lastDurationSec;
+  lastDurationSec = 0;
 
+  const durationS = durationSec.toFixed(1);
   console.log(`[Wavely] Captured ${durationS}s of audio. Transcribing with ${modelLabel}...`);
 
   if (state === "showing-result") {
@@ -91,6 +108,7 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
         if (text) {
           console.log(`[Wavely] (deferred) -> "${text}"\n`);
           savedResult = text;
+          savedResultMeta = { language, model: modelLabel, profileId, durationSec };
         } else {
           console.log("[Wavely] (deferred) No transcript returned.\n");
         }
@@ -111,6 +129,15 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
         state = "showing-result";
         overlay?.webContents.send("overlay:result", text);
         pasteText(text);
+        saveConversation({
+          id: uuid(),
+          text,
+          language,
+          model: modelLabel,
+          profileId,
+          durationSec,
+          createdAt: Date.now(),
+        });
       } else {
         console.log("[Wavely] No transcript returned.\n");
         state = "idle";
@@ -129,11 +156,24 @@ function handleOverlayIdle(): void {
 
   if (savedResult) {
     const text = savedResult;
+    const meta = savedResultMeta;
     savedResult = null;
+    savedResultMeta = null;
     state = "showing-result";
     const overlay = getOverlayWindow();
     overlay?.webContents.send("overlay:result", text);
     pasteText(text);
+    if (meta) {
+      saveConversation({
+        id: uuid(),
+        text,
+        language: meta.language,
+        model: meta.model,
+        profileId: meta.profileId,
+        durationSec: meta.durationSec,
+        createdAt: Date.now(),
+      });
+    }
     return;
   }
 
