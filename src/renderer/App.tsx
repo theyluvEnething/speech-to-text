@@ -6,6 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import ConversationsView from "@/views/ConversationsView";
 import ProfilesView from "@/views/ProfilesView";
 import SettingsView from "@/views/SettingsView";
+import AppView from "@/views/AppView";
 
 function App(): React.ReactElement {
   const activeTab = useStore((s) => s.activeTab);
@@ -63,6 +64,7 @@ function App(): React.ReactElement {
             {activeTab === "conversations" && <ConversationsView />}
             {activeTab === "profiles" && <ProfilesView />}
             {activeTab === "settings" && <SettingsView />}
+            {activeTab === "app" && <AppView />}
           </div>
         </main>
       </div>

@@ -1,0 +1,80 @@
+{
+  "app": {
+    "name": "Wavely",
+    "active": "Aktiv",
+    "paused": "Pausiert",
+    "stopped": "Gestoppt"
+  },
+  "nav": {
+    "conversations": "Aufzeichnungen",
+    "profiles": "Profile",
+    "settings": "Einstellungen",
+    "app": "App"
+  },
+  "conversations": {
+    "title": "Aufzeichnungen",
+    "search": "Transkripte durchsuchen…",
+    "noConversations": "Noch keine Aufzeichnungen",
+    "noConversationsHint": "Halte die Push-to-Talk-Taste gedrückt, um deine erste Aufzeichnung zu starten.",
+    "noResults": "Keine Transkripte gefunden.",
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "thisWeek": "Diese Woche",
+    "earlier": "Früher",
+    "copy": "Kopieren",
+    "delete": "Löschen",
+    "copied": "In die Zwischenablage kopiert",
+    "deleted": "Aufzeichnung gelöscht"
+  },
+  "profiles": {
+    "title": "Profile",
+    "newProfile": "Neues Profil",
+    "editProfile": "Profil bearbeiten",
+    "createProfile": "Neues Profil",
+    "name": "Name",
+    "namePlaceholder": "z.B. Arztgespräche",
+    "color": "Farbe",
+    "icon": "Symbol",
+    "systemPrompt": "System-Prompt",
+    "systemPromptPlaceholder": "Optional. Für zukünftige Nachbearbeitung reserviert.",
+    "languageOverride": "Sprachüberschreibung",
+    "modelOverride": "Modellüberschreibung",
+    "useGlobalSetting": "Globale Einstellung verwenden",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "created": "Profil erstellt",
+    "updated": "Profil aktualisiert",
+    "deleted": "Profil gelöscht",
+    "cannotDeleteLast": "Das letzte Profil kann nicht gelöscht werden.",
+    "saveFailed": "Profil konnte nicht gespeichert werden",
+    "deleteFailed": "Profil konnte nicht gelöscht werden"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "recording": "Aufnahme",
+    "transcription": "Transkription",
+    "pushToTalkKey": "Push-to-Talk-Taste",
+    "pushToTalkHint": "Taste während des Sprechens gedrückt halten, zum Transkribieren loslassen.",
+    "language": "Sprache",
+    "languageOverridden": "Sprache wird vom Profil überschrieben",
+    "modelTier": "Modell-Stufe",
+    "modelTierHint": "Domänenspezifische Modelle optimieren für medizinische oder Besprechungsszenarien.",
+    "preferencesSaved": "Einstellungen gespeichert"
+  },
+  "appSettings": {
+    "title": "App",
+    "language": "Sprache",
+    "appLanguage": "App-Sprache",
+    "clipboard": "Zwischenablage",
+    "copyToClipboard": "In Zwischenablage kopieren",
+    "copyToClipboardHint": "Transkribierten Text automatisch kopieren und einfügen.",
+    "account": "Konto",
+    "loggedIn": "Angemeldet",
+    "localSession": "Lokale Sitzung",
+    "about": "Über",
+    "aboutText": "Wavely v1.0.0 — Push-to-Talk-Spracherkennung unterstützt von Deepgram.",
+    "resetToDefaults": "Auf Standard zurücksetzen",
+    "resetDone": "Einstellungen auf Standard zurückgesetzt",
+    "resetFailed": "Einstellungen konnten nicht zurückgesetzt werden"
+  }
+}

@@ -1,11 +1,11 @@
-import React from "react";
-import { MessageSquare, User, Settings, Mic, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import React, { useEffect } from "react";
+import { MessageSquare, User, Settings, Mic, PanelLeftClose, PanelLeftOpen, Play, Pause, AppWindow } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore, type Tab } from "@/store";
 import ProfileFooter from "@/components/ProfileFooter";
 import { Separator } from "@/components/ui/separator";
 
-const NAV_ITEMS: { tab: Tab; icon: typeof MessageSquare; label: string }[] = [
+const MAIN_NAV: { tab: Tab; icon: typeof MessageSquare; label: string }[] = [
   { tab: "conversations", icon: MessageSquare, label: "Conversations" },
   { tab: "profiles", icon: User, label: "Profiles" },
   { tab: "settings", icon: Settings, label: "Settings" },
@@ -16,6 +16,16 @@ function Sidebar(): React.ReactElement {
   const setActiveTab = useStore((s) => s.setActiveTab);
   const collapsed = useStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useStore((s) => s.toggleSidebar);
+  const isPaused = useStore((s) => s.isPaused);
+  const setIsPaused = useStore((s) => s.setIsPaused);
+
+  useEffect(() => {
+    window.wavely.getPaused().then((paused) => setIsPaused(paused));
+  }, []);
+
+  function handleTogglePaused(): void {
+    window.wavely.togglePaused().then((paused) => setIsPaused(paused));
+  }
 
   return (
     <aside
@@ -45,9 +55,9 @@ function Sidebar(): React.ReactElement {
         <Separator />
       </div>
 
-      {/* Navigation */}
+      {/* Main navigation */}
       <nav className={cn("flex-1 py-3 space-y-0.5", collapsed ? "px-2" : "px-2")}>
-        {NAV_ITEMS.map((item) => (
+        {MAIN_NAV.map((item) => (
           <button
             key={item.tab}
             onClick={() => setActiveTab(item.tab)}
@@ -70,8 +80,29 @@ function Sidebar(): React.ReactElement {
         ))}
       </nav>
 
-      {/* Collapse toggle */}
-      <div className={cn("px-2 pb-1", collapsed && "flex justify-center")}>
+      {/* Bottom nav: App + collapse */}
+      <div className={cn("space-y-0.5 pb-1", collapsed ? "px-2" : "px-2")}>
+        {/* App tab */}
+        <button
+          onClick={() => setActiveTab("app")}
+          title={collapsed ? "App" : undefined}
+          className={cn(
+            "flex items-center gap-2.5 w-full h-8 rounded-md transition-colors duration-150 relative",
+            collapsed ? "justify-center px-0" : "px-2.5",
+            "text-[13px] font-medium",
+            activeTab === "app"
+              ? "bg-accent text-foreground"
+              : "text-foreground/45 hover:text-foreground/70 hover:bg-accent/50",
+          )}
+        >
+          {activeTab === "app" && !collapsed && (
+            <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-foreground/40" />
+          )}
+          <AppWindow className={cn("h-4 w-4 shrink-0", activeTab === "app" ? "text-foreground/92" : "")} />
+          {!collapsed && <span>App</span>}
+        </button>
+
+        {/* Collapse toggle */}
         <button
           onClick={toggleSidebar}
           className="flex items-center justify-center w-full h-7 rounded-md
@@ -94,14 +125,30 @@ function Sidebar(): React.ReactElement {
         <ProfileFooter collapsed={collapsed} />
       </div>
 
-      {/* Status dot */}
+      {/* Status indicator */}
       {!collapsed && (
         <div className="px-3 pb-3">
-          <div className="flex items-center gap-2 px-2.5 py-1">
-            <div className="w-2 h-2 rounded-full bg-foreground/40 shrink-0" />
-            <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
-              Running
-            </span>
+          <div className="flex items-center justify-between px-2.5 py-1">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-2 h-2 rounded-full shrink-0",
+                isPaused ? "bg-[#F5C518]" : "bg-[#4ADE80]",
+              )} />
+              <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
+                {isPaused ? "Paused" : "Active"}
+              </span>
+            </div>
+            <button
+              onClick={handleTogglePaused}
+              className="ml-2 text-foreground/30 hover:text-foreground/60 transition-colors duration-150"
+              title={isPaused ? "Resume" : "Pause"}
+            >
+              {isPaused ? (
+                <Play className="h-3 w-3" />
+              ) : (
+                <Pause className="h-3 w-3" />
+              )}
+            </button>
           </div>
         </div>
       )}

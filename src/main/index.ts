@@ -23,6 +23,10 @@ function ensureApiKey(): void {
 }
 
 function startRecording(): void {
+  if (store.get("isPaused")) {
+    console.log("[Wavely] Recording blocked — app is paused.");
+    return;
+  }
   if (audioActive) {
     console.log("[Wavely] Recording blocked — audio already capturing.");
     return;
@@ -101,8 +105,9 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
     .then((text) => {
       if (text) {
         console.log(`[Wavely] -> "${text}"\n`);
-        // Paste immediately — clipboard write is sync, keystroke runs in background
-        pasteText(text);
+        if (store.get("copyToClipboard")) {
+          pasteText(text);
+        }
         state = "showing-result";
         overlay?.webContents.send("overlay:result", text);
         saveConversation({

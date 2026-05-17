@@ -27,6 +27,9 @@ interface StoreSchema {
   language: string;
   model: string;
   modelTier: string;
+  copyToClipboard: boolean;
+  appLanguage: string;
+  isPaused: boolean;
   profiles: Profile[];
   activeProfileId: string;
   conversations: Conversation[];
@@ -34,10 +37,13 @@ interface StoreSchema {
 
 export const store = new Store<StoreSchema>({
   defaults: {
-    hotkey: "alt",
-    language: "en",
+    hotkey: "ctrlright",
+    language: "auto",
     model: "nova-2",
     modelTier: "",
+    copyToClipboard: true,
+    appLanguage: "en",
+    isPaused: false,
     profiles: [
       {
         id: "default",
@@ -93,37 +99,42 @@ export function registerIpcHandlers(
 ): void {
   // ── Settings ──────────────────────────────────────────────
   ipcMain.handle("settings:get", () => {
-    const settings = {
+    return {
       hotkey: store.get("hotkey"),
       language: store.get("language"),
       model: store.get("model"),
       modelTier: store.get("modelTier"),
+      copyToClipboard: store.get("copyToClipboard"),
+      appLanguage: store.get("appLanguage"),
     };
-    console.log(`[Wavely] Settings loaded: hotkey=${settings.hotkey}, language=${settings.language}, model=${settings.model}${settings.modelTier ? `-${settings.modelTier}` : ""}`);
-    return settings;
   });
 
-  ipcMain.handle("settings:set", (_event, settings: Record<string, string>) => {
+  ipcMain.handle("settings:set", (_event, settings: Record<string, string | boolean>) => {
     const oldHotkey = store.get("hotkey");
 
-    if (settings['hotkey'] !== undefined && settings['hotkey'] !== oldHotkey) {
+    if (typeof settings['hotkey'] === "string" && settings['hotkey'] !== oldHotkey) {
       store.set("hotkey", settings['hotkey']);
       updateHotkey(settings['hotkey']);
-      console.log(`[Wavely] Hotkey saved: ${oldHotkey} -> ${settings['hotkey']}`);
     }
 
-    if (settings['language'] !== undefined) {
+    if (typeof settings['language'] === "string") {
       store.set("language", settings['language']);
     }
 
-    if (settings['model'] !== undefined) {
+    if (typeof settings['model'] === "string") {
       store.set("model", settings['model']);
-      console.log(`[Wavely] Model saved: ${settings['model']}`);
     }
 
-    if (settings['modelTier'] !== undefined) {
+    if (typeof settings['modelTier'] === "string") {
       store.set("modelTier", settings['modelTier']);
-      console.log(`[Wavely] Model tier saved: ${settings['modelTier'] || "default"}`);
+    }
+
+    if (typeof settings['copyToClipboard'] === "boolean") {
+      store.set("copyToClipboard", settings['copyToClipboard']);
+    }
+
+    if (typeof settings['appLanguage'] === "string") {
+      store.set("appLanguage", settings['appLanguage']);
     }
 
     return { success: true };
@@ -223,6 +234,17 @@ export function registerIpcHandlers(
 
   ipcMain.on("audio:levels", (_event, data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }) => {
     onLevels(data);
+  });
+
+  // ── App state ─────────────────────────────────────────────
+  ipcMain.handle("app:getPaused", () => {
+    return store.get("isPaused");
+  });
+
+  ipcMain.handle("app:togglePaused", () => {
+    const paused = !store.get("isPaused");
+    store.set("isPaused", paused);
+    return paused;
   });
 }
 

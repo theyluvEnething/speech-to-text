@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { useStore } from "@/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 
 const HOTKEYS = [
   { value: "alt", label: "Alt (Left)" },
@@ -188,22 +187,6 @@ function SettingsView(): React.ReactElement {
           </CardContent>
         </Card>
 
-        {/* About */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
-              About
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-[13px] text-foreground/70">
-              Wavely v1.0.0 — Push-to-talk speech-to-text powered by Deepgram.
-            </p>
-            <Button variant="outline" size="sm">
-              Reset to defaults
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

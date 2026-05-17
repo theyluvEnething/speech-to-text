@@ -1,0 +1,80 @@
+{
+  "app": {
+    "name": "Wavely",
+    "active": "Attivo",
+    "paused": "In pausa",
+    "stopped": "Fermato"
+  },
+  "nav": {
+    "conversations": "Conversazioni",
+    "profiles": "Profili",
+    "settings": "Impostazioni",
+    "app": "App"
+  },
+  "conversations": {
+    "title": "Conversazioni",
+    "search": "Cerca trascrizioni…",
+    "noConversations": "Nessuna conversazione",
+    "noConversationsHint": "Tieni premuto il tasto push-to-talk per iniziare la prima trascrizione.",
+    "noResults": "Nessuna trascrizione corrisponde alla ricerca.",
+    "today": "Oggi",
+    "yesterday": "Ieri",
+    "thisWeek": "Questa settimana",
+    "earlier": "Precedenti",
+    "copy": "Copia",
+    "delete": "Elimina",
+    "copied": "Copiato negli appunti",
+    "deleted": "Conversazione eliminata"
+  },
+  "profiles": {
+    "title": "Profili",
+    "newProfile": "Nuovo profilo",
+    "editProfile": "Modifica profilo",
+    "createProfile": "Nuovo profilo",
+    "name": "Nome",
+    "namePlaceholder": "es. Chiamate mediche",
+    "color": "Colore",
+    "icon": "Icona",
+    "systemPrompt": "Prompt di sistema",
+    "systemPromptPlaceholder": "Opzionale. Riservato per future elaborazioni.",
+    "languageOverride": "Override lingua",
+    "modelOverride": "Override modello",
+    "useGlobalSetting": "Usa impostazione globale",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "created": "Profilo creato",
+    "updated": "Profilo aggiornato",
+    "deleted": "Profilo eliminato",
+    "cannotDeleteLast": "Impossibile eliminare l'ultimo profilo.",
+    "saveFailed": "Salvataggio profilo fallito",
+    "deleteFailed": "Eliminazione profilo fallita"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "recording": "Registrazione",
+    "transcription": "Trascrizione",
+    "pushToTalkKey": "Tasto push-to-talk",
+    "pushToTalkHint": "Tieni premuto questo tasto mentre parli, rilascia per trascrivere.",
+    "language": "Lingua",
+    "languageOverridden": "Lingua sostituita dal profilo",
+    "modelTier": "Livello modello",
+    "modelTierHint": "Modelli specializzati ottimizzati per scenari medici o riunioni.",
+    "preferencesSaved": "Preferenze salvate"
+  },
+  "appSettings": {
+    "title": "App",
+    "language": "Lingua",
+    "appLanguage": "Lingua dell'app",
+    "clipboard": "Appunti",
+    "copyToClipboard": "Copia negli appunti",
+    "copyToClipboardHint": "Copia e incolla automaticamente il testo trascritto.",
+    "account": "Account",
+    "loggedIn": "Accesso effettuato",
+    "localSession": "Sessione locale",
+    "about": "Informazioni",
+    "aboutText": "Wavely v1.0.0 — Push-to-talk speech-to-text basato su Deepgram.",
+    "resetToDefaults": "Ripristina impostazioni predefinite",
+    "resetDone": "Impostazioni ripristinate ai valori predefiniti",
+    "resetFailed": "Ripristino impostazioni fallito"
+  }
+}

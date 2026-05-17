@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type Tab = "conversations" | "profiles" | "settings";
+export type Tab = "conversations" | "profiles" | "settings" | "app";
 
 interface AppStore {
   activeTab: Tab;
@@ -15,6 +15,8 @@ interface AppStore {
   setConversations: (conversations: Conversation[]) => void;
   triggerNewProfile: boolean;
   setTriggerNewProfile: (v: boolean) => void;
+  isPaused: boolean;
+  setIsPaused: (v: boolean) => void;
 }
 
 export const useStore = create<AppStore>((set) => ({
@@ -30,4 +32,6 @@ export const useStore = create<AppStore>((set) => ({
   setConversations: (conversations) => set({ conversations }),
   triggerNewProfile: false,
   setTriggerNewProfile: (v) => set({ triggerNewProfile: v }),
+  isPaused: false,
+  setIsPaused: (v) => set({ isPaused: v }),
 }));

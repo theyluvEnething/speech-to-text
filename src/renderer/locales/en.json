@@ -1,0 +1,80 @@
+{
+  "app": {
+    "name": "Wavely",
+    "active": "Active",
+    "paused": "Paused",
+    "stopped": "Stopped"
+  },
+  "nav": {
+    "conversations": "Conversations",
+    "profiles": "Profiles",
+    "settings": "Settings",
+    "app": "App"
+  },
+  "conversations": {
+    "title": "Conversations",
+    "search": "Search transcripts…",
+    "noConversations": "No conversations yet",
+    "noConversationsHint": "Hold your push-to-talk key to start your first transcription.",
+    "noResults": "No transcripts match your search.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This week",
+    "earlier": "Earlier",
+    "copy": "Copy",
+    "delete": "Delete",
+    "copied": "Copied to clipboard",
+    "deleted": "Conversation deleted"
+  },
+  "profiles": {
+    "title": "Profiles",
+    "newProfile": "New profile",
+    "editProfile": "Edit profile",
+    "createProfile": "New profile",
+    "name": "Name",
+    "namePlaceholder": "e.g. Medical Calls",
+    "color": "Color",
+    "icon": "Icon",
+    "systemPrompt": "System prompt",
+    "systemPromptPlaceholder": "Optional. Reserved for future post-processing.",
+    "languageOverride": "Language override",
+    "modelOverride": "Model override",
+    "useGlobalSetting": "Use global setting",
+    "save": "Save",
+    "cancel": "Cancel",
+    "created": "Profile created",
+    "updated": "Profile updated",
+    "deleted": "Profile deleted",
+    "cannotDeleteLast": "Cannot delete the last profile.",
+    "saveFailed": "Failed to save profile",
+    "deleteFailed": "Failed to delete profile"
+  },
+  "settings": {
+    "title": "Settings",
+    "recording": "Recording",
+    "transcription": "Transcription",
+    "pushToTalkKey": "Push-to-talk key",
+    "pushToTalkHint": "Hold this key while speaking, release to transcribe.",
+    "language": "Language",
+    "languageOverridden": "Language overridden by profile",
+    "modelTier": "Model tier",
+    "modelTierHint": "Domain-specific models optimize for medical or meeting scenarios.",
+    "preferencesSaved": "Preferences saved"
+  },
+  "appSettings": {
+    "title": "App",
+    "language": "Language",
+    "appLanguage": "App language",
+    "clipboard": "Clipboard",
+    "copyToClipboard": "Copy to clipboard",
+    "copyToClipboardHint": "Automatically copy and paste transcribed text.",
+    "account": "Account",
+    "loggedIn": "Logged in",
+    "localSession": "Local session",
+    "about": "About",
+    "aboutText": "Wavely v1.0.0 — Push-to-talk speech-to-text powered by Deepgram.",
+    "resetToDefaults": "Reset to defaults",
+    "resetDone": "Settings reset to defaults",
+    "resetFailed": "Failed to reset settings"
+  }
+}
