@@ -25,8 +25,10 @@ import { cn } from "@/lib/utils";
 
 const COLORS = ["#ef4444", "#f59e0b", "#eab308", "#10b981", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
 const EMOJIS = ["🩺", "💉", "🏥", "💼", "📞", "🎙️", "🏠", "💻", "✈️", "📝", "🎓", "☕", "🛠️", "🧠", "⚡", "🎯"];
+const SENTINEL = "__global__";
+
 const LANGUAGES = [
-  { value: "", label: "Use global setting" },
+  { value: SENTINEL, label: "Use global setting" },
   { value: "en", label: "English" },
   { value: "de", label: "Deutsch" },
   { value: "fr", label: "Francais" },
@@ -39,10 +41,21 @@ const LANGUAGES = [
 ];
 
 const MODELS = [
-  { value: "", label: "Use global setting" },
+  { value: SENTINEL, label: "Use global setting" },
   { value: "nova-2", label: "nova-2" },
   { value: "nova-3", label: "nova-3" },
 ];
+
+function randomId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 const EMPTY_FORM: Profile = {
   id: "",
@@ -59,18 +72,19 @@ function ProfilesView(): React.ReactElement {
   const activeProfile = useStore((s) => s.activeProfile);
   const setProfiles = useStore((s) => s.setProfiles);
   const setActiveProfile = useStore((s) => s.setActiveProfile);
+  const triggerNewProfile = useStore((s) => s.triggerNewProfile);
+  const setTriggerNewProfile = useStore((s) => s.setTriggerNewProfile);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Profile>({ ...EMPTY_FORM });
 
   useEffect(() => {
-    function onNewProfile(): void {
+    if (triggerNewProfile) {
       setEditing({ ...EMPTY_FORM });
       setDialogOpen(true);
+      setTriggerNewProfile(false);
     }
-    window.addEventListener("wavely:new-profile", onNewProfile);
-    return () => window.removeEventListener("wavely:new-profile", onNewProfile);
-  }, []);
+  }, [triggerNewProfile]);
 
   function openCreate(): void {
     setEditing({ ...EMPTY_FORM });
@@ -87,7 +101,7 @@ function ProfilesView(): React.ReactElement {
 
     const profile: Profile = {
       ...editing,
-      id: editing.id || crypto.randomUUID(),
+      id: editing.id || randomId(),
       name: editing.name.trim(),
     };
 
@@ -262,8 +276,8 @@ function ProfilesView(): React.ReactElement {
               <div className="space-y-2">
                 <Label>Language override</Label>
                 <Select
-                  value={editing.language || ""}
-                  onValueChange={(v) => setEditing((p) => ({ ...p, language: v || undefined }))}
+                  value={editing.language || SENTINEL}
+                  onValueChange={(v) => setEditing((p) => ({ ...p, language: v === SENTINEL ? "" : v }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -278,8 +292,8 @@ function ProfilesView(): React.ReactElement {
               <div className="space-y-2">
                 <Label>Model override</Label>
                 <Select
-                  value={editing.model || ""}
-                  onValueChange={(v) => setEditing((p) => ({ ...p, model: v || undefined }))}
+                  value={editing.model || SENTINEL}
+                  onValueChange={(v) => setEditing((p) => ({ ...p, model: v === SENTINEL ? "" : v }))}
                 >
                   <SelectTrigger>
                     <SelectValue />

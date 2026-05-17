@@ -25,8 +25,10 @@ const LANGUAGES = [
   { value: "auto", label: "Auto-detect" },
 ];
 
+const SENTINEL = "__global__";
+
 const NOVA2_TIERS = [
-  { value: "", label: "Standard (nova-2)" },
+  { value: SENTINEL, label: "Standard (nova-2)" },
   { value: "general", label: "General (nova-2-general)" },
   { value: "medical", label: "Medical (nova-2-medical)" },
   { value: "meeting", label: "Meeting (nova-2-meeting)" },
@@ -149,10 +151,11 @@ function SettingsView(): React.ReactElement {
           <CardContent className="space-y-2">
             <label className="text-[13px] font-medium text-foreground">Model tier</label>
             <Select
-              value={modelTier}
+              value={modelTier || SENTINEL}
               onValueChange={(v) => {
-                setModelTier(v);
-                if (!initialLoad.current) save({ modelTier: v });
+                const tier = v === SENTINEL ? "" : v;
+                setModelTier(tier);
+                if (!initialLoad.current) save({ modelTier: tier });
               }}
             >
               <SelectTrigger className="w-full">

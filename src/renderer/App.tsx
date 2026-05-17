@@ -28,11 +28,11 @@ function App(): React.ReactElement {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-background rounded-[12px] overflow-hidden border border-border/60 shadow-2xl window-enter">
+    <div className="flex flex-col h-screen bg-background rounded-[12px] overflow-hidden window-enter">
       <TitleBar />
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 p-2 pt-0">
         <Sidebar />
-        <main className="flex-1 min-w-0 bg-card">
+        <main className="flex-1 min-w-0 bg-card rounded-xl overflow-hidden ml-1">
           <div className="h-full px-8 py-6 overflow-y-auto">
             {activeTab === "conversations" && <ConversationsView />}
             {activeTab === "profiles" && <ProfilesView />}

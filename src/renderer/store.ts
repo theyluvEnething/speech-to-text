@@ -13,6 +13,8 @@ interface AppStore {
   setActiveProfile: (profile: Profile) => void;
   conversations: Conversation[];
   setConversations: (conversations: Conversation[]) => void;
+  triggerNewProfile: boolean;
+  setTriggerNewProfile: (v: boolean) => void;
 }
 
 export const useStore = create<AppStore>((set) => ({
@@ -26,4 +28,6 @@ export const useStore = create<AppStore>((set) => ({
   setActiveProfile: (profile) => set({ activeProfile: profile }),
   conversations: [],
   setConversations: (conversations) => set({ conversations }),
+  triggerNewProfile: false,
+  setTriggerNewProfile: (v) => set({ triggerNewProfile: v }),
 }));

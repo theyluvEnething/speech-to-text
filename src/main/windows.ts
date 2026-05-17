@@ -22,6 +22,8 @@ export function createSettingsWindow(): BrowserWindow {
   settingsWindow = new BrowserWindow({
     width: 900,
     height: 620,
+    minWidth: 560,
+    minHeight: 330,
     resizable: true,
     frame: false,
     titleBarStyle: isMac ? "hiddenInset" : "default",
@@ -36,10 +38,6 @@ export function createSettingsWindow(): BrowserWindow {
 
   settingsWindow.loadFile(join(RENDERER_BASE, "index.html"));
   settingsWindow.setMenuBarVisibility(false);
-
-  if (!isMac) {
-    settingsWindow.setBackgroundColor("#080808");
-  }
 
   settingsWindow.on("closed", () => {
     settingsWindow = null;

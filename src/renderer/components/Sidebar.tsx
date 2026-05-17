@@ -20,7 +20,7 @@ function Sidebar(): React.ReactElement {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full bg-background border-r border-border shrink-0 transition-all duration-200",
+        "flex flex-col h-full bg-transparent shrink-0 transition-all duration-200",
         collapsed ? "w-[52px]" : "w-60",
       )}
     >

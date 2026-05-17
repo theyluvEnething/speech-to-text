@@ -3,12 +3,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { UserPlus, Check } from "lucide-react";
 import { useStore, type Tab } from "@/store";
 
-function ProfileSwitcherPopover({ children }: { children: React.ReactNode }): React.ReactElement {
+function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNode; compact?: boolean }): React.ReactElement {
   const profiles = useStore((s) => s.profiles);
   const activeProfile = useStore((s) => s.activeProfile);
   const setActiveProfile = useStore((s) => s.setActiveProfile);
   const setActiveTab = useStore((s) => s.setActiveTab);
   const setProfiles = useStore((s) => s.setProfiles);
+  const setTriggerNewProfile = useStore((s) => s.setTriggerNewProfile);
 
   function handleSelect(id: string): void {
     window.wavely.profiles.setActive(id).then(() => {
@@ -19,9 +20,41 @@ function ProfileSwitcherPopover({ children }: { children: React.ReactNode }): Re
 
   function handleNewProfile(): void {
     setActiveTab("profiles");
-    // Open create dialog — this is triggered by the ProfilesView's state
-    // We dispatch a custom event that ProfilesView listens for
-    window.dispatchEvent(new CustomEvent("wavely:new-profile"));
+    setTriggerNewProfile(true);
+  }
+
+  if (compact) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>{children}</PopoverTrigger>
+        <PopoverContent align="start" side="top" className="w-auto p-1.5">
+          <div className="flex items-center gap-1">
+            {profiles.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => handleSelect(p.id)}
+                title={p.name}
+                className="flex items-center justify-center w-9 h-9 rounded-md text-lg
+                  hover:bg-accent transition-colors
+                  data-[active=true]:bg-accent data-[active=true]:ring-1 data-[active=true]:ring-border"
+                data-active={activeProfile?.id === p.id}
+              >
+                {p.icon}
+              </button>
+            ))}
+            <div className="w-px h-6 bg-border mx-0.5" />
+            <button
+              onClick={handleNewProfile}
+              title="New profile"
+              className="flex items-center justify-center w-9 h-9 rounded-md
+                text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <UserPlus className="h-4 w-4" />
+            </button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
   }
 
   return (

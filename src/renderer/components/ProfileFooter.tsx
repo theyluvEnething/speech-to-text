@@ -10,7 +10,7 @@ function ProfileFooter({ collapsed }: { collapsed: boolean }): React.ReactElemen
   if (!activeProfile) return <div />;
 
   return (
-    <ProfileSwitcherPopover>
+    <ProfileSwitcherPopover compact={collapsed}>
       <button
         className={cn(
           "flex items-center rounded-lg hover:bg-accent/50 transition-colors text-left group",
@@ -18,12 +18,14 @@ function ProfileFooter({ collapsed }: { collapsed: boolean }): React.ReactElemen
         )}
         title={collapsed ? activeProfile.name : undefined}
       >
-        <span
-          className="w-2.5 h-2.5 rounded-full shrink-0"
-          style={{ backgroundColor: activeProfile.color }}
-        />
-        {!collapsed && (
+        {collapsed ? (
+          <span className="text-[18px] leading-none">{activeProfile.icon}</span>
+        ) : (
           <>
+            <span
+              className="w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: activeProfile.color }}
+            />
             <span className="text-[16px] leading-none">{activeProfile.icon}</span>
             <span className="flex-1 text-[13px] font-medium truncate text-foreground">
               {activeProfile.name}

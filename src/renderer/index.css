@@ -29,20 +29,20 @@
   }
 
   .dark {
-    --background: 0 0% 3%;
+    --background: 0 0% 6.3%;
     --foreground: 0 0% 96%;
-    --card: 0 0% 6%;
+    --card: 0 0% 7.5%;
     --card-foreground: 0 0% 96%;
-    --popover: 0 0% 8%;
+    --popover: 0 0% 9%;
     --popover-foreground: 0 0% 96%;
     --primary: 210 90% 36%;
     --primary-foreground: 0 0% 100%;
-    --muted: 0 0% 13%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 215 35% 14%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 50%;
+    --accent: 0 0% 12%;
     --accent-foreground: 0 0% 96%;
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
     --ring: 210 90% 36%;
   }
 
@@ -51,7 +51,7 @@
   }
 
   body {
-    background-color: hsl(var(--background));
+    background: transparent;
     color: hsl(var(--foreground));
     font-family: "Inter", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -63,6 +63,7 @@ html, body, #root {
   margin: 0;
   padding: 0;
   height: 100%;
+  background: transparent;
 }
 
 .drag-region {
