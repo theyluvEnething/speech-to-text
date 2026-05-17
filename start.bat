@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
-title Whisper PTT
+title Wavely
 echo ================================================
-echo   Whisper PTT v2.0.0
+echo   Wavely v1.0.0
 echo   Push-to-Talk Speech-to-Text (Deepgram)
 echo ================================================
 echo.
@@ -76,7 +76,7 @@ goto :done
 :fail
 echo.
 echo ================================================
-echo   Whisper PTT stopped due to an error above.
+echo   Wavely stopped due to an error above.
 echo ================================================
 
 :done

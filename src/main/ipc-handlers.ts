@@ -19,6 +19,7 @@ export const store = new Store<{
 export function registerIpcHandlers(
   onAudioBuffer: (buffer: ArrayBuffer) => void,
   onLevels: (data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }) => void,
+  onOverlayIdle: () => void,
 ): void {
   ipcMain.handle("settings:get", () => {
     const settings = {
@@ -27,7 +28,7 @@ export function registerIpcHandlers(
       model: store.get("model"),
       modelTier: store.get("modelTier"),
     };
-    console.log(`[Whisper] Settings loaded: hotkey=${settings.hotkey}, language=${settings.language}, model=${settings.model}${settings.modelTier ? `-${settings.modelTier}` : ""}`);
+    console.log(`[Wavely] Settings loaded: hotkey=${settings.hotkey}, language=${settings.language}, model=${settings.model}${settings.modelTier ? `-${settings.modelTier}` : ""}`);
     return settings;
   });
 
@@ -37,7 +38,7 @@ export function registerIpcHandlers(
     if (settings['hotkey'] !== undefined && settings['hotkey'] !== oldHotkey) {
       store.set("hotkey", settings['hotkey']);
       updateHotkey(settings['hotkey']);
-      console.log(`[Whisper] Hotkey saved: ${oldHotkey} -> ${settings['hotkey']}`);
+      console.log(`[Wavely] Hotkey saved: ${oldHotkey} -> ${settings['hotkey']}`);
     }
 
     if (settings['language'] !== undefined) {
@@ -46,12 +47,12 @@ export function registerIpcHandlers(
 
     if (settings['model'] !== undefined) {
       store.set("model", settings['model']);
-      console.log(`[Whisper] Model saved: ${settings['model']}`);
+      console.log(`[Wavely] Model saved: ${settings['model']}`);
     }
 
     if (settings['modelTier'] !== undefined) {
       store.set("modelTier", settings['modelTier']);
-      console.log(`[Whisper] Model tier saved: ${settings['modelTier'] || "default"}`);
+      console.log(`[Wavely] Model tier saved: ${settings['modelTier'] || "default"}`);
     }
 
     return { success: true };
@@ -60,19 +61,23 @@ export function registerIpcHandlers(
   ipcMain.on("settings:hide", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
-      console.log("[Whisper] Settings window hidden to tray.");
+      console.log("[Wavely] Settings window hidden to tray.");
       win.hide();
     }
   });
 
   ipcMain.on("settings:close", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    console.log("[Whisper] Settings window closed.");
+    console.log("[Wavely] Settings window closed.");
     win?.close();
   });
 
+  ipcMain.on("overlay:idle", () => {
+    onOverlayIdle();
+  });
+
   ipcMain.on("audio:buffer", (_event, buffer: ArrayBuffer) => {
-    console.log(`[Whisper] Audio buffer received: ${buffer.byteLength} bytes`);
+    console.log(`[Wavely] Audio buffer received: ${buffer.byteLength} bytes`);
     onAudioBuffer(buffer);
   });
 

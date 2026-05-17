@@ -4,6 +4,25 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      animation: {
+        "fade-in": "fadeIn 200ms ease-out",
+        "zoom-in": "zoomIn 200ms ease-out",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        zoomIn: {
+          "0%": { opacity: "0", transform: "scale(0.92)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 12px rgba(239,68,68,0.15)" },
+          "50%": { boxShadow: "0 0 24px rgba(239,68,68,0.3)" },
+        },
+      },
       colors: {
         surface: {
           50: "#f8f9fa",

@@ -1,4 +1,4 @@
-# Whisper PTT — Push-to-Talk Speech-to-Text
+# Wavely — Push-to-Talk Speech-to-Text
 
 ## What this is
 
@@ -82,12 +82,12 @@ Settings stored via `electron-store`:
 
 **Windows**
 - Paste via `Ctrl+V` simulation (nut-js)
-- Build: `npm run dist` → `dist/Whisper PTT Setup.exe`
+- Build: `npm run dist` → `dist/Wavely Setup.exe`
 
 **macOS**
 - Accessibility permission required for keyboard simulation
 - Paste via `Cmd+V` simulation (nut-js)
-- Build: `npm run dist` → `dist/Whisper PTT.dmg`
+- Build: `npm run dist` → `dist/Wavely.dmg`
 
 ## Dev setup
 

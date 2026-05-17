@@ -1,4 +1,4 @@
-interface WhisperSettings {
+interface WavelySettings {
   getSettings(): Promise<{
     hotkey: string;
     language: string;
@@ -29,11 +29,12 @@ interface OverlayApi {
   onState(callback: (state: string) => void): void;
   onResult(callback: (text: string) => void): void;
   onError(callback: (msg: string) => void): void;
+  sendIdle(): void;
 }
 
 declare global {
   interface Window {
-    whisper: WhisperSettings;
+    whisper: WavelySettings;
     audio: AudioApi;
     overlay: OverlayApi;
   }

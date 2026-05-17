@@ -12,6 +12,7 @@ const RENDERER_BASE = join(__dirname, "../renderer");
 
 export function createSettingsWindow(): BrowserWindow {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.show();
     settingsWindow.focus();
     return settingsWindow;
   }

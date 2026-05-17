@@ -6,6 +6,10 @@ let analyser: AnalyserNode | null = null;
 let levelTimer: ReturnType<typeof setInterval> | null = null;
 let sampleCount = 0;
 let startTime = 0;
+let stopTimeout: ReturnType<typeof setTimeout> | null = null;
+let generation = 0;
+
+const POST_RELEASE_MS = 310;
 
 function computeLevels(): { rms: number; peak: number } {
   if (!analyser) return { rms: 0, peak: 0 };
@@ -56,6 +60,33 @@ function stopLevelUpdates(): void {
 }
 
 async function startRecording(): Promise<void> {
+  generation++;
+  const currentGen = generation;
+
+  // Cancel any pending delayed stop from a previous recording
+  if (stopTimeout) {
+    clearTimeout(stopTimeout);
+    stopTimeout = null;
+  }
+
+  // Detach and stop any previous MediaRecorder
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.ondataavailable = null;
+    mediaRecorder.onstop = null;
+    mediaRecorder.stop();
+  }
+  mediaRecorder = null;
+  stopLevelUpdates();
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+    analyser = null;
+  }
+  if (stream) {
+    stream.getTracks().forEach((track) => track.stop());
+    stream = null;
+  }
+
   chunks = [];
 
   try {
@@ -87,6 +118,7 @@ async function startRecording(): Promise<void> {
     };
 
     mediaRecorder.onstop = async () => {
+      if (currentGen !== generation) return; // Stale — a newer recording replaced this one
       stopLevelUpdates();
 
       const { rms, peak } = computeLevels();
@@ -121,10 +153,21 @@ async function startRecording(): Promise<void> {
 }
 
 function stopRecording(): void {
-  if (mediaRecorder && mediaRecorder.state !== "inactive") {
-    mediaRecorder.stop();
-    mediaRecorder = null;
+  if (stopTimeout) {
+    clearTimeout(stopTimeout);
+    stopTimeout = null;
   }
+
+  if (!mediaRecorder || mediaRecorder.state === "inactive") return;
+
+  // Keep recording for POST_RELEASE_MS to capture trailing speech
+  stopTimeout = setTimeout(() => {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+      mediaRecorder = null;
+    }
+    stopTimeout = null;
+  }, POST_RELEASE_MS);
 }
 
 window.audio.onStart(() => {

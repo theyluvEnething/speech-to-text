@@ -12,4 +12,8 @@ contextBridge.exposeInMainWorld("overlay", {
   onError: (callback: (msg: string) => void): void => {
     ipcRenderer.on("overlay:error", (_event, msg: string) => callback(msg));
   },
+
+  sendIdle: (): void => {
+    ipcRenderer.send("overlay:idle");
+  },
 });

@@ -62,7 +62,7 @@ function startPolling(): void {
 
     if (wasPressed && !isPressed) {
       state.isPressed = false;
-      console.log(`[Whisper] Push-to-talk key released -> stopping...`);
+      console.log(`[Wavely] Push-to-talk key released -> stopping...`);
       state.onKeyUp();
       stopPolling();
     }
@@ -96,14 +96,14 @@ export function registerHotkey(
   };
 
   if (!uiohookAvailable()) {
-    console.warn("[Whisper] uiohook-napi not available (run `npm run rebuild` to build native modules). Falling back to toggle mode.");
+    console.warn("[Wavely] uiohook-napi not available (run `npm run rebuild` to build native modules). Falling back to toggle mode.");
     registerGlobalShortcutFallback(normalizedKey);
     return;
   }
 
   const expectedKeycode = UIOHOOK_KEY_MAP[normalizedKey];
   if (expectedKeycode === undefined) {
-    console.warn(`[Whisper] Unknown hotkey: "${normalizedKey}", falling back to toggle mode.`);
+    console.warn(`[Wavely] Unknown hotkey: "${normalizedKey}", falling back to toggle mode.`);
     registerGlobalShortcutFallback(normalizedKey);
     return;
   }
@@ -115,7 +115,7 @@ export function registerHotkey(
       if (event.keycode === expectedKeycode && !state?.isPressed) {
         if (state) state.isPressed = true;
         const keyName = UiohookKey[event.keycode] ?? event.keycode;
-        console.log(`[Whisper] Push-to-talk key pressed (${keyName}) -> recording...`);
+        console.log(`[Wavely] Push-to-talk key pressed (${keyName}) -> recording...`);
         onKeyDown();
       }
     });
@@ -124,15 +124,15 @@ export function registerHotkey(
       if (event.keycode === expectedKeycode && state?.isPressed) {
         if (state) state.isPressed = false;
         const keyName = UiohookKey[event.keycode] ?? event.keycode;
-        console.log(`[Whisper] Push-to-talk key released (${keyName}) -> stopping...`);
+        console.log(`[Wavely] Push-to-talk key released (${keyName}) -> stopping...`);
         onKeyUp();
       }
     });
 
     uIOhook.start();
-    console.log(`[Whisper] Hotkey registered via uiohook: ${normalizedKey} (keycode ${expectedKeycode})`);
+    console.log(`[Wavely] Hotkey registered via uiohook: ${normalizedKey} (keycode ${expectedKeycode})`);
   } catch (err) {
-    console.warn("[Whisper] uiohook-napi failed to start, falling back to globalShortcut toggle mode:", err);
+    console.warn("[Wavely] uiohook-napi failed to start, falling back to globalShortcut toggle mode:", err);
     registerGlobalShortcutFallback(normalizedKey);
   }
 }
@@ -145,25 +145,25 @@ function registerGlobalShortcutFallback(key: string): void {
     globalShortcut.register(accelerator, () => {
       if (!recording) {
         recording = true;
-        console.log(`[Whisper] Toggle mode: recording ON (${accelerator})`);
+        console.log(`[Wavely] Toggle mode: recording ON (${accelerator})`);
         state?.onKeyDown();
       } else {
         recording = false;
-        console.log(`[Whisper] Toggle mode: recording OFF (${accelerator})`);
+        console.log(`[Wavely] Toggle mode: recording OFF (${accelerator})`);
         state?.onKeyUp();
         stopPolling();
       }
     });
-    console.log(`[Whisper] Hotkey registered via globalShortcut toggle: ${accelerator}`);
+    console.log(`[Wavely] Hotkey registered via globalShortcut toggle: ${accelerator}`);
   } catch (err) {
-    console.error("[Whisper] Failed to register any hotkey:", err);
+    console.error("[Wavely] Failed to register any hotkey:", err);
   }
 }
 
 export function updateHotkey(key: string): void {
   if (state) {
     const { onKeyDown, onKeyUp } = state;
-    console.log(`[Whisper] Hotkey changed to: ${key} -> re-registering...`);
+    console.log(`[Wavely] Hotkey changed to: ${key} -> re-registering...`);
     registerHotkey(key, onKeyDown, onKeyUp);
   }
 }
