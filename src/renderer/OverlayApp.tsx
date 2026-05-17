@@ -121,7 +121,7 @@ function OverlayApp(): React.ReactElement {
       ? "border-amber-500/50"
       : isError
         ? "border-red-600/50"
-        : "border-accent/40";
+        : "border-emerald-500/40";
 
   const glowColor = isRecording
     ? "animate-glow-pulse"
@@ -129,7 +129,7 @@ function OverlayApp(): React.ReactElement {
       ? "shadow-[0_0_30px_rgba(245,158,11,0.15)]"
       : isError
         ? "shadow-[0_0_30px_rgba(220,38,38,0.15)]"
-        : "shadow-[0_0_30px_rgba(108,92,231,0.15)]";
+        : "shadow-[0_0_30px_rgba(16,185,129,0.15)]";
 
   return (
     <div className="flex items-center justify-center w-full h-full">
@@ -153,8 +153,8 @@ function OverlayApp(): React.ReactElement {
               </svg>
             </div>
           ) : (
-            <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="rgb(108,92,231)" strokeWidth="1.5" strokeLinecap="round">
+            <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M2 4.5L5 8l5-5" />
               </svg>
             </div>
