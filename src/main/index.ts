@@ -1,4 +1,4 @@
-import { app, ipcMain } from "electron";
+import { app, ipcMain, clipboard } from "electron";
 import { join } from "path";
 import { config } from "dotenv";
 import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow } from "./windows";
@@ -121,9 +121,14 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
     .then((text) => {
       if (text) {
         console.log(`[Wavely] -> "${text}"\n`);
-        if (store.get("copyToClipboard")) {
-          pasteText(text);
-        }
+        // Always paste. Copy-to-clipboard toggle only adds clipboard.copy()
+        // so the text also stays in the clipboard for manual use.
+        const prevClipboard = clipboard.readText();
+        pasteText(text).then(() => {
+          if (!store.get("copyToClipboard")) {
+            clipboard.writeText(prevClipboard);
+          }
+        });
         state = "showing-result";
         overlay?.webContents.send("overlay:result", text);
         saveConversation({
