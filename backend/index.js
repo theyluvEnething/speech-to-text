@@ -42,10 +42,10 @@ app.get("/api/get-deepgram-key", async (_req, res) => {
     }
 
     const data = await response.json();
-    const tempKey = data.api_key;
+    const tempKey = data.key;
 
     if (!tempKey) {
-      console.error("[Wavely Backend] No api_key in Deepgram response:", JSON.stringify(data));
+      console.error("[Wavely Backend] No key in Deepgram response:", JSON.stringify(data));
       return res.status(500).json({ error: "No API key in response." });
     }
 

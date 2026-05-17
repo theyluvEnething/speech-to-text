@@ -5,7 +5,8 @@ let deepgram: DeepgramClient | null = null;
 
 export async function fetchTemporaryKey(): Promise<string> {
   console.log("[Wavely] Fetching temporary Deepgram key from backend...");
-  const response = await fetch("http://localhost:3000/api/get-deepgram-key");
+  const BACKEND_URL = "http://157.173.115.116:3000/api/get-deepgram-key";
+  const response = await fetch(BACKEND_URL);
   if (!response.ok) {
     const body = await response.text();
     throw new Error(`Backend returned ${response.status}: ${body}`);
