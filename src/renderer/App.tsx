@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Toaster } from "sonner";
 import { useStore } from "@/store";
 import TitleBar from "@/components/TitleBar";
@@ -9,10 +10,19 @@ import SettingsView from "@/views/SettingsView";
 import AppView from "@/views/AppView";
 
 function App(): React.ReactElement {
+  const { i18n } = useTranslation();
   const activeTab = useStore((s) => s.activeTab);
   const setProfiles = useStore((s) => s.setProfiles);
   const setActiveProfile = useStore((s) => s.setActiveProfile);
   const setConversations = useStore((s) => s.setConversations);
+
+  // Set i18n language from stored setting on startup
+  useEffect(() => {
+    window.wavely.getSettings().then((settings) => {
+      const lang = settings.appLanguage || "en";
+      if (i18n.language !== lang) i18n.changeLanguage(lang);
+    }).catch(() => {});
+  }, []);
 
   // Prevent modifier keys from triggering system menus (e.g. Alt on Windows)
   // and use renderer-side keyup as fallback for push-to-talk release detection.
