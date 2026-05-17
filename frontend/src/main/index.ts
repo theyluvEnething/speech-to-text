@@ -1,14 +1,10 @@
 import { app, ipcMain, clipboard } from "electron";
-import { join } from "path";
-import { config } from "dotenv";
 import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow } from "./windows";
 import { createTray } from "./tray";
 import { registerHotkey, unregisterAll } from "./hotkey";
 import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } from "./ipc-handlers";
-import { transcribe } from "./transcriber";
+import { transcribe, fetchTemporaryKey } from "./transcriber";
 import { pasteText } from "./paste";
-
-config({ path: join(app.getAppPath(), ".env") });
 
 type AppState = "idle" | "recording" | "processing" | "showing-result";
 
@@ -30,12 +26,6 @@ function sendOverlayState(newState: string): void {
   const labels = overlayLabels[lang] ?? overlayLabels["en"]!;
   const label = labels[newState] ?? "";
   overlay?.webContents.send("overlay:state", newState, label);
-}
-
-function ensureApiKey(): void {
-  if (!process.env['DEEPGRAM_API_KEY'] || process.env['DEEPGRAM_API_KEY'] === "your_key_here") {
-    console.warn("[Wavely] Deepgram API key not set. Add DEEPGRAM_API_KEY to .env file.");
-  }
 }
 
 function startRecording(): void {
@@ -163,15 +153,16 @@ app.whenReady().then(() => {
   const savedLanguage = store.get("language");
   const savedModel = store.get("model");
   const savedModelTier = store.get("modelTier");
-  const apiKey = process.env['DEEPGRAM_API_KEY'];
   const modelLabel = `${savedModel}${savedModelTier ? `-${savedModelTier}` : ""}`;
 
   console.log("--- Wavely v1.0.0 ---");
   console.log(`  Hotkey: ${savedHotkey}  |  Language: ${savedLanguage}  |  Model: ${modelLabel}`);
-  console.log(`  Deepgram API key: ${apiKey && apiKey !== "your_key_here" ? "configured" : "MISSING"}`);
   console.log(`  Platform: ${process.platform}`);
 
-  ensureApiKey();
+  // Fetch a temporary Deepgram key from the backend before the first recording
+  fetchTemporaryKey().catch((err) => {
+    console.error("[Wavely] Failed to fetch initial Deepgram key:", err.message);
+  });
 
   registerIpcHandlers(handleAudioBuffer, handleLevels, handleOverlayIdle);
 
