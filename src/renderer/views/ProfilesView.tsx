@@ -24,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const COLORS = ["#ef4444", "#f59e0b", "#eab308", "#10b981", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
-const EMOJIS = ["🩺", "💉", "🏥", "💼", "📞", "🎙️", "🏠", "💻", "✈️", "📝", "🎓", "☕", "🛠️", "🧠", "⚡", "🎯"];
+const ICONS = ["🇬🇧", "🇩🇪", "🇫🇷", "🇪🇸", "🇮🇹", "🇯🇵", "🇰🇷", "🇨🇳", "🌐", "💼", "🏥", "🎓", "🎙️", "💻", "⚡", "🎯"];
 const SENTINEL = "__global__";
 
 const LANGUAGES = [
@@ -245,7 +245,7 @@ function ProfilesView(): React.ReactElement {
             <div className="space-y-2">
               <Label>Icon</Label>
               <div className="grid grid-cols-8 gap-1.5">
-                {EMOJIS.map((e) => (
+                {ICONS.map((e) => (
                   <button
                     key={e}
                     onClick={() => setEditing((p) => ({ ...p, icon: e }))}

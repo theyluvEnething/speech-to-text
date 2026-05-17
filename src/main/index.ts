@@ -94,9 +94,10 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
   const modelLabel = `${model}${modelTier ? `-${modelTier}` : ""}`;
   const durationSec = lastDurationSec;
   lastDurationSec = 0;
+  const langLabel = language || "auto";
 
   const durationS = durationSec.toFixed(1);
-  console.log(`[Wavely] Captured ${durationS}s of audio. Transcribing with ${modelLabel}...`);
+  console.log(`[Wavely] Captured ${durationS}s of audio. Transcribing with ${modelLabel} in ${langLabel}...`);
 
   state = "processing";
   overlay?.webContents.send("overlay:state", "processing");

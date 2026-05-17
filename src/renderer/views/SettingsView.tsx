@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useStore } from "@/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 const HOTKEYS = [
   { value: "alt", label: "Alt (Left)" },
@@ -44,6 +45,7 @@ function SettingsView(): React.ReactElement {
   const [hotkey, setHotkey] = useState("alt");
   const [language, setLanguage] = useState("en");
   const [modelTier, setModelTier] = useState("");
+  const [copyToClipboard, setCopyToClipboard] = useState(true);
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
 
@@ -54,6 +56,7 @@ function SettingsView(): React.ReactElement {
         setHotkey(settings.hotkey || "alt");
         setLanguage(settings.language || "en");
         setModelTier(settings.modelTier || "");
+        setCopyToClipboard(settings.copyToClipboard !== false);
         setLoading(false);
         initialLoad.current = false;
       })
@@ -64,7 +67,7 @@ function SettingsView(): React.ReactElement {
       });
   }, []);
 
-  function save(updated: Record<string, string>): void {
+  function save(updated: Record<string, string | boolean>): void {
     window.wavely
       .setSettings({ model: "nova-2", ...updated })
       .then(() => {
@@ -149,6 +152,34 @@ function SettingsView(): React.ReactElement {
                   Language overridden by profile &quot;{activeProfile?.name ?? ""}&quot; ({languageLabel ?? profileLanguage})
                 </p>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Clipboard */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
+              Clipboard
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
+                  Copy to clipboard
+                </p>
+                <p className="text-[12px] text-foreground/45 mt-0.5">
+                  Automatically copy and paste transcribed text.
+                </p>
+              </div>
+              <Switch
+                checked={copyToClipboard}
+                onCheckedChange={(v) => {
+                  setCopyToClipboard(v);
+                  if (!initialLoad.current) save({ copyToClipboard: v });
+                }}
+              />
             </div>
           </CardContent>
         </Card>

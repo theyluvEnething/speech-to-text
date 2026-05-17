@@ -4,18 +4,18 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 
 const APP_LANGUAGES = [
   { value: "en", label: "English" },
   { value: "de", label: "Deutsch" },
   { value: "it", label: "Italiano" },
+  { value: "es", label: "Espanol" },
+  { value: "ja", label: "日本語" },
 ];
 
 function AppView(): React.ReactElement {
   const { t, i18n } = useTranslation();
   const [appLanguage, setAppLanguage] = useState("en");
-  const [copyToClipboard, setCopyToClipboard] = useState(true);
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
 
@@ -26,7 +26,6 @@ function AppView(): React.ReactElement {
         const lang = settings.appLanguage || "en";
         setAppLanguage(lang);
         i18n.changeLanguage(lang);
-        setCopyToClipboard(settings.copyToClipboard !== false);
         setLoading(false);
         initialLoad.current = false;
       })
@@ -41,7 +40,7 @@ function AppView(): React.ReactElement {
     window.wavely
       .setSettings(updated)
       .then(() => {
-        toast("Preferences saved");
+        toast(t("appSettings.preferencesSaved", "Preferences saved"));
       })
       .catch((err) => {
         console.error("[Wavely] Failed to save settings:", err);
@@ -60,11 +59,11 @@ function AppView(): React.ReactElement {
       })
       .then(() => {
         setAppLanguage("en");
-        setCopyToClipboard(true);
-        toast("Settings reset to defaults");
+        i18n.changeLanguage("en");
+        toast(t("appSettings.resetDone", "Settings reset to defaults"));
       })
       .catch((err) => {
-        toast(err instanceof Error ? err.message : "Failed to reset settings");
+        toast(err instanceof Error ? err.message : t("appSettings.resetFailed", "Failed to reset settings"));
       });
   }
 
@@ -79,7 +78,7 @@ function AppView(): React.ReactElement {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-foreground/98">App</h2>
+        <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-foreground/98">{t("appSettings.title", "App")}</h2>
       </div>
 
       <div className="space-y-4 flex-1 overflow-y-auto">
@@ -87,11 +86,11 @@ function AppView(): React.ReactElement {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
-              Language
+              {t("appSettings.language", "Language")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">App language</label>
+            <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">{t("appSettings.appLanguage", "App language")}</label>
             <Select
               value={appLanguage}
               onValueChange={(v) => {
@@ -114,39 +113,11 @@ function AppView(): React.ReactElement {
           </CardContent>
         </Card>
 
-        {/* Clipboard */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
-              Clipboard
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
-                  Copy to clipboard
-                </p>
-                <p className="text-[12px] text-foreground/45 mt-0.5">
-                  Automatically copy and paste transcribed text.
-                </p>
-              </div>
-              <Switch
-                checked={copyToClipboard}
-                onCheckedChange={(v) => {
-                  setCopyToClipboard(v);
-                  if (!initialLoad.current) save({ copyToClipboard: v });
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Account */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
-              Account
+              {t("appSettings.account", "Account")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -156,29 +127,29 @@ function AppView(): React.ReactElement {
               </div>
               <div>
                 <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
-                  Logged in
+                  {t("appSettings.loggedIn", "Logged in")}
                 </p>
                 <p className="text-[12px] text-foreground/45">
-                  Local session
+                  {t("appSettings.localSession", "Local session")}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* About */}
+      </div>
+
+      {/* Reset at very bottom */}
+      <div className="shrink-0 pt-4 pb-2">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
-              About
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-[13px] text-foreground/70">
-              Wavely v1.0.0 — Push-to-talk speech-to-text powered by Deepgram.
-            </p>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[13px] text-foreground/70">
+                {t("appSettings.aboutText", "Wavely v1.0.0 — Push-to-talk speech-to-text powered by Deepgram.")}
+              </p>
+            </div>
             <Button variant="destructive" size="sm" onClick={handleReset}>
-              Reset to defaults
+              {t("appSettings.resetToDefaults", "Reset to defaults")}
             </Button>
           </CardContent>
         </Card>

@@ -1,0 +1,80 @@
+{
+  "app": {
+    "name": "Wavely",
+    "active": "アクティブ",
+    "paused": "一時停止中",
+    "stopped": "停止"
+  },
+  "nav": {
+    "conversations": "会話",
+    "profiles": "プロフィール",
+    "settings": "設定",
+    "app": "アプリ"
+  },
+  "conversations": {
+    "title": "会話",
+    "search": "トランスクリプトを検索…",
+    "noConversations": "まだ会話がありません",
+    "noConversationsHint": "プッシュトゥトークキーを押して最初の文字起こしを開始しましょう。",
+    "noResults": "検索に一致するトランスクリプトはありません。",
+    "today": "今日",
+    "yesterday": "昨日",
+    "thisWeek": "今週",
+    "earlier": "以前",
+    "copy": "コピー",
+    "delete": "削除",
+    "copied": "クリップボードにコピーしました",
+    "deleted": "会話を削除しました"
+  },
+  "profiles": {
+    "title": "プロフィール",
+    "newProfile": "新規プロフィール",
+    "editProfile": "プロフィールを編集",
+    "createProfile": "新規プロフィール",
+    "name": "名前",
+    "namePlaceholder": "例：医療通話",
+    "color": "色",
+    "icon": "アイコン",
+    "systemPrompt": "システムプロンプト",
+    "systemPromptPlaceholder": "任意。将来の後処理のために予約されています。",
+    "languageOverride": "言語の上書き",
+    "modelOverride": "モデルの上書き",
+    "useGlobalSetting": "グローバル設定を使用",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "created": "プロフィールを作成しました",
+    "updated": "プロフィールを更新しました",
+    "deleted": "プロフィールを削除しました",
+    "cannotDeleteLast": "最後のプロフィールは削除できません。",
+    "saveFailed": "プロフィールの保存に失敗しました",
+    "deleteFailed": "プロフィールの削除に失敗しました"
+  },
+  "settings": {
+    "title": "設定",
+    "recording": "録音",
+    "transcription": "文字起こし",
+    "pushToTalkKey": "プッシュトゥトークキー",
+    "pushToTalkHint": "このキーを押しながら話し、離すと文字起こしされます。",
+    "language": "言語",
+    "languageOverridden": "プロフィールによって言語が上書きされています",
+    "modelTier": "モデルティア",
+    "modelTierHint": "ドメイン固有モデルは医療やミーティングのシナリオに最適化されています。",
+    "preferencesSaved": "設定を保存しました"
+  },
+  "appSettings": {
+    "title": "アプリ",
+    "language": "言語",
+    "appLanguage": "アプリの言語",
+    "clipboard": "クリップボード",
+    "copyToClipboard": "クリップボードにコピー",
+    "copyToClipboardHint": "文字起こしされたテキストを自動的にコピー＆ペーストします。",
+    "account": "アカウント",
+    "loggedIn": "ログイン中",
+    "localSession": "ローカルセッション",
+    "about": "バージョン情報",
+    "aboutText": "Wavely v1.0.0 — Deepgram を利用したプッシュトゥトーク音声文字起こし。",
+    "resetToDefaults": "デフォルトにリセット",
+    "resetDone": "設定をデフォルトにリセットしました",
+    "resetFailed": "設定のリセットに失敗しました"
+  }
+}

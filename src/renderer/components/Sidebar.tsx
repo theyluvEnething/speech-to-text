@@ -1,23 +1,25 @@
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { MessageSquare, User, Settings, Mic, PanelLeftClose, PanelLeftOpen, Play, Pause, AppWindow } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore, type Tab } from "@/store";
 import ProfileFooter from "@/components/ProfileFooter";
 import { Separator } from "@/components/ui/separator";
 
-const MAIN_NAV: { tab: Tab; icon: typeof MessageSquare; label: string }[] = [
-  { tab: "conversations", icon: MessageSquare, label: "Conversations" },
-  { tab: "profiles", icon: User, label: "Profiles" },
-  { tab: "settings", icon: Settings, label: "Settings" },
-];
-
 function Sidebar(): React.ReactElement {
+  const { t } = useTranslation();
   const activeTab = useStore((s) => s.activeTab);
   const setActiveTab = useStore((s) => s.setActiveTab);
   const collapsed = useStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useStore((s) => s.toggleSidebar);
   const isPaused = useStore((s) => s.isPaused);
   const setIsPaused = useStore((s) => s.setIsPaused);
+
+  const MAIN_NAV: { tab: Tab; icon: typeof MessageSquare; label: string }[] = [
+    { tab: "conversations", icon: MessageSquare, label: t("nav.conversations", "Conversations") },
+    { tab: "profiles", icon: User, label: t("nav.profiles", "Profiles") },
+    { tab: "settings", icon: Settings, label: t("nav.settings", "Settings") },
+  ];
 
   useEffect(() => {
     window.wavely.getPaused().then((paused) => setIsPaused(paused));
@@ -99,7 +101,7 @@ function Sidebar(): React.ReactElement {
             <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-foreground/40" />
           )}
           <AppWindow className={cn("h-4 w-4 shrink-0", activeTab === "app" ? "text-foreground/92" : "")} />
-          {!collapsed && <span>App</span>}
+          {!collapsed && <span>{t("nav.app", "App")}</span>}
         </button>
 
         {/* Collapse toggle */}
@@ -135,7 +137,7 @@ function Sidebar(): React.ReactElement {
                 isPaused ? "bg-[#F5C518]" : "bg-[#4ADE80]",
               )} />
               <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
-                {isPaused ? "Paused" : "Active"}
+                {isPaused ? t("app.paused", "Paused") : t("app.active", "Active")}
               </span>
             </div>
             <button
