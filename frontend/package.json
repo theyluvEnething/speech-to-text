@@ -60,6 +60,7 @@
   "build": {
     "appId": "com.wavely.app",
     "productName": "Wavely",
+    "copyright": "Copyright (c) 2026 Enething",
     "directories": {
       "output": "dist"
     },
@@ -93,7 +94,8 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "wavely-installer.${ext}"
     }
   }
 }
