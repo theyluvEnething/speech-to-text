@@ -55,21 +55,36 @@ module.exports = {
       },
       animation: {
         "fade-in": "fadeIn 200ms ease-out",
+        "fade-out": "fadeOut 200ms ease-in",
         "zoom-in": "zoomIn 200ms ease-out",
+        "scale-out": "scaleOut 200ms ease-in",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "glow-pulse-green": "glow-pulse-green 2s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        fadeOut: {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
         zoomIn: {
           "0%": { opacity: "0", transform: "scale(0.92)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        scaleOut: {
+          "0%": { opacity: "1", transform: "scale(1)" },
+          "100%": { opacity: "0", transform: "scale(0.92)" },
+        },
         "glow-pulse": {
           "0%, 100%": { boxShadow: "0 0 12px rgba(239,68,68,0.15)" },
           "50%": { boxShadow: "0 0 24px rgba(239,68,68,0.3)" },
+        },
+        "glow-pulse-green": {
+          "0%, 100%": { boxShadow: "0 0 12px rgba(16,185,129,0.15)" },
+          "50%": { boxShadow: "0 0 24px rgba(16,185,129,0.3)" },
         },
       },
     },

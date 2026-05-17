@@ -16,7 +16,7 @@
     --card-foreground: 0 0% 9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
-    --primary: 252 80% 64%;
+    --primary: 210 90% 36%;
     --primary-foreground: 0 0% 100%;
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
@@ -24,26 +24,26 @@
     --accent-foreground: 0 0% 9%;
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 252 80% 64%;
+    --ring: 210 90% 36%;
     --radius: 0.625rem;
   }
 
   .dark {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 3%;
+    --foreground: 0 0% 96%;
     --card: 0 0% 6%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 252 80% 64%;
+    --card-foreground: 0 0% 96%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 210 90% 36%;
     --primary-foreground: 0 0% 100%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 58%;
-    --accent: 0 0% 12%;
-    --accent-foreground: 0 0% 98%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 215 35% 14%;
+    --accent-foreground: 0 0% 96%;
     --border: 0 0% 14%;
     --input: 0 0% 14%;
-    --ring: 252 80% 64%;
+    --ring: 210 90% 36%;
   }
 
   * {
@@ -71,4 +71,31 @@ html, body, #root {
 
 .no-drag {
   -webkit-app-region: no-drag;
+}
+
+/* Window open/close animations */
+@keyframes window-open {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes window-close {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.window-enter {
+  animation: window-open 180ms ease-out;
 }

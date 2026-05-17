@@ -5,6 +5,8 @@ export type Tab = "conversations" | "profiles" | "settings";
 interface AppStore {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
+  sidebarCollapsed: boolean;
+  toggleSidebar: () => void;
   profiles: Profile[];
   setProfiles: (profiles: Profile[]) => void;
   activeProfile: Profile | null;
@@ -16,6 +18,8 @@ interface AppStore {
 export const useStore = create<AppStore>((set) => ({
   activeTab: "conversations",
   setActiveTab: (tab) => set({ activeTab: tab }),
+  sidebarCollapsed: false,
+  toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
   profiles: [],
   setProfiles: (profiles) => set({ profiles }),
   activeProfile: null,

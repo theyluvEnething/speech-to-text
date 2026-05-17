@@ -14,8 +14,6 @@ type AppState = "idle" | "recording" | "processing" | "showing-result";
 
 let state: AppState = "idle";
 let audioActive = false;
-let savedResult: string | null = null;
-let savedResultMeta: { language: string; model: string; profileId: string; durationSec: number } | null = null;
 let lastDurationSec = 0;
 
 function ensureApiKey(): void {
@@ -35,18 +33,14 @@ function startRecording(): void {
   }
 
   audioActive = true;
-  const audio = getAudioWindow();
-  audio?.webContents.send("audio:start");
-
-  if (state === "showing-result") {
-    console.log("[Wavely] Deferred recording — capturing behind result overlay.");
-    return;
-  }
-
   state = "recording";
+
   const overlay = getOverlayWindow();
+  const audio = getAudioWindow();
+
   console.log("[Wavely] Recording started...");
   overlay?.webContents.send("overlay:state", "recording");
+  audio?.webContents.send("audio:start");
 }
 
 function stopRecording(): void {
@@ -87,10 +81,8 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
 
   if (buffer.byteLength === 0) {
     console.log("[Wavely] No audio captured.");
-    if (state === "recording") {
-      state = "idle";
-      overlay?.webContents.send("overlay:state", "idle");
-    }
+    state = "idle";
+    overlay?.webContents.send("overlay:state", "idle");
     return;
   }
 
@@ -101,23 +93,6 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
 
   const durationS = durationSec.toFixed(1);
   console.log(`[Wavely] Captured ${durationS}s of audio. Transcribing with ${modelLabel}...`);
-
-  if (state === "showing-result") {
-    transcribe(buffer, model, modelTier, language)
-      .then((text) => {
-        if (text) {
-          console.log(`[Wavely] (deferred) -> "${text}"\n`);
-          savedResult = text;
-          savedResultMeta = { language, model: modelLabel, profileId, durationSec };
-        } else {
-          console.log("[Wavely] (deferred) No transcript returned.\n");
-        }
-      })
-      .catch((err: Error) => {
-        console.error(`[Wavely] (deferred) Transcription failed: ${err.message}\n`);
-      });
-    return;
-  }
 
   state = "processing";
   overlay?.webContents.send("overlay:state", "processing");
@@ -152,40 +127,8 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
 }
 
 function handleOverlayIdle(): void {
-  console.log("[Wavely] Overlay returned to idle.");
-
-  if (savedResult) {
-    const text = savedResult;
-    const meta = savedResultMeta;
-    savedResult = null;
-    savedResultMeta = null;
-    state = "showing-result";
-    const overlay = getOverlayWindow();
-    overlay?.webContents.send("overlay:result", text);
-    pasteText(text);
-    if (meta) {
-      saveConversation({
-        id: uuid(),
-        text,
-        language: meta.language,
-        model: meta.model,
-        profileId: meta.profileId,
-        durationSec: meta.durationSec,
-        createdAt: Date.now(),
-      });
-    }
-    return;
-  }
-
-  if (audioActive) {
-    state = "recording";
-    const overlay = getOverlayWindow();
-    console.log("[Wavely] Showing deferred recording UI.");
-    overlay?.webContents.send("overlay:state", "recording");
-    return;
-  }
-
   state = "idle";
+  console.log("[Wavely] Overlay returned to idle.");
 }
 
 app.whenReady().then(() => {

@@ -31,7 +31,7 @@ function AudioBars({ active }: { active: boolean }): React.ReactElement {
       {heights.map((h, i) => (
         <div
           key={i}
-          className="w-[3px] rounded-full bg-red-400 transition-all duration-[120ms] ease-linear"
+          className="w-[3px] rounded-full bg-emerald-400 transition-all duration-[120ms] ease-linear"
           style={{ height: `${h}px`, opacity: active ? 0.9 : 0.5 }}
         />
       ))}
@@ -44,6 +44,7 @@ function OverlayApp(): React.ReactElement {
   const [text, setText] = useState("");
   const [visible, setVisible] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [exiting, setExiting] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -55,16 +56,21 @@ function OverlayApp(): React.ReactElement {
   }
 
   function goIdle(): void {
-    setVisible(false);
-    setState("idle");
-    setText("");
-    window.overlay.sendIdle();
+    setExiting(true);
+    setTimeout(() => {
+      setVisible(false);
+      setState("idle");
+      setText("");
+      setExiting(false);
+      window.overlay.sendIdle();
+    }, 200);
   }
 
   useEffect(() => {
     window.overlay.onState((newState: string) => {
       if (newState === "recording") {
         clearResultTimer();
+        setExiting(false);
         setState("recording");
         setVisible(true);
         setElapsed(0);
@@ -74,6 +80,7 @@ function OverlayApp(): React.ReactElement {
       } else if (newState === "processing") {
         if (timer.current) { clearInterval(timer.current); timer.current = null; }
         clearResultTimer();
+        setExiting(false);
         setState("processing");
       } else if (newState === "idle") {
         if (timer.current) { clearInterval(timer.current); timer.current = null; }
@@ -85,6 +92,7 @@ function OverlayApp(): React.ReactElement {
     window.overlay.onResult((resultText: string) => {
       if (timer.current) { clearInterval(timer.current); timer.current = null; }
       clearResultTimer();
+      setExiting(false);
       setState("result");
       setText(resultText);
       resultTimeout.current = setTimeout(() => {
@@ -95,6 +103,7 @@ function OverlayApp(): React.ReactElement {
     window.overlay.onError((msg: string) => {
       if (timer.current) { clearInterval(timer.current); timer.current = null; }
       clearResultTimer();
+      setExiting(false);
       setState("error");
       setText(msg);
       resultTimeout.current = setTimeout(() => {
@@ -116,20 +125,20 @@ function OverlayApp(): React.ReactElement {
   const isError = state === "error";
 
   const borderColor = isRecording
-    ? "border-red-500/50"
+    ? "border-emerald-500/50"
     : isProcessing
       ? "border-amber-500/50"
       : isError
         ? "border-red-600/50"
-        : "border-emerald-500/40";
+        : "border-emerald-500/30";
 
   const glowColor = isRecording
-    ? "animate-glow-pulse"
+    ? "animate-glow-pulse-green"
     : isProcessing
       ? "shadow-[0_0_30px_rgba(245,158,11,0.15)]"
       : isError
         ? "shadow-[0_0_30px_rgba(220,38,38,0.15)]"
-        : "shadow-[0_0_30px_rgba(16,185,129,0.15)]";
+        : "shadow-[0_0_30px_rgba(16,185,129,0.12)]";
 
   return (
     <div className="flex items-center justify-center w-full h-full">
@@ -137,7 +146,11 @@ function OverlayApp(): React.ReactElement {
         className={`flex items-center gap-4 px-5 py-3.5 rounded-2xl
           bg-surface-900/90 backdrop-blur-2xl border
           shadow-2xl shadow-black/40 ${glowColor} ${borderColor}
-          animate-fade-in animate-zoom-in
+          ${exiting
+            ? "animate-fade-out animate-scale-out"
+            : "animate-fade-in animate-zoom-in"
+          }
+          transition-all duration-200
           min-w-[240px] max-w-[400px]`}
       >
         {/* Left indicator */}
@@ -148,7 +161,7 @@ function OverlayApp(): React.ReactElement {
             <div className="w-5 h-5 rounded-full border-2 border-amber-400/60 border-t-transparent animate-spin" />
           ) : isError ? (
             <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="rgb(239,68,68)" strokeWidth="1.5" strokeLinecap="round">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M6 3.5v3M6 8v.5" />
               </svg>
             </div>
@@ -164,25 +177,18 @@ function OverlayApp(): React.ReactElement {
         {/* Center content */}
         <div className="flex-1 min-w-0">
           {isRecording ? (
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 animate-fade-in">
               <span className="text-sm font-semibold text-white">Recording</span>
               <span className="text-xs text-surface-400 tabular-nums">{elapsed.toFixed(1)}s</span>
             </div>
           ) : isProcessing ? (
-            <p className="text-sm font-medium text-amber-300/90">Transcribing…</p>
+            <p className="text-sm font-medium text-amber-300/90 animate-fade-in">Transcribing…</p>
           ) : isError ? (
-            <p className="text-sm text-red-400/90 truncate leading-snug">{text}</p>
+            <p className="text-sm text-red-400/90 truncate leading-snug animate-fade-in">{text}</p>
           ) : (
-            <p className="text-sm text-white/90 leading-snug">{text}</p>
+            <p className="text-sm text-white/90 leading-snug animate-fade-in">{text}</p>
           )}
         </div>
-
-        {/* Right hint */}
-        {isRecording && (
-          <span className="text-[10px] text-surface-600 shrink-0 animate-pulse">
-            ESC
-          </span>
-        )}
       </div>
     </div>
   );

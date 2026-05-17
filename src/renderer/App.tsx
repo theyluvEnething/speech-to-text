@@ -28,7 +28,7 @@ function App(): React.ReactElement {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-background rounded-[12px] overflow-hidden border border-border/60 shadow-2xl">
+    <div className="flex flex-col h-screen bg-background rounded-[12px] overflow-hidden border border-border/60 shadow-2xl window-enter">
       <TitleBar />
       <div className="flex flex-1 min-h-0">
         <Sidebar />
