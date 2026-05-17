@@ -20,8 +20,8 @@ export function createSettingsWindow(): BrowserWindow {
   const isMac = process.platform === "darwin";
 
   settingsWindow = new BrowserWindow({
-    width: 900,
-    height: 620,
+    width: 1240,
+    height: 760,
     minWidth: 560,
     minHeight: 330,
     resizable: true,
@@ -38,6 +38,14 @@ export function createSettingsWindow(): BrowserWindow {
 
   settingsWindow.loadFile(join(RENDERER_BASE, "index.html"));
   settingsWindow.setMenuBarVisibility(false);
+
+  // Prevent modifier keys from triggering system menus (e.g. Alt on Windows)
+  // which would break push-to-talk key-release detection via uiohook.
+  settingsWindow.webContents.on("before-input-event", (event, input) => {
+    if ((input.key === "Alt" || input.key === "Control" || input.key === "Shift") && input.type === "keyDown") {
+      event.preventDefault();
+    }
+  });
 
   settingsWindow.on("closed", () => {
     settingsWindow = null;

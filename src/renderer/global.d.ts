@@ -39,6 +39,7 @@ declare global {
     platform: string;
     getSettings(): Promise<{ hotkey: string; language: string; model: string; modelTier: string }>;
     setSettings(settings: Record<string, string>): Promise<{ success: boolean }>;
+    stopRecording(): void;
     hideWindow(): void;
     closeWindow(): void;
     profiles: WavelyProfiles;

@@ -14,8 +14,8 @@ function TitleBar(): React.ReactElement {
           <button
             onClick={() => window.wavely.closeWindow()}
             className="flex items-center justify-center w-10 h-full
-              text-muted-foreground hover:text-red-400 hover:bg-red-500/10
-              transition-colors"
+              text-foreground/30 hover:text-foreground hover:bg-accent
+              transition-colors duration-150"
             aria-label="Close"
           >
             <X className="h-3.5 w-3.5" />

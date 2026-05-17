@@ -31,7 +31,7 @@ function AudioBars({ active }: { active: boolean }): React.ReactElement {
       {heights.map((h, i) => (
         <div
           key={i}
-          className="w-[3px] rounded-full bg-emerald-400 transition-all duration-[120ms] ease-linear"
+          className="w-[3px] rounded-full bg-red-400 transition-all duration-[120ms] ease-linear"
           style={{ height: `${h}px`, opacity: active ? 0.9 : 0.5 }}
         />
       ))}
@@ -125,7 +125,7 @@ function OverlayApp(): React.ReactElement {
   const isError = state === "error";
 
   const borderColor = isRecording
-    ? "border-emerald-500/50"
+    ? "border-red-500/50"
     : isProcessing
       ? "border-amber-500/50"
       : isError
@@ -133,7 +133,7 @@ function OverlayApp(): React.ReactElement {
         : "border-emerald-500/30";
 
   const glowColor = isRecording
-    ? "animate-glow-pulse-green"
+    ? "animate-glow-pulse"
     : isProcessing
       ? "shadow-[0_0_30px_rgba(245,158,11,0.15)]"
       : isError

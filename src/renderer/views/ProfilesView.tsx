@@ -142,7 +142,7 @@ function ProfilesView(): React.ReactElement {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[17px] font-semibold tracking-tight text-foreground">Profiles</h2>
+        <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-foreground/98">Profiles</h2>
         <Button size="sm" onClick={openCreate}>
           <Plus className="h-4 w-4 mr-1.5" />
           New profile
@@ -158,7 +158,7 @@ function ProfilesView(): React.ReactElement {
                 key={p.id}
                 className={cn(
                   "cursor-pointer transition-all hover:border-border/80 group",
-                  isActive && "ring-2 ring-primary/60",
+                  isActive && "ring-2 ring-border",
                 )}
                 onClick={() => handleSetActive(p.id)}
               >
@@ -170,32 +170,32 @@ function ProfilesView(): React.ReactElement {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xl">{p.icon}</span>
-                        <span className="text-sm font-medium truncate text-foreground">
+                        <span className="text-lg">{p.icon}</span>
+                        <span className="text-[14px] font-medium tracking-[-0.01em] text-foreground/92 truncate">
                           {p.name}
                         </span>
                       </div>
                       {p.language && (
-                        <p className="text-[11px] text-muted-foreground mt-1">
+                        <p className="text-[12px] text-foreground/45 mt-1">
                           Language: {p.language}
                         </p>
                       )}
                       {p.model && (
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[12px] text-foreground/45">
                           Model: {p.model}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
                       <button
                         onClick={(e) => { e.stopPropagation(); openEdit(p); }}
-                        className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+                        className="p-1 rounded hover:bg-accent text-foreground/45 hover:text-foreground/70"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }}
-                        className="p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400"
+                        className="p-1 rounded hover:bg-accent text-foreground/45 hover:text-foreground"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>

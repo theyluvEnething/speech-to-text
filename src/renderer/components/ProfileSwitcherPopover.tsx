@@ -76,7 +76,7 @@ function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNo
               <span className="text-[16px] leading-none">{p.icon}</span>
               <span className="flex-1 truncate text-foreground">{p.name}</span>
               {activeProfile?.id === p.id && (
-                <Check className="h-4 w-4 text-primary shrink-0" />
+                <Check className="h-4 w-4 text-foreground/50 shrink-0" />
               )}
             </button>
           ))}

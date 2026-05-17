@@ -1,4 +1,4 @@
-import { app } from "electron";
+import { app, ipcMain } from "electron";
 import { join } from "path";
 import { config } from "dotenv";
 import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow } from "./windows";
@@ -101,9 +101,10 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
     .then((text) => {
       if (text) {
         console.log(`[Wavely] -> "${text}"\n`);
+        // Paste immediately — clipboard write is sync, keystroke runs in background
+        pasteText(text);
         state = "showing-result";
         overlay?.webContents.send("overlay:result", text);
-        pasteText(text);
         saveConversation({
           id: uuid(),
           text,
@@ -147,6 +148,12 @@ app.whenReady().then(() => {
   ensureApiKey();
 
   registerIpcHandlers(handleAudioBuffer, handleLevels, handleOverlayIdle);
+
+  // Renderer-side key-up fallback — when the window is focused, the renderer
+  // can detect key-up events that uiohook might miss (e.g. Alt on Windows).
+  ipcMain.on("recording:stop", () => {
+    if (audioActive) stopRecording();
+  });
 
   createAudioWindow();
   createOverlayWindow();

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { useStore } from "@/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,12 @@ const NOVA2_TIERS = [
 ];
 
 function SettingsView(): React.ReactElement {
+  const activeProfile = useStore((s) => s.activeProfile);
+  const profileLanguage = activeProfile?.language;
+  const isLanguageOverridden = !!profileLanguage;
+
+  const languageLabel = LANGUAGES.find((l) => l.value === profileLanguage)?.label;
+
   const [hotkey, setHotkey] = useState("alt");
   const [language, setLanguage] = useState("en");
   const [modelTier, setModelTier] = useState("");
@@ -72,7 +79,7 @@ function SettingsView(): React.ReactElement {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="w-6 h-6 rounded-full border-2 border-muted border-t-primary animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-muted border-t-foreground/50 animate-spin" />
       </div>
     );
   }
@@ -80,20 +87,20 @@ function SettingsView(): React.ReactElement {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[17px] font-semibold tracking-tight text-foreground">Settings</h2>
+        <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-foreground/98">Settings</h2>
       </div>
 
       <div className="space-y-4 flex-1 overflow-y-auto">
         {/* Recording */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
               Recording
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-[13px] font-medium text-foreground">Push-to-talk key</label>
+              <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">Push-to-talk key</label>
               <Select
                 value={hotkey}
                 onValueChange={(v) => {
@@ -112,21 +119,22 @@ function SettingsView(): React.ReactElement {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[12px] text-muted-foreground">
+              <p className="text-[12px] text-foreground/45">
                 Hold this key while speaking, release to transcribe.
               </p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[13px] font-medium text-foreground">Language</label>
+              <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">Language</label>
               <Select
                 value={language}
                 onValueChange={(v) => {
                   setLanguage(v);
                   if (!initialLoad.current) save({ language: v });
                 }}
+                disabled={isLanguageOverridden}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className={isLanguageOverridden ? "w-full opacity-50 cursor-not-allowed" : "w-full"}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -137,6 +145,11 @@ function SettingsView(): React.ReactElement {
                   ))}
                 </SelectContent>
               </Select>
+              {isLanguageOverridden && (
+                <p className="text-[12px] text-foreground/50">
+                  Language overridden by profile &quot;{activeProfile?.name ?? ""}&quot; ({languageLabel ?? profileLanguage})
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -144,12 +157,12 @@ function SettingsView(): React.ReactElement {
         {/* Transcription */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
               Transcription
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <label className="text-[13px] font-medium text-foreground">Model tier</label>
+            <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">Model tier</label>
             <Select
               value={modelTier || SENTINEL}
               onValueChange={(v) => {
@@ -169,7 +182,7 @@ function SettingsView(): React.ReactElement {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-[12px] text-muted-foreground">
+            <p className="text-[12px] text-foreground/45">
               Domain-specific models optimize for medical or meeting scenarios.
             </p>
           </CardContent>
@@ -178,12 +191,12 @@ function SettingsView(): React.ReactElement {
         {/* About */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
               About
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-[13px] text-foreground/70">
               Wavely v1.0.0 — Push-to-talk speech-to-text powered by Deepgram.
             </p>
             <Button variant="outline" size="sm">

@@ -75,58 +75,58 @@ function ConversationRow({
   return (
     <div
       className={cn(
-        "group rounded-lg border border-border/60 transition-colors",
-        expanded ? "bg-card" : "hover:bg-card/50",
+        "group rounded-lg border border-border transition-colors duration-150",
+        expanded ? "bg-[#1A1B1E] border-border" : "bg-muted hover:bg-[#1A1B1E] hover:border-border",
       )}
     >
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-start gap-3 w-full px-3 py-3 text-left"
+        className="flex items-start gap-3 w-full px-3.5 py-3 text-left"
       >
         <span
-          className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
+          className="w-2 h-2 rounded-full mt-1.5 shrink-0"
           style={{ backgroundColor: profileColor }}
         />
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] text-foreground leading-snug truncate">
+          <p className="text-[14px] font-medium text-foreground/92 leading-snug truncate tracking-[-0.01em]">
             {conversation.text}
           </p>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-[12px] text-foreground/45">
               {profileIcon} {profileName}
             </span>
-            <span className="text-[11px] text-muted-foreground/70">·</span>
-            <span className="text-[11px] text-muted-foreground/70">
+            <span className="text-[12px] text-foreground/25">·</span>
+            <span className="text-[12px] text-foreground/45">
               {formatDuration(conversation.durationSec)}
             </span>
-            <span className="text-[11px] text-muted-foreground/70">·</span>
-            <span className="text-[11px] text-muted-foreground/70">
+            <span className="text-[12px] text-foreground/25">·</span>
+            <span className="text-[12px] text-foreground/45">
               {formatTime(conversation.createdAt)}
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
           <button
             onClick={(e) => { e.stopPropagation(); handleCopy(); }}
-            className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+            className="p-1.5 rounded hover:bg-accent text-foreground/45 hover:text-foreground/70"
           >
             <Copy className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="p-1.5 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400"
+            className="p-1.5 rounded hover:bg-accent text-foreground/45 hover:text-foreground"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
-          <span className="text-muted-foreground/50 ml-1">
+          <span className="text-foreground/30 ml-1">
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </span>
         </div>
       </button>
 
       {expanded && (
-        <div className="px-3 pb-3 pt-0 border-t border-border/40 mx-3">
-          <p className="text-[13px] text-foreground leading-relaxed whitespace-pre-wrap mt-3">
+        <div className="px-3.5 pb-3 pt-0 border-t border-border mx-3.5">
+          <p className="text-[13px] text-foreground/70 leading-relaxed whitespace-pre-wrap mt-3">
             {conversation.text}
           </p>
           <div className="flex items-center gap-2 mt-3">
@@ -176,11 +176,11 @@ function ConversationsView(): React.ReactElement {
   if (conversations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center px-8">
-        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-          <MessageSquare className="h-6 w-6 text-muted-foreground" />
+        <div className="w-12 h-12 rounded-full bg-input flex items-center justify-center mb-4">
+          <MessageSquare className="h-6 w-6 text-foreground/25" />
         </div>
-        <h3 className="text-sm font-medium text-foreground mb-1">No conversations yet</h3>
-        <p className="text-[13px] text-muted-foreground max-w-xs">
+        <h3 className="text-[14px] font-medium text-foreground/92 mb-1 tracking-[-0.01em]">No conversations yet</h3>
+        <p className="text-[13px] text-foreground/45 max-w-xs">
           Hold your push-to-talk key to start your first transcription.
         </p>
       </div>
@@ -189,14 +189,14 @@ function ConversationsView(): React.ReactElement {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[17px] font-semibold tracking-tight text-foreground">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-foreground/98">
           Conversations
         </h2>
       </div>
 
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/25" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -205,15 +205,15 @@ function ConversationsView(): React.ReactElement {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-6">
+      <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-12">
+          <p className="text-center text-[13px] text-foreground/45 py-12">
             No transcripts match your search.
           </p>
         ) : (
           groups.map((group) => (
-            <div key={group.label}>
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-2 px-1">
+            <div key={group.label} className="mb-6">
+              <h3 className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40 mb-2 px-1">
                 {group.label}
               </h3>
               <div className="space-y-1">
@@ -223,7 +223,7 @@ function ConversationsView(): React.ReactElement {
                     <ConversationRow
                       key={c.id}
                       conversation={c}
-                      profileColor={profile?.color ?? "#6c5ce7"}
+                      profileColor={profile?.color ?? "#888888"}
                       profileIcon={profile?.icon ?? "🎙️"}
                       profileName={profile?.name ?? "Default"}
                       onDelete={() => handleDelete(c.id)}

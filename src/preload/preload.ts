@@ -9,6 +9,10 @@ contextBridge.exposeInMainWorld("wavely", {
   setSettings: (settings: Record<string, string>): Promise<{ success: boolean }> =>
     ipcRenderer.invoke("settings:set", settings),
 
+  stopRecording: (): void => {
+    ipcRenderer.send("recording:stop");
+  },
+
   hideWindow: (): void => {
     ipcRenderer.send("settings:hide");
   },

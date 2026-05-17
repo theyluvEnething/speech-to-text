@@ -20,7 +20,7 @@ function Sidebar(): React.ReactElement {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full bg-transparent shrink-0 transition-all duration-200",
+        "flex flex-col h-full bg-sidebar shrink-0 transition-all duration-150",
         collapsed ? "w-[52px]" : "w-60",
       )}
     >
@@ -31,36 +31,41 @@ function Sidebar(): React.ReactElement {
           collapsed ? "justify-center px-0" : "gap-3 px-4",
         )}
       >
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary shrink-0">
-          <Mic className="h-5 w-5 text-primary-foreground" />
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-foreground shrink-0">
+          <Mic className="h-5 w-5 text-background" />
         </div>
         {!collapsed && (
-          <span className="text-[17px] font-bold tracking-tight text-foreground whitespace-nowrap">
+          <span className="text-[15px] font-semibold tracking-[-0.01em] text-foreground/95 whitespace-nowrap">
             Wavely
           </span>
         )}
       </div>
 
-      <Separator />
+      <div className="mx-3">
+        <Separator />
+      </div>
 
       {/* Navigation */}
-      <nav className={cn("flex-1 py-3 space-y-0.5", collapsed ? "px-2" : "px-3")}>
+      <nav className={cn("flex-1 py-3 space-y-0.5", collapsed ? "px-2" : "px-2")}>
         {NAV_ITEMS.map((item) => (
           <button
             key={item.tab}
             onClick={() => setActiveTab(item.tab)}
             title={collapsed ? item.label : undefined}
             className={cn(
-              "flex items-center gap-2.5 w-full h-8 rounded-md transition-colors",
-              collapsed ? "justify-center px-0" : "px-3",
+              "flex items-center gap-2.5 w-full h-8 rounded-md transition-colors duration-150 relative",
+              collapsed ? "justify-center px-0" : "px-2.5",
               "text-[13px] font-medium",
               activeTab === item.tab
                 ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+                : "text-foreground/45 hover:text-foreground/70 hover:bg-accent/50",
             )}
           >
-            <item.icon className="h-4 w-4 shrink-0" />
-            {!collapsed && item.label}
+            {activeTab === item.tab && !collapsed && (
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-foreground/40" />
+            )}
+            <item.icon className={cn("h-4 w-4 shrink-0", activeTab === item.tab ? "text-foreground/92" : "")} />
+            {!collapsed && <span>{item.label}</span>}
           </button>
         ))}
       </nav>
@@ -70,8 +75,8 @@ function Sidebar(): React.ReactElement {
         <button
           onClick={toggleSidebar}
           className="flex items-center justify-center w-full h-7 rounded-md
-            text-muted-foreground hover:text-foreground hover:bg-accent/50
-            transition-colors"
+            text-foreground/30 hover:text-foreground/60 hover:bg-accent/50
+            transition-colors duration-150"
         >
           {collapsed ? (
             <PanelLeftOpen className="h-3.5 w-3.5" />
@@ -82,7 +87,9 @@ function Sidebar(): React.ReactElement {
       </div>
 
       {/* Profile footer */}
-      <Separator />
+      <div className="mx-3">
+        <Separator />
+      </div>
       <div className={cn("py-2", collapsed ? "px-1.5" : "px-3")}>
         <ProfileFooter collapsed={collapsed} />
       </div>
@@ -90,9 +97,11 @@ function Sidebar(): React.ReactElement {
       {/* Status dot */}
       {!collapsed && (
         <div className="px-3 pb-3">
-          <div className="flex items-center gap-2 px-3 py-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 shadow-[0_0_6px_rgba(16,185,129,0.4)]" />
-            <span className="text-[11px] text-muted-foreground">Running</span>
+          <div className="flex items-center gap-2 px-2.5 py-1">
+            <div className="w-2 h-2 rounded-full bg-foreground/40 shrink-0" />
+            <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
+              Running
+            </span>
           </div>
         </div>
       )}
