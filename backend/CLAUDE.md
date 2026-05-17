@@ -1,70 +1,70 @@
 # Wavely Backend
 
-Temporary Deepgram API key distribution server. Holds the master API key securely and issues short-lived keys to Wavely desktop clients — so the master key never leaves the server.
+Temporary Deepgram API key distribution server. Holds the master API key securely and issues short-lived keys to Wavely desktop clients.
 
-## Setup
+## Production Deployment
+
+The backend runs as a Docker container with **automatic restart** — it comes back up after crashes and after server reboots with zero manual intervention.
+
+### Frontend API URL
+
+```
+http://2a02:c207:2298:9950::1:3000/api/get-deepgram-key
+```
+
+Point the Wavely frontend (Electron app) at this URL to get temporary Deepgram keys.
+
+## Docker Management
+
+All commands must be run from `/opt/speech-to-text/backend/`:
 
 ```bash
-cd backend
-npm install
+cd /opt/speech-to-text/backend
+
+docker compose ps          # Is it running?
+docker compose logs -f     # Live logs
+docker compose restart     # Restart the container
+docker compose down        # Stop it
+docker compose up -d       # Start it
+docker compose build && docker compose up -d  # Rebuild after code changes
 ```
 
-Create a `.env` file with your Deepgram credentials:
+## Files
 
-```
-DEEPGRAM_API_KEY=your_master_key_here
-DEEPGRAM_PROJECT_ID=your_project_id_here
-```
-
-Get these from the [Deepgram Console](https://console.deepgram.com).
-
-## Run
-
-```bash
-npm start        # Production
-npm run dev      # Development (auto-restarts on changes)
-```
-
-The server starts on **http://localhost:3000**.
+| File | Purpose |
+|------|---------|
+| `index.js` | Express server — the only app code |
+| `Dockerfile` | Builds the Node.js container image |
+| `docker-compose.yml` | Runs the container with restart:always |
+| `.env` | Deepgram credentials (never commit this) |
 
 ## API
 
 ### `GET /api/get-deepgram-key`
 
-Generates a temporary Deepgram API key and returns it to the client.
+Returns a temporary Deepgram API key valid for 6 hours.
 
-**Response** (200):
+**Success (200):**
 ```json
-{
-  "api_key": "dg_temp_abc123..."
-}
+{ "api_key": "dg_temp_abc123..." }
 ```
 
-**Response** (500):
+**Error (500):**
 ```json
-{
-  "error": "Failed to generate temporary key."
-}
+{ "error": "Failed to generate temporary key." }
 ```
 
-The temporary key:
-- Has `member` scope (read/write access to the project)
-- Expires after **6 hours** (21600 seconds)
-- Is identified by the comment `"Wavely Client Key"` in the Deepgram dashboard
+## Environment Variables (.env)
 
-## How it works
+| Variable | Description |
+|----------|-------------|
+| `DEEPGRAM_API_KEY` | Master Deepgram API key |
+| `DEEPGRAM_PROJECT_ID` | Deepgram project ID |
 
-1. Client sends `GET /api/get-deepgram-key`
-2. Server reads `DEEPGRAM_API_KEY` and `DEEPGRAM_PROJECT_ID` from `.env`
-3. Server calls Deepgram's `POST /v1/projects/{id}/keys` with the master key
-4. Deepgram returns a temporary key
-5. Server returns `{ api_key }` to the client
-6. Client uses the temp key for transcription; on expiry (or 401), it requests a new one
+Get these from [console.deepgram.com](https://console.deepgram.com).
 
-## Dependencies
+## First-Time Setup (already done)
 
-| Library | Purpose |
-|---------|---------|
-| `express` | HTTP server |
-| `cors` | Cross-origin requests (client runs on a different origin) |
-| `dotenv` | Load credentials from `.env` |
+```bash
+sudo bash /tmp/wavely-setup/setup.sh
+```

@@ -1,0 +1,9 @@
+services:
+  wavely-backend:
+    build: .
+    container_name: wavely-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
