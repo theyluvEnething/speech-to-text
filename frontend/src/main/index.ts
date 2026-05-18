@@ -4,7 +4,7 @@ import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverla
 import { createTray } from "./tray";
 import { registerHotkey, unregisterAll } from "./hotkey";
 import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } from "./ipc-handlers";
-import { transcribe, fetchTemporaryKey } from "./transcriber";
+import { transcribe, fetchTemporaryKey, initDeepgramClient } from "./transcriber";
 import { pasteText } from "./paste";
 
 type AppState = "idle" | "recording" | "processing" | "showing-result";
@@ -117,11 +117,16 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
         // Always paste. Copy-to-clipboard toggle only adds clipboard.copy()
         // so the text also stays in the clipboard for manual use.
         const prevClipboard = clipboard.readText();
-        pasteText(text).then(() => {
-          if (!store.get("copyToClipboard")) {
-            clipboard.writeText(prevClipboard);
-          }
-        });
+        pasteText(text)
+          .then(() => {
+            if (!store.get("copyToClipboard")) {
+              clipboard.writeText(prevClipboard);
+            }
+          })
+          .catch((err: Error) => {
+            console.error(`[Wavely] Paste failed: ${err.message}`);
+            overlay?.webContents.send("overlay:error", `Text copied. Paste failed: ${err.message}`);
+          });
         state = "showing-result";
         overlay?.webContents.send("overlay:result", text);
         saveConversation({
@@ -175,6 +180,7 @@ app.whenReady().then(() => {
     fetchTemporaryKey()
       .then(() => {
         console.log("[Wavely] Initial Deepgram key obtained.");
+        initDeepgramClient();
       })
       .catch((err: Error) => {
         console.error("[Wavely] Failed to fetch Deepgram key:", err.message);

@@ -1,11 +1,10 @@
 import { clipboard } from "electron";
+import { keyboard, Key } from "@nut-tree-fork/nut-js";
 
 export async function pasteText(text: string): Promise<void> {
   if (!text) return;
 
   clipboard.writeText(text);
-
-  const { keyboard, Key } = await import("@nut-tree-fork/nut-js");
 
   const modifier = process.platform === "darwin" ? Key.LeftSuper : Key.LeftControl;
 

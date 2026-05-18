@@ -1,5 +1,6 @@
 import { ipcMain, BrowserWindow } from "electron";
 import Store from "electron-store";
+import { v4 as uuidv4 } from "uuid";
 import { updateHotkey } from "./hotkey";
 import { getSettingsWindow } from "./windows";
 
@@ -80,21 +81,8 @@ export function saveConversation(conv: Conversation): void {
   }
 }
 
-let v4: () => string;
 function uuid(): string {
-  if (!v4) {
-    try {
-      v4 = require("uuid").v4;
-    } catch {
-      v4 = () =>
-        "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-          const r = (Math.random() * 16) | 0;
-          const v = c === "x" ? r : (r & 0x3) | 0x8;
-          return v.toString(16);
-        });
-    }
-  }
-  return v4();
+  return uuidv4();
 }
 
 export function registerIpcHandlers(

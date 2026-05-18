@@ -31,6 +31,10 @@ function getClient(): DeepgramClient {
   return deepgram;
 }
 
+export function initDeepgramClient(): void {
+  getClient();
+}
+
 function buildModelName(model: string, modelTier: string): string {
   if (!modelTier) return model;
   return `${model}-${modelTier}`;
