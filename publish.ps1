@@ -5,11 +5,22 @@ Write-Host "  Wavely - GitHub Release Publisher" -ForegroundColor Cyan
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 1. Check for GitHub Token
+# 1. Check for GitHub Token (process env, then Windows user/machine stores)
+if (-not $env:GH_TOKEN -and -not $env:GITHUB_TOKEN) {
+    $env:GH_TOKEN = [System.Environment]::GetEnvironmentVariable('GH_TOKEN', 'User')
+}
+if (-not $env:GH_TOKEN -and -not $env:GITHUB_TOKEN) {
+    $env:GH_TOKEN = [System.Environment]::GetEnvironmentVariable('GH_TOKEN', 'Machine')
+}
+if (-not $env:GH_TOKEN -and -not $env:GITHUB_TOKEN) {
+    $env:GITHUB_TOKEN = [System.Environment]::GetEnvironmentVariable('GITHUB_TOKEN', 'User')
+}
 if (-not $env:GH_TOKEN -and -not $env:GITHUB_TOKEN) {
     Write-Host "[ERROR] GH_TOKEN environment variable is missing!" -ForegroundColor Red
-    Write-Host "Please set it before publishing. Example:" -ForegroundColor Yellow
-    Write-Host '$env:GH_TOKEN="your_personal_access_token"' -ForegroundColor Yellow
+    Write-Host "Please set it before publishing. Options:" -ForegroundColor Yellow
+    Write-Host '  Process:  $env:GH_TOKEN="your_personal_access_token"' -ForegroundColor Yellow
+    Write-Host '  User:     [System.Environment]::SetEnvironmentVariable("GH_TOKEN", "token", "User")' -ForegroundColor Yellow
+    Write-Host '  Machine:  [System.Environment]::SetEnvironmentVariable("GH_TOKEN", "token", "Machine")' -ForegroundColor Yellow
     exit 1
 }
 Write-Host "[OK] GitHub Token found." -ForegroundColor Green
