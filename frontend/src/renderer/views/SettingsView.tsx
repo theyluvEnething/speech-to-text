@@ -35,6 +35,11 @@ const NOVA2_TIERS = [
   { value: "meeting", label: "Meeting (nova-2-meeting)" },
 ];
 
+const TRANSCRIPTION_MODES = [
+  { value: "prerecorded", label: "Prerecorded (REST)" },
+  { value: "realtime", label: "Realtime (WebSocket)" },
+];
+
 function SettingsView(): React.ReactElement {
   const activeProfile = useStore((s) => s.activeProfile);
   const profileLanguage = activeProfile?.language;
@@ -45,6 +50,7 @@ function SettingsView(): React.ReactElement {
   const [hotkey, setHotkey] = useState("alt");
   const [language, setLanguage] = useState("en");
   const [modelTier, setModelTier] = useState("");
+  const [transcriptionMode, setTranscriptionMode] = useState<"prerecorded" | "realtime">("prerecorded");
   const [copyToClipboard, setCopyToClipboard] = useState(true);
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
@@ -56,6 +62,7 @@ function SettingsView(): React.ReactElement {
         setHotkey(settings.hotkey || "alt");
         setLanguage(settings.language || "en");
         setModelTier(settings.modelTier || "");
+        setTranscriptionMode(settings.transcriptionMode || "prerecorded");
         setCopyToClipboard(settings.copyToClipboard !== false);
         setLoading(false);
         initialLoad.current = false;
@@ -192,29 +199,31 @@ function SettingsView(): React.ReactElement {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">Model tier</label>
-            <Select
-              value={modelTier || SENTINEL}
-              onValueChange={(v) => {
-                const tier = v === SENTINEL ? "" : v;
-                setModelTier(tier);
-                if (!initialLoad.current) save({ modelTier: tier });
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {NOVA2_TIERS.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[12px] text-foreground/45">
-              Domain-specific models optimize for medical or meeting scenarios.
-            </p>
+            <div className="space-y-2">
+              <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">Transcription mode</label>
+              <Select
+                value={transcriptionMode}
+                onValueChange={(v) => {
+                  const mode = v as "prerecorded" | "realtime";
+                  setTranscriptionMode(mode);
+                  if (!initialLoad.current) save({ transcriptionMode: mode });
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TRANSCRIPTION_MODES.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[12px] text-foreground/45">
+                Realtime streams audio via WebSocket for near-zero latency. Prerecorded waits for the full recording.
+              </p>
+            </div>
           </CardContent>
         </Card>
 

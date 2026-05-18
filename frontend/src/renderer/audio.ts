@@ -9,7 +9,7 @@ let startTime = 0;
 let stopTimeout: ReturnType<typeof setTimeout> | null = null;
 let generation = 0;
 
-const POST_RELEASE_MS = 310;
+const POST_RELEASE_MS = 50;
 
 function computeLevels(): { rms: number; peak: number } {
   if (!analyser) return { rms: 0, peak: 0 };
@@ -111,9 +111,11 @@ async function startRecording(): Promise<void> {
 
     mediaRecorder = new MediaRecorder(stream, { mimeType });
 
-    mediaRecorder.ondataavailable = (event: BlobEvent) => {
+    mediaRecorder.ondataavailable = async (event: BlobEvent) => {
       if (event.data.size > 0) {
         chunks.push(event.data);
+        const buffer = await event.data.arrayBuffer();
+        window.audio.sendChunk(buffer);
       }
     };
 
@@ -160,9 +162,9 @@ function stopRecording(): void {
 
   if (!mediaRecorder || mediaRecorder.state === "inactive") return;
 
-  // Keep recording for POST_RELEASE_MS to capture trailing speech
   stopTimeout = setTimeout(() => {
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.requestData();
       mediaRecorder.stop();
       mediaRecorder = null;
     }
