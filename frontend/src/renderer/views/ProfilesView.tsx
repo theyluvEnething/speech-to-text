@@ -24,7 +24,13 @@ import {
 import { cn } from "@/lib/utils";
 
 const COLORS = ["#ef4444", "#f59e0b", "#eab308", "#10b981", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
-const ICONS = ["🇬🇧", "🇩🇪", "🇫🇷", "🇪🇸", "🇮🇹", "🇯🇵", "🇰🇷", "🇨🇳", "🌐", "💼", "🏥", "🎓", "🎙️", "💻", "⚡", "🎯"];
+const ICONS = [
+  "🇬🇧", "🇩🇪", "🇫🇷", "🇪🇸", "🇮🇹", "🇯🇵", "🇰🇷", "🇨🇳",
+  "🎙️", "💼", "📅", "📝", "💻",
+  "🏥", "💊", "⚖️", "🎓", "🔬",
+  "📞", "🎧", "🤝",
+  "🏠", "🎨",
+];
 const SENTINEL = "__global__";
 
 const LANGUAGES = [
@@ -77,6 +83,8 @@ function ProfilesView(): React.ReactElement {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Profile>({ ...EMPTY_FORM });
+  const [customEmoji, setCustomEmoji] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   useEffect(() => {
     if (triggerNewProfile) {
@@ -248,7 +256,10 @@ function ProfilesView(): React.ReactElement {
                 {ICONS.map((e) => (
                   <button
                     key={e}
-                    onClick={() => setEditing((p) => ({ ...p, icon: e }))}
+                    onClick={() => {
+                      setEditing((p) => ({ ...p, icon: e }));
+                      setShowCustomInput(false);
+                    }}
                     className={cn(
                       "flex items-center justify-center w-9 h-9 rounded-md text-lg transition-all",
                       editing.icon === e
@@ -259,6 +270,52 @@ function ProfilesView(): React.ReactElement {
                     {e}
                   </button>
                 ))}
+                {showCustomInput ? (
+                  <div className="flex items-center gap-1 col-span-2">
+                    <Input
+                      autoFocus
+                      value={customEmoji}
+                      onChange={(e) => setCustomEmoji(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && customEmoji.trim()) {
+                          setEditing((p) => ({ ...p, icon: customEmoji.trim() }));
+                          setShowCustomInput(false);
+                          setCustomEmoji("");
+                        }
+                        if (e.key === "Escape") {
+                          setShowCustomInput(false);
+                          setCustomEmoji("");
+                        }
+                      }}
+                      placeholder="Emoji…"
+                      className="h-9 w-full text-center text-lg"
+                      maxLength={4}
+                    />
+                    <button
+                      onClick={() => {
+                        if (customEmoji.trim()) {
+                          setEditing((p) => ({ ...p, icon: customEmoji.trim() }));
+                        }
+                        setShowCustomInput(false);
+                        setCustomEmoji("");
+                      }}
+                      className="shrink-0 flex items-center justify-center w-9 h-9 rounded-md
+                        text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowCustomInput(true)}
+                    title="Custom emoji"
+                    className="flex items-center justify-center w-9 h-9 rounded-md text-lg
+                      text-muted-foreground hover:text-foreground hover:bg-accent transition-colors
+                      border border-dashed border-border"
+                  >
+                    +
+                  </button>
+                )}
               </div>
             </div>
 

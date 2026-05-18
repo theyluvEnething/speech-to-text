@@ -113,7 +113,7 @@ savedResult: string | null (deferred transcript awaiting overlay idle)
 
 ### Profile
 ```
-id, name, color (8 presets), icon (16 emoji), systemPrompt (text, unused for now),
+id, name, color (8 presets), icon (23 emoji + custom input), systemPrompt (text, unused for now),
 language? (override), model? (override)
 ```
 - Default profile: id `"default"`, color `#10b981`, icon `🎙️`
