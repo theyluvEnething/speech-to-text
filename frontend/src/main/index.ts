@@ -157,12 +157,29 @@ app.whenReady().then(() => {
 
   console.log("--- Wavely v1.0.0 ---");
   console.log(`  Hotkey: ${savedHotkey}  |  Language: ${savedLanguage}  |  Model: ${modelLabel}`);
+  const apiKey = process.env["DEEPGRAM_API_KEY"];
   console.log(`  Platform: ${process.platform}`);
+  console.log(`  Deepgram API key: ${apiKey && apiKey !== "your_key_here" ? "configured" : "MISSING"}`);
 
-  // Fetch a temporary Deepgram key from the backend before the first recording
-  fetchTemporaryKey().catch((err) => {
-    console.error("[Wavely] Failed to fetch initial Deepgram key:", err.message);
+  // Auto-start on Windows login
+  app.setLoginItemSettings({
+    openAtLogin: true,
+    path: app.getPath("exe"),
   });
+
+  // Retry fetching a temporary Deepgram key every 15s until successful
+  function tryFetchKey(): void {
+    fetchTemporaryKey()
+      .then(() => {
+        console.log("[Wavely] Initial Deepgram key obtained.");
+      })
+      .catch((err: Error) => {
+        console.error("[Wavely] Failed to fetch Deepgram key:", err.message);
+        console.log("[Wavely] Retrying in 15s...");
+        setTimeout(tryFetchKey, 15_000);
+      });
+  }
+  tryFetchKey();
 
   registerIpcHandlers(handleAudioBuffer, handleLevels, handleOverlayIdle);
 
