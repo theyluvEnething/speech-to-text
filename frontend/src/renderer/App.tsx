@@ -61,6 +61,10 @@ function App(): React.ReactElement {
     }).catch((err) => {
       console.error("[Wavely] Failed to load initial data:", err);
     });
+
+    window.wavely.conversations.onNew((conv) => {
+      setConversations([conv as Conversation, ...useStore.getState().conversations]);
+    });
   }, []);
 
   // To make concentric borders, OuterRadius = InnerRadius + Padding

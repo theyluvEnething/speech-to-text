@@ -85,10 +85,12 @@ function ProfilesView(): React.ReactElement {
   const [editing, setEditing] = useState<Profile>({ ...EMPTY_FORM });
   const [customEmoji, setCustomEmoji] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [nameTouched, setNameTouched] = useState(false);
 
   useEffect(() => {
     if (triggerNewProfile) {
       setEditing({ ...EMPTY_FORM });
+      setNameTouched(false);
       setDialogOpen(true);
       setTriggerNewProfile(false);
     }
@@ -96,16 +98,21 @@ function ProfilesView(): React.ReactElement {
 
   function openCreate(): void {
     setEditing({ ...EMPTY_FORM });
+    setNameTouched(false);
     setDialogOpen(true);
   }
 
   function openEdit(profile: Profile): void {
     setEditing({ ...profile });
+    setNameTouched(false);
     setDialogOpen(true);
   }
 
   function handleSave(): void {
-    if (!editing.name.trim()) return;
+    if (!editing.name.trim()) {
+      setNameTouched(true);
+      return;
+    }
 
     const profile: Profile = {
       ...editing,
@@ -228,9 +235,19 @@ function ProfilesView(): React.ReactElement {
               <Label>Name</Label>
               <Input
                 value={editing.name}
-                onChange={(e) => setEditing((p) => ({ ...p, name: e.target.value }))}
+                onChange={(e) => {
+                  setEditing((p) => ({ ...p, name: e.target.value }));
+                  if (e.target.value.trim()) setNameTouched(false);
+                }}
+                onBlur={() => setNameTouched(!editing.name.trim())}
                 placeholder="e.g. Medical Calls"
+                className={cn(
+                  nameTouched && !editing.name.trim() && "border-red-500/60 focus-visible:ring-red-500/30",
+                )}
               />
+              {nameTouched && !editing.name.trim() && (
+                <p className="text-[12px] text-red-400/80">Profile name is required.</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -369,7 +386,9 @@ function ProfilesView(): React.ReactElement {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave}>Save</Button>
+            <Button onClick={handleSave} disabled={!editing.name.trim()}>
+              {editing.id ? "Save" : "Create"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

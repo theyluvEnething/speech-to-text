@@ -1,6 +1,7 @@
 import { ipcMain, BrowserWindow } from "electron";
 import Store from "electron-store";
 import { updateHotkey } from "./hotkey";
+import { getSettingsWindow } from "./windows";
 
 interface Profile {
   id: string;
@@ -68,11 +69,15 @@ export function getActiveProfile(): Profile {
 export function saveConversation(conv: Conversation): void {
   const conversations = store.get("conversations");
   conversations.unshift(conv);
-  // Keep only the last 500 conversations
   if (conversations.length > 500) {
     conversations.length = 500;
   }
   store.set("conversations", conversations);
+
+  const win = getSettingsWindow();
+  if (win && !win.isDestroyed()) {
+    win.webContents.send("conversations:new", conv);
+  }
 }
 
 let v4: () => string;

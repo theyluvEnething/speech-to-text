@@ -53,6 +53,10 @@ contextBridge.exposeInMainWorld("wavely", {
 
     clear: (): Promise<void> =>
       ipcRenderer.invoke("conversations:clear"),
+
+    onNew: (callback: (conv: unknown) => void): void => {
+      ipcRenderer.on("conversations:new", (_event, conv) => callback(conv));
+    },
   },
 });
 

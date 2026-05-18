@@ -33,6 +33,7 @@ declare global {
     list(): Promise<Conversation[]>;
     delete(id: string): Promise<Conversation[]>;
     clear(): Promise<void>;
+    onNew(callback: (conv: Conversation) => void): void;
   }
 
   interface WavelyApi {
