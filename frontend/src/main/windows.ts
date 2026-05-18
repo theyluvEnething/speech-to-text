@@ -86,7 +86,24 @@ export function createOverlayWindow(): BrowserWindow {
   overlayWindow.setAlwaysOnTop(true, "screen-saver");
   setWindowClickThrough(overlayWindow);
 
+  // Re-apply alwaysOnTop periodically — Windows drops it after screensaver / fullscreen apps
+  const alwaysOnTopTimer = setInterval(() => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayWindow.setAlwaysOnTop(true, "screen-saver");
+    } else {
+      clearInterval(alwaysOnTopTimer);
+    }
+  }, 5000);
+
+  // Reposition and re-assert alwaysOnTop when the window is shown (e.g. after alt-tab)
+  overlayWindow.on("show", () => {
+    const { width: w, height: h } = screen.getPrimaryDisplay().workAreaSize;
+    overlayWindow?.setPosition(Math.round((w - 360) / 2), h - 120);
+    overlayWindow?.setAlwaysOnTop(true, "screen-saver");
+  });
+
   overlayWindow.on("closed", () => {
+    clearInterval(alwaysOnTopTimer);
     overlayWindow = null;
   });
 
