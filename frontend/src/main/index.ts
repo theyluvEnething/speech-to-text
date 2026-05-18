@@ -8,6 +8,18 @@ import { registerHotkey, unregisterAll } from "./hotkey";
 import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } from "./ipc-handlers";
 import { transcribe, fetchTemporaryKey, initDeepgramClient, startRealtimeTranscription, sendRealtimeChunk, stopRealtimeTranscription } from "./transcriber";
 import { pasteText } from "./paste";
+import { correctTranscript } from "./llm";
+
+const httpAgent = new http.Agent({ keepAlive: true });
+const httpsAgent = new https.Agent({ keepAlive: true });
+
+const _origFetch = global.fetch;
+global.fetch = function (url, options) {
+  return _origFetch(url, {
+    ...options,
+    agent: new URL(url.toString()).protocol === "http:" ? httpAgent : httpsAgent,
+  } as RequestInit);
+};
 
 const httpAgent = new http.Agent({ keepAlive: true });
 const httpsAgent = new https.Agent({ keepAlive: true });
@@ -45,7 +57,7 @@ function sendOverlayState(newState: string): void {
   overlay?.webContents.send("overlay:state", newState, label);
 }
 
-function startRecording(): void {
+async function startRecording(): Promise<void> {
   if (store.get("isPaused")) {
     console.log("[Wavely] Recording blocked — app is paused.");
     return;
