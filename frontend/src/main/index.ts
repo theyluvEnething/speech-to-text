@@ -1,4 +1,5 @@
 import { app, ipcMain, clipboard } from "electron";
+import { autoUpdater } from "electron-updater";
 import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow } from "./windows";
 import { createTray } from "./tray";
 import { registerHotkey, unregisterAll } from "./hotkey";
@@ -11,6 +12,8 @@ type AppState = "idle" | "recording" | "processing" | "showing-result";
 let state: AppState = "idle";
 let audioActive = false;
 let lastDurationSec = 0;
+
+autoUpdater.logger = console;
 
 const overlayLabels: Record<string, Record<string, string>> = {
   en: { recording: "Recording", processing: "Transcribing…", idle: "" },
@@ -198,6 +201,14 @@ app.whenReady().then(() => {
   });
 
   registerHotkey(savedHotkey, startRecording, stopRecording);
+
+  autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+    console.error("[AutoUpdater] Failed to check for updates:", err);
+  });
+
+  autoUpdater.on("update-downloaded", (info) => {
+    console.log(`[AutoUpdater] Update v${info.version} downloaded. It will be installed on restart.`);
+  });
 
   app.on("activate", () => {
     createSettingsWindow();
