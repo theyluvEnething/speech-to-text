@@ -26,14 +26,23 @@ const LANGUAGES = [
   { value: "auto", label: "Auto-detect" },
 ];
 
-const SENTINEL = "__global__";
-
-const NOVA2_TIERS = [
-  { value: SENTINEL, label: "Standard (nova-2)" },
-  { value: "general", label: "General (nova-2-general)" },
-  { value: "medical", label: "Medical (nova-2-medical)" },
-  { value: "meeting", label: "Meeting (nova-2-meeting)" },
+const PROVIDERS = [
+  { value: "deepgram", label: "Deepgram" },
+  { value: "groq", label: "Groq" },
+  { value: "openai", label: "OpenAI" },
 ];
+
+const MODELS_BY_PROVIDER: Record<string, readonly { value: string; label: string }[]> = {
+  deepgram: [
+    { value: "nova-2", label: "Nova-2" },
+    { value: "nova-2-general", label: "Nova-2 General" },
+  ],
+  groq: [
+    { value: "whisper-large-v3-turbo", label: "Whisper Large V3 Turbo" },
+    { value: "whisper-large-v3", label: "Whisper Large V3" },
+  ],
+  openai: [],
+};
 
 function SettingsView(): React.ReactElement {
   const activeProfile = useStore((s) => s.activeProfile);
@@ -44,7 +53,8 @@ function SettingsView(): React.ReactElement {
 
   const [hotkey, setHotkey] = useState("alt");
   const [language, setLanguage] = useState("en");
-  const [modelTier, setModelTier] = useState("");
+  const [provider, setProvider] = useState("groq");
+  const [model, setModel] = useState("whisper-large-v3-turbo");
   const [copyToClipboard, setCopyToClipboard] = useState(true);
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
@@ -55,7 +65,8 @@ function SettingsView(): React.ReactElement {
       .then((settings) => {
         setHotkey(settings.hotkey || "alt");
         setLanguage(settings.language || "en");
-        setModelTier(settings.modelTier || "");
+        setProvider(settings.provider || "groq");
+        setModel(settings.model || "whisper-large-v3-turbo");
         setCopyToClipboard(settings.copyToClipboard !== false);
         setLoading(false);
         initialLoad.current = false;
@@ -69,7 +80,7 @@ function SettingsView(): React.ReactElement {
 
   function save(updated: Record<string, string | boolean>): void {
     window.wavely
-      .setSettings({ model: "nova-2", ...updated })
+      .setSettings(updated)
       .then(() => {
         toast("Preferences saved");
       })
@@ -191,30 +202,66 @@ function SettingsView(): React.ReactElement {
               Transcription
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">Model tier</label>
-            <Select
-              value={modelTier || SENTINEL}
-              onValueChange={(v) => {
-                const tier = v === SENTINEL ? "" : v;
-                setModelTier(tier);
-                if (!initialLoad.current) save({ modelTier: tier });
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {NOVA2_TIERS.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[12px] text-foreground/45">
-              Domain-specific models optimize for medical or meeting scenarios.
-            </p>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">Provider</label>
+              <Select
+                value={provider}
+                onValueChange={(v) => {
+                  setProvider(v);
+                  const models = MODELS_BY_PROVIDER[v] ?? [];
+                  if (models.length > 0 && !models.some((m) => m.value === model)) {
+                    const newModel = models[0]!.value;
+                    setModel(newModel);
+                    if (!initialLoad.current) save({ provider: v, model: newModel });
+                  } else {
+                    if (!initialLoad.current) save({ provider: v });
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROVIDERS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[12px] text-foreground/45">
+                Select the transcription service provider.
+              </p>
+            </div>
+
+            {provider !== "openai" ? (
+              <div className="space-y-2">
+                <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">Model</label>
+                <Select
+                  value={model}
+                  onValueChange={(v) => {
+                    setModel(v);
+                    if (!initialLoad.current) save({ model: v });
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(MODELS_BY_PROVIDER[provider] ?? []).map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <p className="text-[12px] text-foreground/45">
+                OpenAI provider is not yet implemented. Select another provider.
+              </p>
+            )}
           </CardContent>
         </Card>
 

@@ -57,8 +57,8 @@
     "pushToTalkHint": "Mantén presionada esta tecla mientras hablas, suéltala para transcribir.",
     "language": "Idioma",
     "languageOverridden": "Idioma personalizado por el perfil",
-    "modelTier": "Nivel del modelo",
-    "modelTierHint": "Los modelos especializados optimizan para escenarios médicos o de reuniones.",
+    "provider": "Proveedor",
+    "providerHint": "Seleccione el servicio de transcripción.",
     "preferencesSaved": "Preferencias guardadas"
   },
   "appSettings": {

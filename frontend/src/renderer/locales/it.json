@@ -57,8 +57,8 @@
     "pushToTalkHint": "Tieni premuto questo tasto mentre parli, rilascia per trascrivere.",
     "language": "Lingua",
     "languageOverridden": "Lingua sostituita dal profilo",
-    "modelTier": "Livello modello",
-    "modelTierHint": "Modelli specializzati ottimizzati per scenari medici o riunioni.",
+    "provider": "Provider",
+    "providerHint": "Seleziona il servizio di trascrizione.",
     "preferencesSaved": "Preferenze salvate"
   },
   "appSettings": {

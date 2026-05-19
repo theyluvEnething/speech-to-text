@@ -57,8 +57,8 @@
     "pushToTalkHint": "このキーを押しながら話し、離すと文字起こしされます。",
     "language": "言語",
     "languageOverridden": "プロフィールによって言語が上書きされています",
-    "modelTier": "モデルティア",
-    "modelTierHint": "ドメイン固有モデルは医療やミーティングのシナリオに最適化されています。",
+    "provider": "プロバイダー",
+    "providerHint": "文字起こしサービスを選択してください。",
     "preferencesSaved": "設定を保存しました"
   },
   "appSettings": {

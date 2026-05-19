@@ -10,3 +10,15 @@ export interface ServerEvent {
   };
   error?: { message: string; code: string };
 }
+
+export type ProviderName = "deepgram" | "groq" | "openai";
+
+export interface TranscribeOptions {
+  model: string;
+  language: string;
+}
+
+export interface TranscriptionProvider {
+  readonly name: ProviderName;
+  transcribe(audio: ArrayBuffer, options: TranscribeOptions): Promise<string>;
+}

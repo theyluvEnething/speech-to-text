@@ -28,7 +28,7 @@ interface StoreSchema {
   hotkey: string;
   language: string;
   model: string;
-  modelTier: string;
+  provider: string;
   copyToClipboard: boolean;
   appLanguage: string;
   isPaused: boolean;
@@ -41,8 +41,8 @@ export const store = new Store<StoreSchema>({
   defaults: {
     hotkey: "ctrlright",
     language: "auto",
-    model: "nova-2",
-    modelTier: "",
+    model: "whisper-large-v3-turbo",
+    provider: "groq",
     copyToClipboard: true,
     appLanguage: "en",
     isPaused: false,
@@ -96,7 +96,7 @@ export function registerIpcHandlers(
       hotkey: store.get("hotkey"),
       language: store.get("language"),
       model: store.get("model"),
-      modelTier: store.get("modelTier"),
+      provider: store.get("provider"),
       copyToClipboard: store.get("copyToClipboard"),
       appLanguage: store.get("appLanguage"),
     };
@@ -118,8 +118,8 @@ export function registerIpcHandlers(
       store.set("model", settings['model']);
     }
 
-    if (typeof settings['modelTier'] === "string") {
-      store.set("modelTier", settings['modelTier']);
+    if (typeof settings['provider'] === "string") {
+      store.set("provider", settings['provider']);
     }
 
     if (typeof settings['copyToClipboard'] === "boolean") {

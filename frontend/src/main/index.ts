@@ -4,7 +4,8 @@ import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverla
 import { createTray } from "./tray";
 import { registerHotkey, unregisterAll } from "./hotkey";
 import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } from "./ipc-handlers";
-import { transcribe, fetchTemporaryKey, initDeepgramClient } from "./transcriber";
+import { getProvider } from "../transcription/index";
+import type { ProviderName } from "../transcription/types";
 import { pasteText } from "./paste";
 
 type AppState = "idle" | "recording" | "processing" | "showing-result";
@@ -74,16 +75,16 @@ function handleLevels(data: { rms: number; peak: number; elapsed: number; sample
   }
 }
 
-function resolveTranscribeOptions(): { language: string; model: string; modelTier: string; profileId: string } {
+function resolveTranscribeOptions(): { language: string; model: string; provider: ProviderName; profileId: string } {
   const profile = getActiveProfile();
+  const globalProvider = store.get("provider") as ProviderName;
   const globalModel = store.get("model");
-  const globalModelTier = store.get("modelTier");
   const globalLanguage = store.get("language");
 
   return {
     language: profile.language || globalLanguage,
     model: profile.model || globalModel,
-    modelTier: profile.model ? "" : globalModelTier,
+    provider: globalProvider,
     profileId: profile.id,
   };
 }
@@ -98,24 +99,22 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
     return;
   }
 
-  const { language, model, modelTier, profileId } = resolveTranscribeOptions();
-  const modelLabel = `${model}${modelTier ? `-${modelTier}` : ""}`;
+  const { language, model, provider: providerName, profileId } = resolveTranscribeOptions();
   const durationSec = lastDurationSec;
   lastDurationSec = 0;
   const langLabel = language || "auto";
 
   const durationS = durationSec.toFixed(1);
-  console.log(`[Wavely] Captured ${durationS}s of audio. Transcribing with ${modelLabel} in ${langLabel}...`);
+  console.log(`[Wavely] Captured ${durationS}s of audio. Transcribing with ${providerName}/${model} in ${langLabel}...`);
 
   state = "processing";
   sendOverlayState("processing");
 
-  transcribe(buffer, model, modelTier, language)
+  const provider = getProvider(providerName);
+  provider.transcribe(buffer, { model, language })
     .then((text) => {
       if (text) {
         console.log(`[Wavely] -> "${text}"\n`);
-        // Always paste. Copy-to-clipboard toggle only adds clipboard.copy()
-        // so the text also stays in the clipboard for manual use.
         const prevClipboard = clipboard.readText();
         pasteText(text)
           .then(() => {
@@ -133,7 +132,7 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
           id: uuid(),
           text,
           language,
-          model: modelLabel,
+          model: `${providerName}/${model}`,
           profileId,
           durationSec,
           createdAt: Date.now(),
@@ -159,36 +158,18 @@ function handleOverlayIdle(): void {
 app.whenReady().then(() => {
   const savedHotkey = store.get("hotkey");
   const savedLanguage = store.get("language");
+  const savedProvider = store.get("provider");
   const savedModel = store.get("model");
-  const savedModelTier = store.get("modelTier");
-  const modelLabel = `${savedModel}${savedModelTier ? `-${savedModelTier}` : ""}`;
 
   console.log("--- Wavely v1.0.0 ---");
-  console.log(`  Hotkey: ${savedHotkey}  |  Language: ${savedLanguage}  |  Model: ${modelLabel}`);
-  const apiKey = process.env["DEEPGRAM_API_KEY"];
+  console.log(`  Hotkey: ${savedHotkey}  |  Language: ${savedLanguage}  |  Provider: ${savedProvider}  |  Model: ${savedModel}`);
   console.log(`  Platform: ${process.platform}`);
-  console.log(`  Deepgram API key: ${apiKey && apiKey !== "your_key_here" ? "configured" : "MISSING"}`);
 
   // Auto-start on Windows login
   app.setLoginItemSettings({
     openAtLogin: true,
     path: app.getPath("exe"),
   });
-
-  // Retry fetching a temporary Deepgram key every 15s until successful
-  function tryFetchKey(): void {
-    fetchTemporaryKey()
-      .then(() => {
-        console.log("[Wavely] Initial Deepgram key obtained.");
-        initDeepgramClient();
-      })
-      .catch((err: Error) => {
-        console.error("[Wavely] Failed to fetch Deepgram key:", err.message);
-        console.log("[Wavely] Retrying in 15s...");
-        setTimeout(tryFetchKey, 15_000);
-      });
-  }
-  tryFetchKey();
 
   registerIpcHandlers(handleAudioBuffer, handleLevels, handleOverlayIdle);
 

@@ -52,8 +52,8 @@ function AppView(): React.ReactElement {
       .setSettings({
         hotkey: "ctrlright",
         language: "auto",
-        model: "nova-2",
-        modelTier: "",
+        model: "whisper-large-v3-turbo",
+        provider: "groq",
         copyToClipboard: true,
         appLanguage: "en",
       })

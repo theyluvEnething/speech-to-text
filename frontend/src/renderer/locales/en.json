@@ -57,8 +57,8 @@
     "pushToTalkHint": "Hold this key while speaking, release to transcribe.",
     "language": "Language",
     "languageOverridden": "Language overridden by profile",
-    "modelTier": "Model tier",
-    "modelTierHint": "Domain-specific models optimize for medical or meeting scenarios.",
+    "provider": "Provider",
+    "providerHint": "Select the transcription service provider.",
     "preferencesSaved": "Preferences saved"
   },
   "appSettings": {

@@ -3,7 +3,7 @@ import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("wavely", {
   platform: process.platform,
 
-  getSettings: (): Promise<{ hotkey: string; language: string; model: string; modelTier: string; copyToClipboard: boolean; appLanguage: string }> =>
+  getSettings: (): Promise<{ hotkey: string; language: string; model: string; provider: string; copyToClipboard: boolean; appLanguage: string }> =>
     ipcRenderer.invoke("settings:get"),
 
   setSettings: (settings: Record<string, string | boolean>): Promise<{ success: boolean }> =>
@@ -64,7 +64,7 @@ contextBridge.exposeInMainWorld("wavely", {
 contextBridge.exposeInMainWorld("whisper", {
   platform: process.platform,
 
-  getSettings: (): Promise<{ hotkey: string; language: string; model: string; modelTier: string }> =>
+  getSettings: (): Promise<{ hotkey: string; language: string; model: string; provider: string }> =>
     ipcRenderer.invoke("settings:get"),
 
   setSettings: (settings: Record<string, string>): Promise<{ success: boolean }> =>

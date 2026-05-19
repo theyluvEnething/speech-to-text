@@ -49,7 +49,9 @@ const LANGUAGES = [
 const MODELS = [
   { value: SENTINEL, label: "Use global setting" },
   { value: "nova-2", label: "nova-2" },
-  { value: "nova-3", label: "nova-3" },
+  { value: "nova-2-general", label: "nova-2-general" },
+  { value: "whisper-large-v3-turbo", label: "whisper-large-v3-turbo" },
+  { value: "whisper-large-v3", label: "whisper-large-v3" },
 ];
 
 function randomId(): string {

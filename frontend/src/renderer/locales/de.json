@@ -57,8 +57,8 @@
     "pushToTalkHint": "Taste während des Sprechens gedrückt halten, zum Transkribieren loslassen.",
     "language": "Sprache",
     "languageOverridden": "Sprache wird vom Profil überschrieben",
-    "modelTier": "Modell-Stufe",
-    "modelTierHint": "Domänenspezifische Modelle optimieren für medizinische oder Besprechungsszenarien.",
+    "provider": "Anbieter",
+    "providerHint": "Wählen Sie den Transkriptionsdienst aus.",
     "preferencesSaved": "Einstellungen gespeichert"
   },
   "appSettings": {
