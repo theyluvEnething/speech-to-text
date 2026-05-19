@@ -27,12 +27,16 @@ const LANGUAGES = [
 ];
 
 const PROVIDERS = [
+  { value: "backend", label: "Backend" },
   { value: "deepgram", label: "Deepgram" },
   { value: "groq", label: "Groq" },
   { value: "openai", label: "OpenAI" },
 ];
 
 const MODELS_BY_PROVIDER: Record<string, readonly { value: string; label: string }[]> = {
+  backend: [
+    { value: "whisper-large-v3", label: "Whisper Large V3" },
+  ],
   deepgram: [
     { value: "nova-2", label: "Nova-2" },
     { value: "nova-2-general", label: "Nova-2 General" },

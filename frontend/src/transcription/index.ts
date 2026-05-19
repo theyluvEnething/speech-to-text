@@ -1,3 +1,4 @@
+import { BackendProvider } from "./backend/provider";
 import { DeepgramProvider } from "./deepgram/provider";
 import { GroqProvider } from "./groq/provider";
 import { OpenAIProvider } from "./openai/provider";
@@ -8,6 +9,9 @@ const instances = new Map<ProviderName, TranscriptionProvider>();
 export function getProvider(name: ProviderName): TranscriptionProvider {
   if (!instances.has(name)) {
     switch (name) {
+      case "backend":
+        instances.set(name, new BackendProvider());
+        break;
       case "deepgram":
         instances.set(name, new DeepgramProvider());
         break;
