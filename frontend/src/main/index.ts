@@ -1,31 +1,17 @@
-import http from "http";
-import https from "https";
 import { app, ipcMain, clipboard } from "electron";
 import { autoUpdater } from "electron-updater";
 import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow } from "./windows";
 import { createTray } from "./tray";
 import { registerHotkey, unregisterAll } from "./hotkey";
 import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } from "./ipc-handlers";
-import { transcribe, fetchTemporaryKey, initDeepgramClient, startRealtimeTranscription, sendRealtimeChunk, stopRealtimeTranscription } from "./transcriber";
+import { transcribe, fetchTemporaryKey, initDeepgramClient } from "./transcriber";
 import { pasteText } from "./paste";
-
-const httpAgent = new http.Agent({ keepAlive: true });
-const httpsAgent = new https.Agent({ keepAlive: true });
-
-const _origFetch = global.fetch;
-global.fetch = function (url, options) {
-  return _origFetch(url, {
-    ...options,
-    agent: new URL(url.toString()).protocol === "http:" ? httpAgent : httpsAgent,
-  } as RequestInit);
-};
 
 type AppState = "idle" | "recording" | "processing" | "showing-result";
 
 let state: AppState = "idle";
 let audioActive = false;
 let lastDurationSec = 0;
-let rtChunkLogCounter = 0;
 
 autoUpdater.logger = console;
 
@@ -66,35 +52,7 @@ function startRecording(): void {
 
   console.log("[Wavely] Recording started...");
   sendOverlayState("recording");
-
   audio?.webContents.send("audio:start");
-
-  const mode = store.get("transcriptionMode");
-
-  if (mode === "realtime") {
-    rtChunkLogCounter = 0;
-    const { language, model, modelTier } = resolveTranscribeOptions();
-    console.log("[Wavely RT] Starting WebSocket (audio already capturing)...");
-    startRealtimeTranscription(
-      model,
-      modelTier,
-      language,
-      (interim) => {
-        console.log(`[Wavely RT] Interim callback — "${interim.slice(-60)}"`);
-      },
-      (_final) => {
-        console.log(`[Wavely RT] Final utterance — transcript so far: "${_final.slice(-60)}"`);
-      },
-    ).then(() => {
-      console.log("[Wavely RT] WebSocket ready — buffered chunks flushed.");
-    }).catch((err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("[Wavely] Realtime connection failed:", msg);
-      audioActive = false;
-      state = "idle";
-      getOverlayWindow()?.webContents.send("overlay:error", msg);
-    });
-  }
 }
 
 function stopRecording(): void {
@@ -107,56 +65,6 @@ function stopRecording(): void {
   const audio = getAudioWindow();
   console.log("[Wavely] Recording stopped.");
   audio?.webContents.send("audio:stop");
-
-  const mode = store.get("transcriptionMode");
-
-  if (mode === "realtime") {
-    console.log("[Wavely RT] stopRecording — entering realtime stop path.");
-    state = "processing";
-    sendOverlayState("processing");
-
-    const { language, model, modelTier, profileId } = resolveTranscribeOptions();
-    const modelLabel = `${model}${modelTier ? `-${modelTier}` : ""}`;
-
-    stopRealtimeTranscription()
-      .then((finalText) => {
-        if (finalText) {
-          console.log(`[Wavely] Realtime -> "${finalText}"`);
-          const prevClipboard = store.get("copyToClipboard") ? "" : clipboard.readText();
-          pasteText(finalText)
-            .then(() => {
-              if (!store.get("copyToClipboard")) {
-                clipboard.writeText(prevClipboard);
-              }
-            })
-            .catch((err: Error) => {
-              console.error(`[Wavely] Paste failed: ${err.message}`);
-              getOverlayWindow()?.webContents.send("overlay:error", `Text copied. Paste failed: ${err.message}`);
-            });
-          state = "showing-result";
-          getOverlayWindow()?.webContents.send("overlay:result", finalText);
-          saveConversation({
-            id: uuid(),
-            text: finalText,
-            language,
-            model: modelLabel,
-            profileId,
-            durationSec: lastDurationSec,
-            createdAt: Date.now(),
-          });
-          lastDurationSec = 0;
-        } else {
-          console.log("[Wavely] No realtime transcript returned.\n");
-          state = "idle";
-          sendOverlayState("idle");
-        }
-      })
-      .catch((err: Error) => {
-        console.error(`[Wavely] Realtime stop failed: ${err.message}\n`);
-        state = "idle";
-        getOverlayWindow()?.webContents.send("overlay:error", err.message);
-      });
-  }
 }
 
 function handleLevels(data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }): void {
@@ -181,8 +89,6 @@ function resolveTranscribeOptions(): { language: string; model: string; modelTie
 }
 
 function handleAudioBuffer(buffer: ArrayBuffer): void {
-  if (store.get("transcriptionMode") !== "prerecorded") return;
-
   const overlay = getOverlayWindow();
 
   if (buffer.byteLength === 0) {
@@ -204,13 +110,14 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
   state = "processing";
   sendOverlayState("processing");
 
-  const prevClipboard = store.get("copyToClipboard") ? "" : clipboard.readText();
-
   transcribe(buffer, model, modelTier, language)
-    .then((rawText) => {
-      if (rawText) {
-        console.log(`[Wavely] -> "${rawText}"`);
-        pasteText(rawText)
+    .then((text) => {
+      if (text) {
+        console.log(`[Wavely] -> "${text}"\n`);
+        // Always paste. Copy-to-clipboard toggle only adds clipboard.copy()
+        // so the text also stays in the clipboard for manual use.
+        const prevClipboard = clipboard.readText();
+        pasteText(text)
           .then(() => {
             if (!store.get("copyToClipboard")) {
               clipboard.writeText(prevClipboard);
@@ -221,10 +128,10 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
             overlay?.webContents.send("overlay:error", `Text copied. Paste failed: ${err.message}`);
           });
         state = "showing-result";
-        overlay?.webContents.send("overlay:result", rawText);
+        overlay?.webContents.send("overlay:result", text);
         saveConversation({
           id: uuid(),
-          text: rawText,
+          text,
           language,
           model: modelLabel,
           profileId,
@@ -289,18 +196,6 @@ app.whenReady().then(() => {
   // can detect key-up events that uiohook might miss (e.g. Alt on Windows).
   ipcMain.on("recording:stop", () => {
     if (audioActive) stopRecording();
-  });
-
-  ipcMain.on("audio:chunk", (_event, chunk: ArrayBuffer) => {
-    rtChunkLogCounter++;
-    if (rtChunkLogCounter <= 3) {
-      console.log(`[Wavely RT] IPC chunk #${rtChunkLogCounter} — ${chunk.byteLength} bytes`);
-    } else if (rtChunkLogCounter % 20 === 0) {
-      console.log(`[Wavely RT] IPC chunk #${rtChunkLogCounter} — ${chunk.byteLength} bytes (${rtChunkLogCounter} total)`);
-    }
-    if (store.get("transcriptionMode") === "realtime") {
-      sendRealtimeChunk(chunk);
-    }
   });
 
   createAudioWindow();

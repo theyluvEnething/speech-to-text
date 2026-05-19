@@ -17,16 +17,8 @@ contextBridge.exposeInMainWorld("audio", {
     ipcRenderer.on("audio:stop", () => callback());
   },
 
-  onChunk: (callback: (chunk: ArrayBuffer) => void): void => {
-    ipcRenderer.on("audio:chunk:emit", (_event, chunk: ArrayBuffer) => callback(chunk));
-  },
-
   sendBuffer: (buffer: ArrayBuffer): void => {
     ipcRenderer.send("audio:buffer", buffer);
-  },
-
-  sendChunk: (chunk: ArrayBuffer): void => {
-    ipcRenderer.send("audio:chunk", chunk);
   },
 
   sendLevels: (data: LevelData): void => {

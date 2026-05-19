@@ -38,7 +38,7 @@ declare global {
 
   interface WavelyApi {
     platform: string;
-    getSettings(): Promise<{ hotkey: string; language: string; model: string; modelTier: string; transcriptionMode: "prerecorded" | "realtime"; copyToClipboard: boolean; appLanguage: string }>;
+    getSettings(): Promise<{ hotkey: string; language: string; model: string; modelTier: string; copyToClipboard: boolean; appLanguage: string }>;
     setSettings(settings: Record<string, string | boolean>): Promise<{ success: boolean }>;
     getPaused(): Promise<boolean>;
     togglePaused(): Promise<boolean>;
@@ -60,9 +60,7 @@ declare global {
   interface AudioApi {
     onStart(callback: () => void): void;
     onStop(callback: () => void): void;
-    onChunk(callback: (chunk: ArrayBuffer) => void): void;
     sendBuffer(buffer: ArrayBuffer): void;
-    sendChunk(chunk: ArrayBuffer): void;
     sendLevels(data: LevelData): void;
   }
 

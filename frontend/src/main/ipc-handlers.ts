@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from "electron";
 import Store from "electron-store";
-import crypto from "crypto";
+import { v4 as uuidv4 } from "uuid";
 import { updateHotkey } from "./hotkey";
 import { getSettingsWindow } from "./windows";
 
@@ -29,7 +29,6 @@ interface StoreSchema {
   language: string;
   model: string;
   modelTier: string;
-  transcriptionMode: "prerecorded" | "realtime";
   copyToClipboard: boolean;
   appLanguage: string;
   isPaused: boolean;
@@ -44,7 +43,6 @@ export const store = new Store<StoreSchema>({
     language: "auto",
     model: "nova-2",
     modelTier: "",
-    transcriptionMode: "prerecorded",
     copyToClipboard: true,
     appLanguage: "en",
     isPaused: false,
@@ -84,7 +82,7 @@ export function saveConversation(conv: Conversation): void {
 }
 
 function uuid(): string {
-  return crypto.randomUUID();
+  return uuidv4();
 }
 
 export function registerIpcHandlers(
@@ -99,7 +97,6 @@ export function registerIpcHandlers(
       language: store.get("language"),
       model: store.get("model"),
       modelTier: store.get("modelTier"),
-      transcriptionMode: store.get("transcriptionMode"),
       copyToClipboard: store.get("copyToClipboard"),
       appLanguage: store.get("appLanguage"),
     };
@@ -123,11 +120,6 @@ export function registerIpcHandlers(
 
     if (typeof settings['modelTier'] === "string") {
       store.set("modelTier", settings['modelTier']);
-    }
-
-    if (typeof settings['transcriptionMode'] === "string" &&
-        (settings['transcriptionMode'] === "prerecorded" || settings['transcriptionMode'] === "realtime")) {
-      store.set("transcriptionMode", settings['transcriptionMode']);
     }
 
     if (typeof settings['copyToClipboard'] === "boolean") {
