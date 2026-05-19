@@ -8,7 +8,6 @@ import { registerHotkey, unregisterAll } from "./hotkey";
 import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } from "./ipc-handlers";
 import { transcribe, fetchTemporaryKey, initDeepgramClient, startRealtimeTranscription, sendRealtimeChunk, stopRealtimeTranscription } from "./transcriber";
 import { pasteText } from "./paste";
-import { correctTranscript } from "./llm";
 
 const httpAgent = new http.Agent({ keepAlive: true });
 const httpsAgent = new https.Agent({ keepAlive: true });
@@ -57,7 +56,7 @@ function sendOverlayState(newState: string): void {
   overlay?.webContents.send("overlay:state", newState, label);
 }
 
-async function startRecording(): Promise<void> {
+function startRecording(): void {
   if (store.get("isPaused")) {
     console.log("[Wavely] Recording blocked — app is paused.");
     return;
