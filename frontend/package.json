@@ -8,7 +8,7 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "package": "npm run build && electron-builder --dir",
-    "dist": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder --publish always",
     "typecheck": "tsc --noEmit",
     "rebuild": "electron-rebuild -f -m .",
     "postinstall": "electron-rebuild -f -m . || true"
