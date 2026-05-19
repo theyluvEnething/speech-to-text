@@ -69,7 +69,9 @@ declare global {
     onState(callback: (state: string, label: string) => void): void;
     onResult(callback: (text: string) => void): void;
     onError(callback: (msg: string) => void): void;
+    onLevels(callback: (levels: { rms: number; peak: number }) => void): void;
     sendIdle(): void;
+    requestResize(width: number, height: number): void;
   }
 
   interface Window {

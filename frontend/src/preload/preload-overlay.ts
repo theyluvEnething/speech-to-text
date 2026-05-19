@@ -13,7 +13,15 @@ contextBridge.exposeInMainWorld("overlay", {
     ipcRenderer.on("overlay:error", (_event, msg: string) => callback(msg));
   },
 
+  onLevels: (callback: (levels: { rms: number; peak: number }) => void): void => {
+    ipcRenderer.on("overlay:levels", (_event, levels: { rms: number; peak: number }) => callback(levels));
+  },
+
   sendIdle: (): void => {
     ipcRenderer.send("overlay:idle");
+  },
+
+  requestResize: (width: number, height: number): void => {
+    ipcRenderer.send("overlay:resize", width, height);
   },
 });

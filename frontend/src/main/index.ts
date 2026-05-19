@@ -1,4 +1,4 @@
-import { app, ipcMain, clipboard } from "electron";
+import { app, ipcMain, clipboard, screen } from "electron";
 import { autoUpdater } from "electron-updater";
 import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow } from "./windows";
 import { createTray } from "./tray";
@@ -73,6 +73,8 @@ function handleLevels(data: { rms: number; peak: number; elapsed: number; sample
     lastDurationSec = data.elapsed;
     console.log(`[Wavely] Audio levels — duration: ${data.elapsed.toFixed(1)}s, peak: ${data.peak.toFixed(1)} dB, RMS: ${data.rms.toFixed(1)} dB`);
   }
+  const overlay = getOverlayWindow();
+  overlay?.webContents.send("overlay:levels", { rms: data.rms, peak: data.peak });
 }
 
 function resolveTranscribeOptions(): { language: string; model: string; provider: ProviderName; profileId: string } {
@@ -182,6 +184,22 @@ app.whenReady().then(() => {
   // Serve API key to the transcription module on demand
   ipcMain.handle("audio:getApiKey", () => {
     return process.env["OPENAI_API_KEY"] || "";
+  });
+
+  // Dynamic overlay window resize
+  ipcMain.on("overlay:resize", (_event, width: number, height: number) => {
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+      const bottomMargin = 48;
+      const newY = Math.round(screenHeight - bottomMargin - height);
+      overlay.setBounds({
+        x: Math.round((screenWidth - width) / 2),
+        y: newY,
+        width,
+        height,
+      });
+    }
   });
 
   createAudioWindow();

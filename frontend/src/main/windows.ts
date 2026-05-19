@@ -63,9 +63,9 @@ export function createOverlayWindow(): BrowserWindow {
 
   overlayWindow = new BrowserWindow({
     width: 360,
-    height: 72,
+    height: 80,
     x: Math.round((screenWidth - 360) / 2),
-    y: screenHeight - 120,
+    y: screenHeight - 48 - 80,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -98,7 +98,10 @@ export function createOverlayWindow(): BrowserWindow {
   // Reposition and re-assert alwaysOnTop when the window is shown (e.g. after alt-tab)
   overlayWindow.on("show", () => {
     const { width: w, height: h } = screen.getPrimaryDisplay().workAreaSize;
-    overlayWindow?.setPosition(Math.round((w - 360) / 2), h - 120);
+    const bounds = overlayWindow?.getBounds();
+    const winW = bounds?.width ?? 360;
+    const winH = bounds?.height ?? 80;
+    overlayWindow?.setPosition(Math.round((w - winW) / 2), h - 48 - winH);
     overlayWindow?.setAlwaysOnTop(true, "screen-saver");
   });
 
