@@ -67,6 +67,7 @@ function OverlayApp(): React.ReactElement {
   const goIdleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const lastResize = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
+  const wasVisible = useRef(false);
 
   const clearResultTimer = useCallback((): void => {
     if (resultTimeout.current) {
@@ -85,7 +86,9 @@ function OverlayApp(): React.ReactElement {
   const goIdle = useCallback((): void => {
     clearResultTimer();
     clearGoIdleTimeout();
+    wasVisible.current = false;
     setExiting(true);
+    setAnimKey((k) => k + 1);
     goIdleTimeout.current = setTimeout(() => {
       setVisible(false);
       setState("idle");
@@ -133,10 +136,12 @@ function OverlayApp(): React.ReactElement {
       if (newState === "recording") {
         clearResultTimer();
         clearGoIdleTimeout();
+        const needsEnter = !wasVisible.current;
+        wasVisible.current = true;
         setExiting(false);
         setState("recording");
         setVisible(true);
-        setAnimKey((k) => k + 1);
+        if (needsEnter) setAnimKey((k) => k + 1);
         setElapsed(0);
         timer.current = setInterval(() => {
           setElapsed((e) => e + 0.1);
@@ -160,7 +165,6 @@ function OverlayApp(): React.ReactElement {
       setExiting(false);
       setState("result");
       setText(resultText);
-      setAnimKey((k) => k + 1);
       resultTimeout.current = setTimeout(() => {
         goIdle();
       }, 3000);
@@ -173,7 +177,6 @@ function OverlayApp(): React.ReactElement {
       setExiting(false);
       setState("error");
       setText(msg);
-      setAnimKey((k) => k + 1);
       resultTimeout.current = setTimeout(() => {
         goIdle();
       }, 3000);
@@ -229,19 +232,19 @@ function OverlayApp(): React.ReactElement {
           max-w-[680px]`}
       >
         {/* Left indicator */}
-        <div className="relative flex items-center justify-center w-8 h-8 shrink-0">
+        <div className="relative flex items-center justify-center w-8 h-8 shrink-0" key={`icon-${state}`}>
           {isRecording ? (
             <AudioBars rms={audioLevels.rms} peak={audioLevels.peak} />
           ) : isProcessing ? (
-            <div className="w-5 h-5 rounded-full border-2 border-amber-400/60 border-t-transparent animate-spin" />
+            <div className="w-5 h-5 rounded-full border-2 border-amber-400/60 border-t-transparent animate-spin animate-fade-in" />
           ) : isError ? (
-            <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center animate-fade-in">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M6 3.5v3M6 8v.5" />
               </svg>
             </div>
           ) : (
-            <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center animate-fade-in">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M2 4.5L5 8l5-5" />
               </svg>
@@ -250,18 +253,18 @@ function OverlayApp(): React.ReactElement {
         </div>
 
         {/* Center content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0" key={`content-${state}`}>
           {isRecording ? (
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 animate-fade-in">
               <span className="text-sm font-semibold text-white">{label || "Recording"}</span>
               <span className="text-xs text-surface-400 tabular-nums">{elapsed.toFixed(1)}s</span>
             </div>
           ) : isProcessing ? (
-            <p className="text-sm font-medium text-amber-300/90">{label || "Transcribing…"}</p>
+            <p className="text-sm font-medium text-amber-300/90 animate-fade-in">{label || "Transcribing…"}</p>
           ) : isError ? (
-            <p className="text-sm text-red-400/90 leading-snug break-words">{text}</p>
+            <p className="text-sm text-red-400/90 leading-snug break-words animate-fade-in">{text}</p>
           ) : (
-            <p className="text-sm text-white/90 leading-snug break-words">{text}</p>
+            <p className="text-sm text-white/90 leading-snug break-words animate-fade-in">{text}</p>
           )}
         </div>
       </div>
