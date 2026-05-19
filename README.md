@@ -6,19 +6,14 @@ Hold a hotkey, speak, release — transcribed text appears wherever your cursor 
 ![Runtime](https://img.shields.io/badge/node-22%20LTS-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-## Architecture
+## Features
 
-```
-speech-to-text/
-├── client/        ← Electron desktop app (React + TypeScript)
-├── backend/       ← Express server (temp API key distribution)
-├── .claude/       ← Claude Code configuration
-└── .git/
-```
-
-The app uses a **client-server model** for API key security:
-- **Backend** holds the master Deepgram API key and generates short-lived temporary keys
-- **Client** fetches a temp key on startup, uses it for transcription, and auto-refreshes on expiry
+- **Push-to-talk** — hold a global hotkey (default `Alt`), speak, release
+- **Modular transcription** — choose between Groq, Deepgram, or OpenAI providers
+- **Silent operation** — runs in the system tray, pastes transcribed text into the focused field
+- **Auto-update** — receives updates automatically via GitHub releases
+- **Profiles** — per-profile language and model overrides
+- **Conversation history** — saves up to 500 transcriptions, grouped by date
 
 ## Quick start
 
@@ -26,30 +21,26 @@ The app uses a **client-server model** for API key security:
 
 - Node.js 22 LTS
 - A microphone
-- A [Deepgram API key](https://console.deepgram.com) and Project ID
+- An API key for your chosen transcription provider (Groq, Deepgram, or OpenAI)
 - Windows 10+ or macOS 12+
 
-### Launch
+### Setup
 
 ```bash
-# Clone
 git clone https://github.com/theyluvEnething/speech-to-text.git
-cd speech-to-text
+cd speech-to-text/frontend
 
-# Backend
-cd backend
-echo DEEPGRAM_API_KEY=your_key_here > .env
-echo DEEPGRAM_PROJECT_ID=your_project_id_here >> .env
-npm install
-npm start          # Starts on http://localhost:3000
+# Set your API keys
+cp .env .env.local
 
-# Client (new terminal)
-cd ../client
+# Add at least one provider key to .env.local:
+#   GROQ_API_KEY=...
+#   DEEPGRAM_API_KEY=...
+#   OPENAI_API_KEY=...
+
 npm install
-npm run dev        # Starts the Electron app
+npm run dev
 ```
-
-Or double-click `client/start.bat` (Windows) — it checks prerequisites, installs dependencies, and launches both services.
 
 ## Configuration
 
@@ -57,35 +48,44 @@ Settings stored via `electron-store`:
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `hotkey` | `ctrlright` | Hold-to-record key (Alt L/R, Ctrl L/R, Shift L/R) |
-| `language` | `auto` | ISO 639-1 code or `auto` for auto-detect |
-| `model` | `nova-2` | Deepgram model (`nova-2` / `nova-3`) |
-| `modelTier` | — | Domain-specific tier (`general`, `medical`, `meeting`) |
-| `copyToClipboard` | `true` | Also leave text in clipboard after pasting |
+| `hotkey` | `Alt` | Hold-to-record key |
+| `language` | `en` | ISO 639-1 code or `auto` for auto-detect |
+| `provider` | `groq` | Transcription provider (`groq`, `deepgram`, `openai`) |
+| `model` | varies | Provider-specific model |
+| `copyToClipboard` | `true` | Leave text in clipboard after pasting |
 | `appLanguage` | `en` | UI language (en / de / it / es / ja) |
 
-Settings are changed via the Settings and App tabs. The hotkey updates immediately on save.
+Settings are changed via the Settings and App tabs in the tray menu.
 
 ## How it works
 
-1. **Hotkey detection** — `uiohook-napi` listens globally for key-down/key-up. Falls back to Electron `globalShortcut` toggle mode if native modules can't load.
-2. **Audio capture** — Browser `MediaRecorder` API captures from the default microphone at 16 kHz mono in a hidden renderer window.
-3. **Transcription** — Deepgram transcribes the audio using a temporary API key fetched from the backend.
-4. **Paste** — Text is simulated as `Ctrl+V` / `Cmd+V` into the active text field via `@nut-tree/nut-js`.
+1. **Hotkey detection** — `uiohook-napi` listens globally for key-down/key-up
+2. **Audio capture** — `MediaRecorder` API captures at 16 kHz mono in a hidden window, with 310ms post-release buffer for trailing words
+3. **Volume visualization** — real-time RMS/peak display on the overlay during recording
+4. **Transcription** — audio buffer sent to the selected provider (Groq, Deepgram, or OpenAI)
+5. **Paste** — `Ctrl+V` / `Cmd+V` simulation via `@nut-tree/nut-js`
+6. **Overlay** — floating pill shows recording status, processing indicator, and transcription result with spring animations
+
+## Build & publish
+
+```bash
+npm run dev          # Dev server with HMR
+npm run build        # Production build
+npm run dist         # Package installer + publish to GitHub releases
+```
+
+Requires `GH_TOKEN` environment variable for GitHub release publishing.
 
 ## Troubleshooting
 
-**uiohook-napi not available / fallback to toggle mode**
-Run `npm run rebuild` inside `client/` to rebuild native modules. If it still fails, toggle mode works as a fallback — press the hotkey once to start recording, again to stop.
+**uiohook-napi not available**
+Run `npm run rebuild` to rebuild native modules. Falls back to `globalShortcut` toggle mode.
 
 **No microphone audio**
-Check that your default microphone is accessible. The app uses the system default input device via `getUserMedia`.
+Check your system default input device. The app uses `getUserMedia` with the default microphone.
 
-**Backend connection refused**
-Make sure the backend is running (`cd backend && npm start`). The client fetches a temporary Deepgram key from `http://localhost:3000/api/get-deepgram-key` on startup.
-
-**Deepgram credentials not configured**
-Set `DEEPGRAM_API_KEY` and `DEEPGRAM_PROJECT_ID` in `backend/.env`. Get them at [console.deepgram.com](https://console.deepgram.com).
+**API key not found**
+Set provider-specific keys in `frontend/.env.local`. Keys are read from environment variables at runtime.
 
 ## License
 

@@ -4,7 +4,8 @@
 
 A cross-platform desktop app (Windows + macOS) that lets the user hold a hotkey,
 speak, release the key, and have the transcribed text automatically pasted into the
-focused text field. Runs silently in the system tray. Transcription via Deepgram API.
+focused text field. Runs silently in the system tray. Modular transcription via
+Groq, Deepgram, or OpenAI.
 
 ## Tech stack
 
@@ -17,7 +18,7 @@ focused text field. Runs silently in the system tray. Transcription via Deepgram
 | Icons | lucide-react | Consistent, tree-shakeable |
 | State (renderer) | Zustand | Lightweight, no boilerplate |
 | Language | TypeScript 5.5 strict | Type safety across main + renderer |
-| Transcription | `@deepgram/sdk` (nova-2 / nova-3) | State-of-the-art accuracy, fast API |
+| Transcription | Groq / Deepgram / OpenAI (modular) | Swappable providers via `transcription/` directory |
 | Audio capture | Web `MediaRecorder` API | Browser-native, no native deps |
 | Hotkey | `uiohook-napi` + `globalShortcut` fallback | Global key-down/key-up detection |
 | Paste | `@nut-tree/nut-js` | OS-level keyboard simulation |
@@ -102,7 +103,7 @@ speech-to-text/
 6. User releases hotkey; `uiohook-napi` detects global key-up
 7. AudioWindow continues recording for 310ms post-release (captures trailing words)
 8. AudioWindow stops MediaRecorder, sends ArrayBuffer to main via IPC
-9. Main reads active profile for language/model overrides, transcribes via Deepgram
+9. Main reads active profile for language/model overrides, transcribes via selected provider
 10. Main copies transcript to clipboard, simulates Ctrl+V / Cmd+V via nut-js
 11. Main saves a `Conversation` record (text, language, model, profileId, duration)
 12. OverlayWindow shows transcribed text for 3s, then fades and sends `overlay:idle`
@@ -191,6 +192,8 @@ Settings stored via `electron-store`:
 | `overlay:state` | send → renderer | `"recording"` / `"processing"` / `"idle"` |
 | `overlay:result` | send → renderer | Transcription text |
 | `overlay:error` | send → renderer | Error message |
+| `overlay:levels` | send → renderer | Real-time `{rms, peak}` dB levels for audio visualization |
+| `overlay:resize` | send → main | Dynamic window resize `(width, height)` for long text |
 | `overlay:idle` | send → main | Overlay faded and returned to idle |
 
 ## Platform notes
@@ -217,17 +220,16 @@ Settings stored via `electron-store`:
 
 ## Do NOT touch
 
-- `main/hotkey.ts`, `main/paste.ts`, `main/transcriber.ts`, `main/tray.ts`
+- `main/hotkey.ts`, `main/paste.ts`, `main/tray.ts`
 - Audio capture pipeline (`audio.html`, `audio.ts`, `preload-audio.ts`)
-- Overlay window and renderer (`overlay.html`, `OverlayApp.tsx`, `preload-overlay.ts`)
 - The `window.whisper` shim in preload.ts (kept for safety)
 
 ## Dev setup
 
 ```bash
 npm install
-cp .env .env.local  # add your DEEPGRAM_API_KEY
+cp .env .env.local  # add at least one provider key: GROQ_API_KEY, DEEPGRAM_API_KEY, OPENAI_API_KEY
 npm run dev          # starts electron-vite dev server
 npm run build        # production build
-npm run dist         # package installer
+npm run dist         # package installer + publish to GitHub releases (requires GH_TOKEN)
 ```
