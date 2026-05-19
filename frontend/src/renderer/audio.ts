@@ -145,7 +145,7 @@ async function startRecording(): Promise<void> {
       }
     };
 
-    mediaRecorder.start(100);
+    mediaRecorder.start(250);
     startLevelUpdates();
   } catch (err) {
     console.error("Failed to start recording:", err);

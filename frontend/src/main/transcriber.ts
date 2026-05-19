@@ -7,6 +7,8 @@ let liveClient: any = null;
 let realtimeTranscript = "";
 let realtimeChunkCount = 0;
 let realtimeMessageCount = 0;
+const earlyChunkBuffer: ArrayBuffer[] = [];
+let liveSocketReady = false;
 
 const MEDICAL_KEYWORDS = [
   "metformin:2", "amlodipine:2", "clopidogrel:2", "levothyroxine:2",
@@ -134,9 +136,17 @@ export async function startRealtimeTranscription(
   realtimeTranscript = "";
   realtimeChunkCount = 0;
   realtimeMessageCount = 0;
+  earlyChunkBuffer.length = 0;
+  liveSocketReady = false;
 
   liveClient.on("open", () => {
-    console.log("[Wavely RT] WebSocket open event fired.");
+    console.log(`[Wavely RT] WebSocket open event fired — flushing ${earlyChunkBuffer.length} buffered chunks.`);
+    liveSocketReady = true;
+    for (const chunk of earlyChunkBuffer) {
+      liveClient.sendMedia(Buffer.from(chunk));
+      realtimeChunkCount++;
+    }
+    earlyChunkBuffer.length = 0;
   });
 
   liveClient.on("message", (data: any) => {
@@ -194,12 +204,17 @@ export async function startRealtimeTranscription(
 }
 
 export function sendRealtimeChunk(buffer: ArrayBuffer): void {
-  if (liveClient && liveClient.readyState === 1) {
+  if (liveClient && liveSocketReady && liveClient.readyState === 1) {
     realtimeChunkCount++;
     if (realtimeChunkCount === 1) {
       console.log(`[Wavely RT] First chunk sent — ${buffer.byteLength} bytes`);
     }
     liveClient.sendMedia(Buffer.from(buffer));
+  } else if (liveClient && !liveSocketReady) {
+    earlyChunkBuffer.push(buffer);
+    if (earlyChunkBuffer.length === 1 || earlyChunkBuffer.length % 10 === 0) {
+      console.log(`[Wavely RT] Chunk buffered — ${earlyChunkBuffer.length} chunks waiting for WebSocket open`);
+    }
   } else if (!liveClient) {
     console.log("[Wavely RT] Chunk dropped — liveClient is null");
   } else {
@@ -226,6 +241,8 @@ export function stopRealtimeTranscription(): Promise<string> {
       realtimeTranscript = "";
       realtimeChunkCount = 0;
       realtimeMessageCount = 0;
+      earlyChunkBuffer.length = 0;
+      liveSocketReady = false;
       resolve(final);
     });
 

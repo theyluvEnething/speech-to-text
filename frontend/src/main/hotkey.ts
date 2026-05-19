@@ -7,7 +7,6 @@ interface HotkeyState {
   onKeyDown: HotkeyCallback;
   onKeyUp: HotkeyCallback;
   isPressed: boolean;
-  pollTimer: ReturnType<typeof setInterval> | null;
 }
 
 let state: HotkeyState | null = null;
@@ -41,43 +40,6 @@ function uiohookAvailable(): boolean {
   }
 }
 
-function startPolling(): void {
-  if (!state) return;
-
-  let wasPressed = true;
-
-  state.pollTimer = setInterval(() => {
-    if (!state) return;
-
-    let isPressed = false;
-    try {
-      const { uIOhook } = require("uiohook-napi");
-      const keycode = UIOHOOK_KEY_MAP[state.currentKey];
-      if (keycode !== undefined) {
-        isPressed = uIOhook.keyIsPressed(keycode);
-      }
-    } catch {
-      // uiohook polling failed
-    }
-
-    if (wasPressed && !isPressed) {
-      state.isPressed = false;
-      console.log(`[Wavely] Push-to-talk key released -> stopping...`);
-      state.onKeyUp();
-      stopPolling();
-    }
-
-    wasPressed = isPressed;
-  }, 50);
-}
-
-function stopPolling(): void {
-  if (state?.pollTimer) {
-    clearInterval(state.pollTimer);
-    state.pollTimer = null;
-  }
-}
-
 export function registerHotkey(
   key: string,
   onKeyDown: HotkeyCallback,
@@ -92,7 +54,6 @@ export function registerHotkey(
     onKeyDown,
     onKeyUp,
     isPressed: false,
-    pollTimer: null,
   };
 
   if (!uiohookAvailable()) {
@@ -151,7 +112,6 @@ function registerGlobalShortcutFallback(key: string): void {
         recording = false;
         console.log(`[Wavely] Toggle mode: recording OFF (${accelerator})`);
         state?.onKeyUp();
-        stopPolling();
       }
     });
     console.log(`[Wavely] Hotkey registered via globalShortcut toggle: ${accelerator}`);
@@ -169,8 +129,6 @@ export function updateHotkey(key: string): void {
 }
 
 export function unregisterAll(): void {
-  stopPolling();
-
   try {
     const { uIOhook } = require("uiohook-napi");
     uIOhook.stop();

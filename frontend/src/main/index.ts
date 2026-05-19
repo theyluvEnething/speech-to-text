@@ -8,7 +8,6 @@ import { registerHotkey, unregisterAll } from "./hotkey";
 import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } from "./ipc-handlers";
 import { transcribe, fetchTemporaryKey, initDeepgramClient, startRealtimeTranscription, sendRealtimeChunk, stopRealtimeTranscription } from "./transcriber";
 import { pasteText } from "./paste";
-import { correctTranscript } from "./llm";
 
 const httpAgent = new http.Agent({ keepAlive: true });
 const httpsAgent = new https.Agent({ keepAlive: true });
@@ -46,7 +45,7 @@ function sendOverlayState(newState: string): void {
   overlay?.webContents.send("overlay:state", newState, label);
 }
 
-async function startRecording(): Promise<void> {
+function startRecording(): void {
   if (store.get("isPaused")) {
     console.log("[Wavely] Recording blocked — app is paused.");
     return;
@@ -68,36 +67,34 @@ async function startRecording(): Promise<void> {
   console.log("[Wavely] Recording started...");
   sendOverlayState("recording");
 
+  audio?.webContents.send("audio:start");
+
   const mode = store.get("transcriptionMode");
 
   if (mode === "realtime") {
     rtChunkLogCounter = 0;
     const { language, model, modelTier } = resolveTranscribeOptions();
-    console.log(`[Wavely RT] Opening WebSocket before starting audio...`);
-    try {
-      await startRealtimeTranscription(
-        model,
-        modelTier,
-        language,
-        (interim) => {
-          console.log(`[Wavely RT] Interim callback — "${interim.slice(-60)}"`);
-        },
-        (_final) => {
-          console.log(`[Wavely RT] Final utterance — transcript so far: "${_final.slice(-60)}"`);
-        },
-      );
-      console.log("[Wavely RT] WebSocket ready, starting audio capture.");
-    } catch (err: unknown) {
+    console.log("[Wavely RT] Starting WebSocket (audio already capturing)...");
+    startRealtimeTranscription(
+      model,
+      modelTier,
+      language,
+      (interim) => {
+        console.log(`[Wavely RT] Interim callback — "${interim.slice(-60)}"`);
+      },
+      (_final) => {
+        console.log(`[Wavely RT] Final utterance — transcript so far: "${_final.slice(-60)}"`);
+      },
+    ).then(() => {
+      console.log("[Wavely RT] WebSocket ready — buffered chunks flushed.");
+    }).catch((err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("[Wavely] Realtime connection failed:", msg);
       audioActive = false;
       state = "idle";
       getOverlayWindow()?.webContents.send("overlay:error", msg);
-      return;
-    }
+    });
   }
-
-  audio?.webContents.send("audio:start");
 }
 
 function stopRecording(): void {
@@ -210,19 +207,10 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
   const prevClipboard = store.get("copyToClipboard") ? "" : clipboard.readText();
 
   transcribe(buffer, model, modelTier, language)
-    .then(async (rawText) => {
+    .then((rawText) => {
       if (rawText) {
-        console.log(`[Wavely] Raw -> "${rawText}"`);
-
-        const openaiKey = process.env["OPENAI_API_KEY"] || "";
-        let finalText = rawText;
-
-        if (openaiKey) {
-          console.log("[Wavely] Running LLM correction...");
-          finalText = await correctTranscript(rawText, langLabel, openaiKey);
-          console.log(`[Wavely] Corrected -> "${finalText}"`);
-        }
-        pasteText(finalText)
+        console.log(`[Wavely] -> "${rawText}"`);
+        pasteText(rawText)
           .then(() => {
             if (!store.get("copyToClipboard")) {
               clipboard.writeText(prevClipboard);
@@ -233,10 +221,10 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
             overlay?.webContents.send("overlay:error", `Text copied. Paste failed: ${err.message}`);
           });
         state = "showing-result";
-        overlay?.webContents.send("overlay:result", finalText);
+        overlay?.webContents.send("overlay:result", rawText);
         saveConversation({
           id: uuid(),
-          text: finalText,
+          text: rawText,
           language,
           model: modelLabel,
           profileId,
