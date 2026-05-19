@@ -24,4 +24,8 @@ contextBridge.exposeInMainWorld("audio", {
   sendLevels: (data: LevelData): void => {
     ipcRenderer.send("audio:levels", data);
   },
+
+  getApiKey: (): Promise<string> => {
+    return ipcRenderer.invoke("audio:getApiKey");
+  },
 });

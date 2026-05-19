@@ -19,7 +19,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/renderer/*"],
-      "@main/*": ["src/main/*"]
+      "@main/*": ["src/main/*"],
+      "@transcription/*": ["src/transcription/*"],
+      "@transcription/groq": ["src/transcription/groq/index"],
+      "@transcription/openai": ["src/transcription/openai/index"],
+      "@transcription/deepgram": ["src/transcription/deepgram/index"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

@@ -198,6 +198,11 @@ app.whenReady().then(() => {
     if (audioActive) stopRecording();
   });
 
+  // Serve API key to the transcription module on demand
+  ipcMain.handle("audio:getApiKey", () => {
+    return process.env["OPENAI_API_KEY"] || "";
+  });
+
   createAudioWindow();
   createOverlayWindow();
 

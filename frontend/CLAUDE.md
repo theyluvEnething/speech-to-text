@@ -37,6 +37,18 @@ speech-to-text/
 │   │   ├── ipc-handlers.ts   # IPC handlers + electron-store schema (profiles, conversations)
 │   │   ├── transcriber.ts    # Deepgram SDK wrapper
 │   │   └── paste.ts          # Clipboard write + Ctrl/Command+V
+│   ├── transcription/        # All API/WebRTC logic — modular, swappable providers
+│   │   ├── index.ts          # Re-exports from active provider
+│   │   ├── types.ts          # Shared types (TranscriptionCallback, ServerEvent)
+│   │   ├── groq/
+│   │   │   ├── index.ts          # Barrel re-exports
+│   │   │   ├── realtime-client.ts   # RealtimeTranscriber — WebRTC client
+│   │   │   ├── get-api-key.ts      # getApiKey() — env vars via IPC
+│   │   │   └── realtime-client.test.ts
+│   │   ├── openai/
+│   │   │   └── index.ts          # Placeholder — not yet implemented
+│   │   └── deepgram/
+│   │       └── index.ts          # Placeholder — not yet implemented
 │   ├── preload/
 │   │   ├── preload.ts        # Settings window bridge → window.wavely
 │   │   ├── preload-audio.ts  # Audio window bridge → window.audio

@@ -62,6 +62,7 @@ declare global {
     onStop(callback: () => void): void;
     sendBuffer(buffer: ArrayBuffer): void;
     sendLevels(data: LevelData): void;
+    getApiKey(): Promise<string>;
   }
 
   interface OverlayApi {
