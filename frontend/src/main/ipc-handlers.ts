@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from "electron";
 import Store from "electron-store";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import { updateHotkey } from "./hotkey";
 import { getSettingsWindow } from "./windows";
 
@@ -82,7 +82,7 @@ export function saveConversation(conv: Conversation): void {
 }
 
 function uuid(): string {
-  return uuidv4();
+  return randomUUID();
 }
 
 export function registerIpcHandlers(
