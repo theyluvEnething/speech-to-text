@@ -76,7 +76,7 @@ export function createOverlayWindow(): BrowserWindow {
     resizable: false,
     focusable: false,
     hasShadow: false,
-    backgroundColor: "#0a0a0a",
+    backgroundColor: "#00000000",
     webPreferences: {
       preload: PRELOAD_OVERLAY,
       contextIsolation: true,
