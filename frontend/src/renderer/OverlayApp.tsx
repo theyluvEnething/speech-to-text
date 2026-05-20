@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Globe, Sparkles, Settings, Check } from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
-import { useHoverExpand } from "@/hooks/useHoverExpand";
+import { useProximity } from "./hooks/useProximity";
 
 type PopupStatus = "idle" | "recording" | "transcribing" | "inserting";
 
@@ -120,9 +120,14 @@ function LanguagePopover({
         <Popover.Content
           side="top"
           align="center"
-          sideOffset={10}
-          collisionPadding={16}
-          className="z-50 min-w-[180px] rounded-xl bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-150"
+          sideOffset={12}
+          collisionPadding={8}
+          avoidCollisions
+          className="z-[9999] min-w-[180px] rounded-xl bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-150"
+          style={{
+            maxWidth: "calc(100vw - 32px)",
+            pointerEvents: "auto",
+          }}
         >
           <div className="space-y-0.5">
             {recentProfiles.map((profile) => (
@@ -173,8 +178,8 @@ function SideButton({
         visible
           ? "opacity-100 scale-100 pointer-events-auto"
           : side === "left"
-            ? "opacity-0 -translate-x-1 scale-75 pointer-events-none"
-            : "opacity-0 translate-x-1 scale-75 pointer-events-none"
+            ? "opacity-0 -translate-x-2 scale-75 pointer-events-none"
+            : "opacity-0 translate-x-2 scale-75 pointer-events-none"
       }`}
       style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.4, 0.64, 1)" }}
     >
@@ -194,22 +199,37 @@ function SideButton({
         {children}
       </button>
 
-      <div
-        className={`absolute left-1/2 -translate-x-1/2 -top-2 text-white/60 transition-opacity duration-150 ${
-          hover ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-          <path d="M5 0L10 6H0L5 0Z" fill="currentColor" />
-        </svg>
-      </div>
+      {/* Tooltip with fixed positioning relative to viewport */}
+      {hover && (
+        <div
+          className="fixed z-[10000] px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 whitespace-nowrap pointer-events-none"
+          style={{
+            left: "50%",
+            transform: "translateX(-50%)",
+            top: "calc(var(--y, 0px) - 32px)",
+          }}
+        />
+      )}
 
+      {/* Custom positioned tooltip using absolute positioning with higher z-index and overflow visible */}
       <div
-        className={`absolute left-1/2 -translate-x-1/2 -top-10 whitespace-nowrap px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 transition-all duration-150 ${
+        className={`absolute left-1/2 -translate-x-1/2 -top-[38px] whitespace-nowrap px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 transition-all duration-150 z-[9999] pointer-events-none shadow-lg ${
           hover ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"
         }`}
+        style={{
+          left: "50%",
+          transform: "translateX(-50%)",
+          top: "-38px",
+          willChange: "opacity, transform",
+        }}
       >
         {tooltip}
+        {/* Triangle arrow */}
+        <div className="absolute left-1/2 -translate-x-1/2 -bottom-[5px]">
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+            <path d="M5 6L10 0H0L5 6Z" fill="rgba(0,0,0,0.9)" />
+          </svg>
+        </div>
       </div>
     </div>
   );
@@ -224,7 +244,7 @@ function OverlayApp(): React.ReactElement {
   );
 
   const barRef = useRef<HTMLDivElement>(null);
-  const isNear = useHoverExpand(barRef, 90);
+  const isNear = useProximity(barRef, 90);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -250,8 +270,9 @@ function OverlayApp(): React.ReactElement {
     if (!el) return;
     const pillW = el.offsetWidth + 32;
     const pillH = el.offsetHeight + 32;
-    const w = Math.max(140, Math.min(700, pillW));
-    const h = Math.max(200, Math.min(400, pillH));
+    // Increase max dimensions to accommodate tooltips and popovers
+    const w = Math.max(140, Math.min(800, pillW));
+    const h = Math.max(200, Math.min(600, pillH));
     if (w !== lastResize.current.w || h !== lastResize.current.h) {
       lastResize.current = { w, h };
       window.overlay.requestResize(w, h);
@@ -260,7 +281,7 @@ function OverlayApp(): React.ReactElement {
 
   useEffect(() => {
     requestAnimationFrame(() => requestResize());
-  }, [text, status, requestResize]);
+  }, [text, status, isNear, requestResize]); // Add isNear to trigger resize when proximity changes
 
   useEffect(() => {
     window.overlay.onState((newState: string, _displayLabel: string) => {
@@ -268,6 +289,7 @@ function OverlayApp(): React.ReactElement {
         clearResultTimer();
         setStatus("recording");
         setElapsed(0);
+        if (timer.current) clearInterval(timer.current);
         timer.current = setInterval(() => {
           setElapsed((e) => e + 0.1);
         }, 100);
@@ -324,7 +346,9 @@ function OverlayApp(): React.ReactElement {
   }, [clearResultTimer, goIdle]);
 
   const isActive = status !== "idle";
-  const expanded = isActive || isNear;
+  // Only expand if actively recording/transcribing/inserting OR hovering near
+  // But when idle and not near, it should stay collapsed
+  const expanded = isActive || (status === "idle" && isNear);
   const activeStatus = isActive ? status : null;
   const meta = activeStatus ? statusColor[activeStatus] : null;
   const showSideButtons =
@@ -353,12 +377,13 @@ function OverlayApp(): React.ReactElement {
   };
 
   return (
-    <div className="flex items-center justify-center w-full h-full p-4">
+    <div className="flex items-center justify-center w-full h-full p-4 overflow-visible">
       <div
         ref={contentRef}
-        className="relative inline-flex flex-col items-center gap-3"
+        className="relative inline-flex flex-col items-center gap-3 overflow-visible"
+        style={{ overflow: "visible" }}
       >
-        <div ref={barRef} className="flex items-center gap-2">
+        <div ref={barRef} className="flex items-center gap-2 overflow-visible">
           <LanguagePopover>
             <SideButton
               visible={showSideButtons}
@@ -408,7 +433,8 @@ function OverlayApp(): React.ReactElement {
                 </span>
               </>
             )}
-            {!activeStatus && isNear && <DottedLine />}
+            {status === "idle" && expanded && <DottedLine />}
+            {status === "idle" && !expanded && null}
           </div>
 
           <SideButton
