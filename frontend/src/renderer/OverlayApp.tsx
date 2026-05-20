@@ -225,7 +225,17 @@ function OverlayApp(): React.ReactElement {
   );
 
   const barRef = useRef<HTMLDivElement>(null);
-  const isNear = useProximity(barRef, 300, 60);
+
+  const isActive = status !== "idle";
+  // Dynamic bounding box based on pill state — hysteresis prevents edge-of-box flickering
+  const [isNear, setIsNear] = useState(false);
+  const isExpanded = isActive || (status === "idle" && isNear);
+  const boundingBoxWidth = isExpanded ? 300 : 100;
+  const boundingBoxHeight = isExpanded ? 60 : 40;
+  const proximityResult = useProximity(barRef, boundingBoxWidth, boundingBoxHeight);
+  useEffect(() => {
+    setIsNear(proximityResult);
+  }, [proximityResult]);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -249,8 +259,8 @@ function OverlayApp(): React.ReactElement {
   const requestResize = useCallback(() => {
     const el = contentRef.current;
     if (!el) return;
-    const pillW = el.offsetWidth + 32;
-    const pillH = el.offsetHeight + 32;
+    const pillW = el.offsetWidth + 92;
+    const pillH = el.offsetHeight + 92;
     // Increase max dimensions to accommodate tooltips and popovers
     const w = Math.max(130, Math.min(920, pillW));
     const h = Math.max(185, Math.min(644, pillH));
@@ -326,9 +336,6 @@ function OverlayApp(): React.ReactElement {
     };
   }, [clearResultTimer, goIdle]);
 
-  const isActive = status !== "idle";
-  // Only expand if actively recording/transcribing/inserting OR hovering near
-  // But when idle and not near, it should stay collapsed
   const expanded = isActive || (status === "idle" && isNear);
   const activeStatus = isActive ? status : null;
   const meta = activeStatus ? statusColor[activeStatus] : null;
