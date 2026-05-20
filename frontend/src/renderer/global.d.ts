@@ -75,7 +75,6 @@ declare global {
     onError(callback: (msg: string) => void): void;
     onLevels(callback: (levels: { rms: number; peak: number }) => void): void;
     sendIdle(): void;
-    requestResize(width: number, height: number): void;
     startRecording(): void;
     stopRecording(): void;
     setClickThrough(passthrough: boolean): Promise<void>;

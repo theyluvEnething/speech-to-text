@@ -21,10 +21,6 @@ contextBridge.exposeInMainWorld("overlay", {
     ipcRenderer.send("overlay:idle");
   },
 
-  requestResize: (width: number, height: number): void => {
-    ipcRenderer.send("overlay:resize", width, height);
-  },
-
   setClickThrough: (passthrough: boolean): Promise<void> => {
     return ipcRenderer.invoke("overlay:setClickThrough", passthrough);
   },

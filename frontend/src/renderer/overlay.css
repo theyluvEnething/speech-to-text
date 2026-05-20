@@ -6,7 +6,7 @@ html, body, #root {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: transparent;
-  user-select: none;
+  background: #0a0a0a;
+  border-radius: 20px;
   overflow: hidden;
 }

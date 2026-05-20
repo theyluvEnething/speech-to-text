@@ -60,19 +60,21 @@ export function createOverlayWindow(): BrowserWindow {
   }
 
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const FIXED_WIDTH = 340;
+  const FIXED_HEIGHT = 190;
 
   overlayWindow = new BrowserWindow({
-    width: 920,
-    height: 644,
-    x: Math.round((screenWidth - 920) / 2),
-    y: screenHeight - 92 - 644,
+    width: FIXED_WIDTH,
+    height: FIXED_HEIGHT,
+    x: Math.round((screenWidth - FIXED_WIDTH) / 2),
+    y: screenHeight - 92 - FIXED_HEIGHT,
     frame: false,
     transparent: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
     focusable: false,
-    hasShadow: false,
+    hasShadow: true,
     backgroundColor: "#0a0a0a",
     webPreferences: {
       preload: PRELOAD_OVERLAY,
@@ -98,10 +100,7 @@ export function createOverlayWindow(): BrowserWindow {
   // Reposition and re-assert alwaysOnTop when the window is shown (e.g. after alt-tab)
   overlayWindow.on("show", () => {
     const { width: w, height: h } = screen.getPrimaryDisplay().workAreaSize;
-    const bounds = overlayWindow?.getBounds();
-    const winW = bounds?.width ?? 920;
-    const winH = bounds?.height ?? 644;
-    overlayWindow?.setPosition(Math.round((w - winW) / 2), h - 92 - winH);
+    overlayWindow?.setPosition(Math.round((w - FIXED_WIDTH) / 2), h - 92 - FIXED_HEIGHT);
     overlayWindow?.setAlwaysOnTop(true, "screen-saver");
   });
 

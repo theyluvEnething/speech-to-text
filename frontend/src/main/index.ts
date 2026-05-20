@@ -1,4 +1,4 @@
-import { app, ipcMain, clipboard, screen } from "electron";
+import { app, ipcMain, clipboard } from "electron";
 import { autoUpdater } from "electron-updater";
 import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow } from "./windows";
 import { createTray } from "./tray";
@@ -210,28 +210,6 @@ app.whenReady().then(() => {
       if (!win.webContents.isLoading()) {
         win.webContents.send("settings:switchTab", tab);
       }
-    }
-  });
-
-  // Dynamic overlay window resize (debounced to prevent race conditions
-  // with proximity detection during expand/collapse transitions)
-  let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
-  ipcMain.on("overlay:resize", (_event, width: number, height: number) => {
-    const overlay = getOverlayWindow();
-    if (overlay && !overlay.isDestroyed()) {
-      if (resizeTimeout) clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-        const bottomMargin = 92;
-        const newY = Math.round(screenHeight - bottomMargin - height);
-        overlay.setBounds({
-          x: Math.round((screenWidth - width) / 2),
-          y: newY,
-          width,
-          height,
-        });
-        resizeTimeout = null;
-      }, 50);
     }
   });
 

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Globe, Sparkles, Settings, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProximity } from "./hooks/useProximity";
+import { springPresets } from "./animations/presets";
 
 type PopupStatus = "idle" | "recording" | "transcribing" | "inserting";
 
@@ -35,23 +37,25 @@ const statusColor: Record<
 };
 
 function Waveform({ rms }: { rms: number }): React.ReactElement {
-  const bars = 12;
   const volumeNorm = Math.max(0, Math.min(1, (rms + 60) / 60));
+  const targetHeight = 2 + volumeNorm * 20;
+
   return (
-    <div className="flex items-center gap-[2px] h-4">
-      {Array.from({ length: bars }).map((_, i) => {
-        const positionFactor = 1 - Math.abs(i - 5.5) * 0.12;
-        const noise = (Math.random() - 0.5) * 2 * volumeNorm * 6;
-        const h = Math.max(2, (2 + volumeNorm * 12) * positionFactor + noise);
-        return (
-          <span
-            key={i}
-            className="w-[2px] rounded-full bg-red-400"
-            style={{ height: `${h}px`, transition: "height 100ms ease-out" }}
-          />
-        );
-      })}
-    </div>
+    <motion.div className="flex items-center gap-[2px] h-4">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <motion.span
+          key={i}
+          className="w-[2px] rounded-full bg-red-400"
+          animate={{ height: targetHeight }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 20,
+            mass: 0.3,
+          }}
+        />
+      ))}
+    </motion.div>
   );
 }
 
@@ -63,15 +67,35 @@ function Spinner(): React.ReactElement {
 
 function DottedLine(): React.ReactElement {
   return (
-    <div className="flex items-center justify-center gap-[3px]">
+    <motion.div
+      className="flex items-center justify-center gap-[3px]"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        visible: {
+          transition: { staggerChildren: 0.03, delayChildren: 0.1 },
+        },
+      }}
+    >
       {Array.from({ length: 18 }).map((_, i) => (
-        <span
+        <motion.span
           key={i}
           className="w-[2.5px] h-[2.5px] rounded-full bg-white/40"
-          style={{ opacity: 0.4 + 0.6 * Math.sin((i / 17) * Math.PI) }}
+          variants={{
+            hidden: { opacity: 0.2, scale: 0.5 },
+            visible: {
+              opacity: [0.2, 0.8, 0.2],
+              scale: [0.5, 1.2, 0.5],
+              transition: {
+                duration: 0.8,
+                repeat: Infinity,
+                delay: i * 0.03,
+              },
+            },
+          }}
         />
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -157,15 +181,11 @@ function LanguagePopover({
 }
 
 function SideButton({
-  visible,
-  side,
   tooltip,
   onClick,
   ariaLabel,
   children,
 }: {
-  visible: boolean;
-  side: "left" | "right";
   tooltip: React.ReactNode;
   onClick?: () => void;
   ariaLabel: string;
@@ -173,45 +193,34 @@ function SideButton({
 }): React.ReactElement {
   return (
     <Tooltip.Provider delayDuration={200}>
-      <div
-        className={`relative overflow-visible transition-all duration-[450ms] ${
-          visible
-            ? "opacity-100 scale-100 pointer-events-auto"
-            : side === "left"
-              ? "opacity-0 -translate-x-2 scale-75 pointer-events-none"
-              : "opacity-0 translate-x-2 scale-75 pointer-events-none"
-        }`}
-        style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.4, 0.64, 1)" }}
-      >
-        <Tooltip.Root>
-          <Tooltip.Trigger asChild>
-            <button
-              type="button"
-              aria-label={ariaLabel}
-              onClick={onClick}
-              className="size-7 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
-              style={{
-                background: "rgba(23,23,23,0.9)",
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.06)",
-              }}
-            >
-              {children}
-            </button>
-          </Tooltip.Trigger>
-          <Tooltip.Portal>
-            <Tooltip.Content
-              side="top"
-              sideOffset={8}
-              collisionPadding={16}
-              className="z-[9999] px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 shadow-lg animate-in fade-in zoom-in-95 duration-150"
-            >
-              {tooltip}
-              <Tooltip.Arrow className="fill-black/90" />
-            </Tooltip.Content>
-          </Tooltip.Portal>
-        </Tooltip.Root>
-      </div>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <button
+            type="button"
+            aria-label={ariaLabel}
+            onClick={onClick}
+            className="size-7 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
+            style={{
+              background: "rgba(23,23,23,0.9)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            {children}
+          </button>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content
+            side="top"
+            sideOffset={8}
+            collisionPadding={16}
+            className="z-[9999] px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 shadow-lg animate-in fade-in zoom-in-95 duration-150"
+          >
+            {tooltip}
+            <Tooltip.Arrow className="fill-black/90" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
     </Tooltip.Provider>
   );
 }
@@ -227,20 +236,11 @@ function OverlayApp(): React.ReactElement {
   const barRef = useRef<HTMLDivElement>(null);
 
   const isActive = status !== "idle";
-  // Dynamic bounding box based on pill state — hysteresis prevents edge-of-box flickering
-  const [isNear, setIsNear] = useState(false);
-  const isExpanded = isActive || (status === "idle" && isNear);
-  const boundingBoxWidth = isExpanded ? 300 : 100;
-  const boundingBoxHeight = isExpanded ? 60 : 40;
-  const proximityResult = useProximity(barRef, boundingBoxWidth, boundingBoxHeight);
-  useEffect(() => {
-    setIsNear(proximityResult);
-  }, [proximityResult]);
+  const isNear = useProximity(barRef, 280, 80);
+  const expanded = isActive || (status === "idle" && isNear);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const lastResize = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
 
   const clearResultTimer = useCallback(() => {
     if (resultTimeout.current) {
@@ -255,24 +255,6 @@ function OverlayApp(): React.ReactElement {
     setText("");
     window.overlay.sendIdle();
   }, [clearResultTimer]);
-
-  const requestResize = useCallback(() => {
-    const el = contentRef.current;
-    if (!el) return;
-    const pillW = el.offsetWidth + 92;
-    const pillH = el.offsetHeight + 92;
-    // Increase max dimensions to accommodate tooltips and popovers
-    const w = Math.max(130, Math.min(920, pillW));
-    const h = Math.max(185, Math.min(644, pillH));
-    if (w !== lastResize.current.w || h !== lastResize.current.h) {
-      lastResize.current = { w, h };
-      window.overlay.requestResize(w, h);
-    }
-  }, []);
-
-  useEffect(() => {
-    requestAnimationFrame(() => requestResize());
-  }, [text, status, isNear, requestResize]); // Add isNear to trigger resize when proximity changes
 
   useEffect(() => {
     window.overlay.onState((newState: string, _displayLabel: string) => {
@@ -336,7 +318,6 @@ function OverlayApp(): React.ReactElement {
     };
   }, [clearResultTimer, goIdle]);
 
-  const expanded = isActive || (status === "idle" && isNear);
   const activeStatus = isActive ? status : null;
   const meta = activeStatus ? statusColor[activeStatus] : null;
   const showSideButtons =
@@ -345,12 +326,6 @@ function OverlayApp(): React.ReactElement {
 
   const displayText =
     text.length > 300 ? text.slice(0, 300) + "..." : text;
-  const barWidthClass =
-    activeStatus === "inserting" && displayText.length > 30
-      ? "min-w-[200px] max-w-[500px]"
-      : expanded
-        ? "min-w-[180px]"
-        : "w-[80px]";
 
   const handleBarClick = () => {
     if (status === "idle") {
@@ -367,93 +342,109 @@ function OverlayApp(): React.ReactElement {
   return (
     <div className="flex items-center justify-center w-full h-full p-4 overflow-visible">
       <div
-        ref={contentRef}
-        className="relative inline-flex flex-col items-center gap-3 overflow-visible"
-        style={{ overflow: "visible" }}
+        ref={barRef}
+        className="flex items-center gap-2 overflow-visible"
       >
-        <div ref={barRef} className="flex items-center gap-2 overflow-visible">
-          <LanguagePopover>
-            <SideButton
-              visible={showSideButtons}
-              side="left"
-              tooltip="Change profile"
-              ariaLabel="Change profile"
+        <AnimatePresence>
+          {showSideButtons && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7, x: -15 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.7, x: -15 }}
+              transition={{ ...springPresets.button, delay: 0.05 }}
             >
-              <Globe className="size-[14px]" strokeWidth={2.25} />
-            </SideButton>
-          </LanguagePopover>
+              <LanguagePopover>
+                <SideButton
+                  tooltip="Change profile"
+                  ariaLabel="Change profile"
+                >
+                  <Globe className="size-[14px]" strokeWidth={2.25} />
+                </SideButton>
+              </LanguagePopover>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <div
-            onClick={handleBarClick}
-            className={`relative overflow-visible flex items-center justify-center gap-2
-              bg-neutral-900/90 backdrop-blur-md border border-white/6
-              transition-all duration-[450ms] rounded-full cursor-pointer
-              ${expanded ? `h-9 ${barWidthClass} px-4` : "h-[15px] w-[75px] px-3 opacity-60"}
-              ${meta ? meta.ring : ""}`}
-            style={{
-              transitionTimingFunction: "cubic-bezier(0.34, 1.4, 0.64, 1)",
-            }}
-          >
-            {activeStatus === "recording" && (
-              <>
-                <Waveform rms={audioLevels.rms} />
-                <span className={`text-[13px] font-medium ${meta?.textColor}`}>
-                  Recording {elapsed.toFixed(1)}s
-                </span>
-              </>
-            )}
-            {activeStatus === "transcribing" && (
-              <>
-                <Spinner />
-                <span className={`text-[13px] font-medium ${meta?.textColor}`}>
-                  Transcribing
-                </span>
-              </>
-            )}
-            {activeStatus === "inserting" && (
-              <>
-                <Check
-                  className="size-4 text-emerald-400 shrink-0"
-                  strokeWidth={2.5}
-                />
-                <span className="text-[13px] font-medium text-white/90 truncate max-w-[440px]">
-                  {displayText}
-                </span>
-              </>
-            )}
-            {status === "idle" && expanded && <DottedLine />}
-            {status === "idle" && !expanded && null}
-          </div>
-
-          <SideButton
-            visible={showSideButtons}
-            side="right"
-            tooltip={
-              hasText ? (
-                <>
-                  Click or press{" "}
-                  <span className="bg-gradient-to-r from-fuchsia-300 to-pink-300 bg-clip-text text-transparent font-semibold">
-                    Win Alt 1
-                  </span>{" "}
-                  to polish
-                </>
-              ) : (
-                "Open settings"
-              )
-            }
-            onClick={hasText ? undefined : handleOpenSettings}
-            ariaLabel={hasText ? "Polish text" : "Open settings"}
-          >
-            {hasText ? (
-              <Sparkles
-                className="size-[14px] text-pink-300"
-                strokeWidth={2.25}
+        <motion.div
+          layout
+          onClick={handleBarClick}
+          className={`flex items-center justify-center gap-2 bg-neutral-900/90 backdrop-blur-md border border-white/6 rounded-full cursor-pointer ${
+            expanded ? "h-9 px-4" : "h-[15px] w-[75px] px-3"
+          }`}
+          animate={{ opacity: expanded ? 1 : 0.6 }}
+          transition={springPresets.pill}
+          style={{
+            boxShadow: meta ? meta.ring : undefined,
+          }}
+        >
+          {activeStatus === "recording" && (
+            <>
+              <Waveform rms={audioLevels.rms} />
+              <span className={`text-[13px] font-medium ${meta?.textColor}`}>
+                Recording {elapsed.toFixed(1)}s
+              </span>
+            </>
+          )}
+          {activeStatus === "transcribing" && (
+            <>
+              <Spinner />
+              <span className={`text-[13px] font-medium ${meta?.textColor}`}>
+                Transcribing
+              </span>
+            </>
+          )}
+          {activeStatus === "inserting" && (
+            <>
+              <Check
+                className="size-4 text-emerald-400 shrink-0"
+                strokeWidth={2.5}
               />
-            ) : (
-              <Settings className="size-[14px]" strokeWidth={2.25} />
-            )}
-          </SideButton>
-        </div>
+              <span className="text-[13px] font-medium text-white/90 truncate max-w-[240px]">
+                {displayText}
+              </span>
+            </>
+          )}
+          {status === "idle" && expanded && <DottedLine />}
+          {status === "idle" && !expanded && null}
+        </motion.div>
+
+        <AnimatePresence>
+          {showSideButtons && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7, x: 15 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.7, x: 15 }}
+              transition={{ ...springPresets.button, delay: 0.05 }}
+            >
+              <SideButton
+                tooltip={
+                  hasText ? (
+                    <>
+                      Click or press{" "}
+                      <span className="bg-gradient-to-r from-fuchsia-300 to-pink-300 bg-clip-text text-transparent font-semibold">
+                        Win Alt 1
+                      </span>{" "}
+                      to polish
+                    </>
+                  ) : (
+                    "Open settings"
+                  )
+                }
+                onClick={hasText ? undefined : handleOpenSettings}
+                ariaLabel={hasText ? "Polish text" : "Open settings"}
+              >
+                {hasText ? (
+                  <Sparkles
+                    className="size-[14px] text-pink-300"
+                    strokeWidth={2.25}
+                  />
+                ) : (
+                  <Settings className="size-[14px]" strokeWidth={2.25} />
+                )}
+              </SideButton>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
