@@ -328,7 +328,7 @@ function OverlayApp(): React.ReactElement {
   const hasText = text.length > 0;
 
   const displayText =
-    text.length > 300 ? text.slice(0, 300) + "..." : text;
+    text.length > 40 ? text.slice(0, 40) + "..." : text;
 
   const handleBarClick = () => {
     if (status === "idle") {
