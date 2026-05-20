@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef, RefObject } from "react";
 
-export function useProximity(ref: RefObject<HTMLElement>, radius: number): boolean {
+export function useProximity(
+  ref: RefObject<HTMLElement>,
+  width: number,
+  height: number,
+): boolean {
   const [isNear, setIsNear] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -8,6 +12,8 @@ export function useProximity(ref: RefObject<HTMLElement>, radius: number): boole
     const element = ref.current;
     if (!element) return;
 
+    const halfW = width / 2;
+    const halfH = height / 2;
     let rafId: number | null = null;
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -21,8 +27,9 @@ export function useProximity(ref: RefObject<HTMLElement>, radius: number): boole
         const rect = element.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
-        const distance = Math.hypot(e.clientX - centerX, e.clientY - centerY);
-        const near = distance <= radius;
+        const near =
+          Math.abs(e.clientX - centerX) <= halfW &&
+          Math.abs(e.clientY - centerY) <= halfH;
 
         setIsNear(near);
         window.overlay.setClickThrough(!near);
@@ -48,7 +55,7 @@ export function useProximity(ref: RefObject<HTMLElement>, radius: number): boole
       if (rafId) cancelAnimationFrame(rafId);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [ref, radius]);
+  }, [ref, width, height]);
 
   return isNear;
 }

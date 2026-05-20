@@ -218,7 +218,7 @@ app.whenReady().then(() => {
     const overlay = getOverlayWindow();
     if (overlay && !overlay.isDestroyed()) {
       const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-      const bottomMargin = 48;
+      const bottomMargin = 100;
       const newY = Math.round(screenHeight - bottomMargin - height);
       overlay.setBounds({
         x: Math.round((screenWidth - width) / 2),

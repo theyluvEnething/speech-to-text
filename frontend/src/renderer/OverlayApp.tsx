@@ -174,7 +174,7 @@ function SideButton({
 
   return (
     <div
-      className={`relative transition-all duration-[450ms] ${
+      className={`relative overflow-visible transition-all duration-[450ms] ${
         visible
           ? "opacity-100 scale-100 pointer-events-auto"
           : side === "left"
@@ -244,7 +244,7 @@ function OverlayApp(): React.ReactElement {
   );
 
   const barRef = useRef<HTMLDivElement>(null);
-  const isNear = useProximity(barRef, 90);
+  const isNear = useProximity(barRef, 300, 100);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -271,8 +271,8 @@ function OverlayApp(): React.ReactElement {
     const pillW = el.offsetWidth + 32;
     const pillH = el.offsetHeight + 32;
     // Increase max dimensions to accommodate tooltips and popovers
-    const w = Math.max(140, Math.min(800, pillW));
-    const h = Math.max(200, Math.min(600, pillH));
+    const w = Math.max(140, Math.min(900, pillW));
+    const h = Math.max(200, Math.min(700, pillH));
     if (w !== lastResize.current.w || h !== lastResize.current.h) {
       lastResize.current = { w, h };
       window.overlay.requestResize(w, h);
@@ -397,7 +397,7 @@ function OverlayApp(): React.ReactElement {
 
           <div
             onClick={handleBarClick}
-            className={`relative overflow-hidden flex items-center justify-center gap-2
+            className={`relative overflow-visible flex items-center justify-center gap-2
               bg-neutral-900/90 backdrop-blur-md border border-white/6
               transition-all duration-[450ms] rounded-full cursor-pointer
               ${expanded ? `h-10 ${barWidthClass} px-4` : "h-[16px] w-[80px] px-3 opacity-60"}
