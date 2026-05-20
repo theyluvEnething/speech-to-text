@@ -4,6 +4,7 @@ import { join } from "path";
 let settingsWindow: BrowserWindow | null = null;
 let overlayWindow: BrowserWindow | null = null;
 let audioWindow: BrowserWindow | null = null;
+let overlayTransparent = true;
 
 const PRELOAD_SETTINGS = join(__dirname, "../preload/preload.js");
 const PRELOAD_OVERLAY = join(__dirname, "../preload/preload-overlay.js");
@@ -69,12 +70,12 @@ export function createOverlayWindow(): BrowserWindow {
     x: Math.round((screenWidth - FIXED_WIDTH) / 2),
     y: screenHeight - 92 - FIXED_HEIGHT,
     frame: false,
-    transparent: false,
+    transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
     focusable: false,
-    hasShadow: true,
+    hasShadow: false,
     backgroundColor: "#0a0a0a",
     webPreferences: {
       preload: PRELOAD_OVERLAY,
@@ -164,4 +165,13 @@ export function getSettingsWindow(): BrowserWindow | null {
     return settingsWindow;
   }
   return null;
+}
+
+export function toggleOverlayTransparency(transparent: boolean): void {
+  overlayTransparent = transparent;
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.setBackgroundColor(transparent ? "#00000000" : "#0a0a0a");
+    overlayWindow.setHasShadow(!transparent);
+    overlayWindow.webContents.send("overlay:transparency-changed", transparent);
+  }
 }

@@ -45,6 +45,9 @@ contextBridge.exposeInMainWorld("wavely", {
   },
 
 
+  toggleOverlayTransparency: (transparent: boolean): Promise<void> =>
+    ipcRenderer.invoke("overlay:toggleTransparency", transparent),
+
   checkForUpdates: (): Promise<{ available: boolean; version: string | null; error: string | null }> =>
     ipcRenderer.invoke("app:checkForUpdates"),
 

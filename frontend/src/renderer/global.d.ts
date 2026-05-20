@@ -47,6 +47,7 @@ declare global {
     closeWindow(): void;
     checkForUpdates(): Promise<{ available: boolean; version: string | null; error: string | null }>;
     downloadAndInstallUpdate(): Promise<void>;
+    toggleOverlayTransparency(transparent: boolean): Promise<void>;
 
     onSwitchTab(callback: (tab: string) => void): void;
     profiles: WavelyProfiles;
@@ -81,6 +82,7 @@ declare global {
     getProfiles(): Promise<Profile[]>;
     setActiveProfile(id: string): Promise<void>;
     showSettings(tab?: string): Promise<void>;
+    onTransparencyChanged(callback: (transparent: boolean) => void): void;
   }
 
   interface Window {

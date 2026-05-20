@@ -2,7 +2,7 @@ import { ipcMain, BrowserWindow } from "electron";
 import Store from "electron-store";
 import { randomUUID } from "crypto";
 import { updateHotkey } from "./hotkey";
-import { getSettingsWindow } from "./windows";
+import { getSettingsWindow, toggleOverlayTransparency } from "./windows";
 
 interface Profile {
   id: string;
@@ -217,6 +217,10 @@ export function registerIpcHandlers(
   // ── Overlay ───────────────────────────────────────────────
   ipcMain.on("overlay:idle", () => {
     onOverlayIdle();
+  });
+
+  ipcMain.handle("overlay:toggleTransparency", (_event, transparent: boolean) => {
+    toggleOverlayTransparency(transparent);
   });
 
   // ── Audio ─────────────────────────────────────────────────

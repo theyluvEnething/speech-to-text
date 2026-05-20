@@ -232,6 +232,7 @@ function OverlayApp(): React.ReactElement {
   const [audioLevels, setAudioLevels] = useState<{ rms: number; peak: number }>(
     { rms: -60, peak: -60 },
   );
+  const [overlayTransparent, setOverlayTransparent] = useState(true);
 
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -312,6 +313,10 @@ function OverlayApp(): React.ReactElement {
       setAudioLevels(levels);
     });
 
+    window.overlay.onTransparencyChanged((transparent: boolean) => {
+      setOverlayTransparent(transparent);
+    });
+
     return () => {
       if (timer.current) clearInterval(timer.current);
       clearResultTimer();
@@ -340,7 +345,10 @@ function OverlayApp(): React.ReactElement {
   };
 
   return (
-    <div className="flex items-center justify-center w-full h-full p-4 overflow-visible">
+    <div
+      className="flex items-center justify-center w-full h-full p-4 overflow-visible"
+      style={{ background: overlayTransparent ? "transparent" : "#0a0a0a" }}
+    >
       <div
         ref={barRef}
         className="flex items-center gap-2 overflow-visible"

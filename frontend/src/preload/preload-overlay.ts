@@ -44,4 +44,8 @@ contextBridge.exposeInMainWorld("overlay", {
   showSettings: (tab?: string): Promise<void> => {
     return ipcRenderer.invoke("overlay:showSettings", tab);
   },
+
+  onTransparencyChanged: (callback: (transparent: boolean) => void): void => {
+    ipcRenderer.on("overlay:transparency-changed", (_event, transparent: boolean) => callback(transparent));
+  },
 });
