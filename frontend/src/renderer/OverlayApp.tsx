@@ -1,66 +1,158 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Globe, Sparkles, Check } from "lucide-react";
 
-type OverlayState = "idle" | "recording" | "processing" | "result" | "error";
+type PopupStatus = "idle" | "hover" | "recording" | "transcribing" | "inserting";
 
-const BAR_COUNT = 5;
-
-function mapDbToHeight(db: number): number {
-  const clamped = Math.max(-60, Math.min(0, db));
-  const normalized = (clamped + 60) / 60;
-  return 3 + normalized * normalized * 22;
+interface NotificationPayload {
+  id: string;
+  title: string;
+  description?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  icon?: "bell" | "sparkles" | "globe";
 }
 
-function AudioBars({ rms, peak }: { rms: number; peak: number }): React.ReactElement {
-  const [heights, setHeights] = useState<number[]>([3, 4, 5, 4, 3]);
-  const prevRef = useRef<number[]>([3, 4, 5, 4, 3]);
+const statusColor: Record<
+  Exclude<PopupStatus, "idle" | "hover">,
+  { ring: string; textColor: string; iconColor: string }
+> = {
+  recording: {
+    ring: "shadow-[0_0_0_1.5px_rgba(239,68,68,0.9),0_0_24px_-2px_rgba(239,68,68,0.6)]",
+    textColor: "text-red-400",
+    iconColor: "bg-red-400",
+  },
+  transcribing: {
+    ring: "shadow-[0_0_0_1.5px_rgba(245,158,11,0.9),0_0_24px_-2px_rgba(245,158,11,0.6)]",
+    textColor: "text-amber-400",
+    iconColor: "border-amber-400/60",
+  },
+  inserting: {
+    ring: "shadow-[0_0_0_1.5px_rgba(34,197,94,0.9),0_0_24px_-2px_rgba(34,197,94,0.6)]",
+    textColor: "text-emerald-400",
+    iconColor: "text-emerald-400",
+  },
+};
 
-  useEffect(() => {
-    const baseHeight = mapDbToHeight(rms);
-    const volumeNorm = Math.max(0, Math.min(1, (rms + 60) / 60));
-    const chaos = volumeNorm * 0.6;
-
-    const next = Array.from({ length: BAR_COUNT }, (_, i) => {
-      const positionFactor = 1 - Math.abs(i - 2) * 0.15;
-      const noise = (Math.random() - 0.5) * 2 * chaos * 8;
-      const peakBoost = volumeNorm > 0.4 ? (Math.random() * peak * 0.03) : 0;
-      return Math.max(3, baseHeight * positionFactor + noise + peakBoost);
-    });
-
-    const smoothed = next.map((h, i) => {
-      const prev = prevRef.current[i] ?? h;
-      return prev + (h - prev) * 0.55;
-    });
-
-    prevRef.current = smoothed;
-    setHeights(smoothed);
-  }, [rms, peak]);
-
+function Waveform({ rms }: { rms: number }): React.ReactElement {
+  const bars = 12;
+  const volumeNorm = Math.max(0, Math.min(1, (rms + 60) / 60));
   return (
-    <div className="flex items-end gap-[3px] h-6">
-      {heights.map((h, i) => (
-        <div
+    <div className="flex items-center gap-[2px] h-4">
+      {Array.from({ length: bars }).map((_, i) => {
+        const positionFactor = 1 - Math.abs(i - 5.5) * 0.12;
+        const noise = (Math.random() - 0.5) * 2 * volumeNorm * 6;
+        const h = Math.max(2, (2 + volumeNorm * 12) * positionFactor + noise);
+        return (
+          <span
+            key={i}
+            className="w-[2px] rounded-full bg-red-400"
+            style={{ height: `${h}px`, transition: "height 100ms ease-out" }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function Spinner(): React.ReactElement {
+  return (
+    <div className="w-4 h-4 rounded-full border-2 border-amber-400/60 border-t-transparent animate-spin" />
+  );
+}
+
+function DottedLine(): React.ReactElement {
+  return (
+    <div className="flex items-center justify-center gap-[3px]">
+      {Array.from({ length: 18 }).map((_, i) => (
+        <span
           key={i}
-          className="w-[3px] rounded-full bg-red-400"
-          style={{
-            height: `${h}px`,
-            opacity: 0.5 + (Math.max(0, Math.min(1, (rms + 60) / 60))) * 0.5,
-            transition: "height 90ms ease-out, opacity 90ms ease-out",
-          }}
+          className="w-[2.5px] h-[2.5px] rounded-full bg-white/40"
+          style={{ opacity: 0.4 + 0.6 * Math.sin((i / 17) * Math.PI) }}
         />
       ))}
     </div>
   );
 }
 
+function SideButton({
+  visible,
+  side,
+  tooltip,
+  onClick,
+  ariaLabel,
+  children,
+}: {
+  visible: boolean;
+  side: "left" | "right";
+  tooltip: React.ReactNode;
+  onClick?: () => void;
+  ariaLabel: string;
+  children: React.ReactNode;
+}): React.ReactElement {
+  const [hover, setHover] = useState(false);
+
+  return (
+    <div
+      className={`relative transition-all duration-[450ms] ${
+        visible
+          ? "opacity-100 scale-100 pointer-events-auto"
+          : side === "left"
+            ? "opacity-0 -translate-x-1 scale-75 pointer-events-none"
+            : "opacity-0 translate-x-1 scale-75 pointer-events-none"
+      }`}
+      style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.4, 0.64, 1)" }}
+    >
+      <button
+        type="button"
+        aria-label={ariaLabel}
+        onClick={onClick}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        className="size-7 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
+        style={{
+          background: "rgba(23,23,23,0.9)",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        {children}
+      </button>
+
+      <div
+        className={`absolute left-1/2 -translate-x-1/2 -top-2 text-white/60 transition-opacity duration-150 ${
+          hover ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+          <path d="M5 0L10 6H0L5 0Z" fill="currentColor" />
+        </svg>
+      </div>
+
+      <div
+        className={`absolute left-1/2 -translate-x-1/2 -top-10 whitespace-nowrap px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 transition-all duration-150 ${
+          hover ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"
+        }`}
+      >
+        {tooltip}
+      </div>
+    </div>
+  );
+}
+
 function OverlayApp(): React.ReactElement {
-  const [state, setState] = useState<OverlayState>("idle");
+  const [status, setStatus] = useState<PopupStatus>("idle");
   const [label, setLabel] = useState("");
   const [text, setText] = useState("");
-  const [visible, setVisible] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [visible, setVisible] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [animKey, setAnimKey] = useState(0);
-  const [audioLevels, setAudioLevels] = useState<{ rms: number; peak: number }>({ rms: -60, peak: -60 });
+  const [audioLevels, setAudioLevels] = useState<{ rms: number; peak: number }>({
+    rms: -60,
+    peak: -60,
+  });
+  const [notification] = useState<NotificationPayload | null>(null);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -91,7 +183,7 @@ function OverlayApp(): React.ReactElement {
     setAnimKey((k) => k + 1);
     goIdleTimeout.current = setTimeout(() => {
       setVisible(false);
-      setState("idle");
+      setStatus("idle");
       setText("");
       setExiting(false);
       window.overlay.sendIdle();
@@ -112,23 +204,10 @@ function OverlayApp(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    if (visible && (state === "result" || state === "error")) {
-      requestAnimationFrame(() => {
-        requestResize();
-      });
+    if (visible) {
+      requestAnimationFrame(() => requestResize());
     }
-  }, [text, visible, state, requestResize]);
-
-  useEffect(() => {
-    if (visible && state === "recording") {
-      const w = 360;
-      const h = 80;
-      if (lastResize.current.w !== w || lastResize.current.h !== h) {
-        lastResize.current = { w, h };
-        window.overlay.requestResize(w, h);
-      }
-    }
-  }, [visible, state]);
+  }, [text, status, visible, requestResize]);
 
   useEffect(() => {
     window.overlay.onState((newState: string, displayLabel: string) => {
@@ -139,31 +218,40 @@ function OverlayApp(): React.ReactElement {
         const needsEnter = !wasVisible.current;
         wasVisible.current = true;
         setExiting(false);
-        setState("recording");
+        setStatus("recording");
         setVisible(true);
-        if (needsEnter) setAnimKey((k) => k + 1);
         setElapsed(0);
+        if (needsEnter) setAnimKey((k) => k + 1);
         timer.current = setInterval(() => {
           setElapsed((e) => e + 0.1);
         }, 100);
       } else if (newState === "processing") {
-        if (timer.current) { clearInterval(timer.current); timer.current = null; }
+        if (timer.current) {
+          clearInterval(timer.current);
+          timer.current = null;
+        }
         clearResultTimer();
         clearGoIdleTimeout();
         setExiting(false);
-        setState("processing");
+        setStatus("transcribing");
       } else if (newState === "idle") {
-        if (timer.current) { clearInterval(timer.current); timer.current = null; }
+        if (timer.current) {
+          clearInterval(timer.current);
+          timer.current = null;
+        }
         goIdle();
       }
     });
 
     window.overlay.onResult((resultText: string) => {
-      if (timer.current) { clearInterval(timer.current); timer.current = null; }
+      if (timer.current) {
+        clearInterval(timer.current);
+        timer.current = null;
+      }
       clearResultTimer();
       clearGoIdleTimeout();
       setExiting(false);
-      setState("result");
+      setStatus("inserting");
       setText(resultText);
       resultTimeout.current = setTimeout(() => {
         goIdle();
@@ -171,15 +259,18 @@ function OverlayApp(): React.ReactElement {
     });
 
     window.overlay.onError((msg: string) => {
-      if (timer.current) { clearInterval(timer.current); timer.current = null; }
+      if (timer.current) {
+        clearInterval(timer.current);
+        timer.current = null;
+      }
       clearResultTimer();
       clearGoIdleTimeout();
       setExiting(false);
-      setState("error");
+      setStatus("inserting");
       setText(msg);
       resultTimeout.current = setTimeout(() => {
         goIdle();
-      }, 3000);
+      }, 4000);
     });
 
     window.overlay.onLevels((levels) => {
@@ -193,79 +284,157 @@ function OverlayApp(): React.ReactElement {
     };
   }, [clearResultTimer, clearGoIdleTimeout, goIdle]);
 
+  const expanded =
+    status === "hover" ||
+    hovered ||
+    status === "recording" ||
+    status === "transcribing" ||
+    status === "inserting";
+  const activeStatus = ["recording", "transcribing", "inserting"].includes(status)
+    ? (status as "recording" | "transcribing" | "inserting")
+    : null;
+  const meta = activeStatus ? statusColor[activeStatus] : null;
+  const showSideButtons = expanded && !activeStatus;
+
   if (!visible) return <div />;
 
-  const isRecording = state === "recording";
-  const isProcessing = state === "processing";
-  const isResult = state === "result";
-  const isError = state === "error";
-
-  const borderColor = isRecording
-    ? "border-red-500/50"
-    : isProcessing
-      ? "border-amber-500/50"
-      : isError
-        ? "border-red-600/50"
-        : "border-emerald-500/30";
-
-  const glowColor = isRecording
-    ? "animate-glow-pulse"
-    : isProcessing
-      ? "shadow-[0_0_30px_rgba(245,158,11,0.15)]"
-      : isError
-        ? "shadow-[0_0_30px_rgba(220,38,38,0.15)]"
-        : "shadow-[0_0_30px_rgba(16,185,129,0.12)]";
-
-  const animClass = exiting
-    ? "animate-popup-exit"
-    : "animate-popup-enter";
+  const displayLabel = label || "Recording";
 
   return (
     <div className="flex items-end justify-center w-full h-full pb-2">
       <div
         key={animKey}
         ref={contentRef}
-        className={`flex items-center gap-4 px-5 py-3.5 rounded-2xl
-          bg-surface-900/90 backdrop-blur-2xl border
-          shadow-2xl shadow-black/40 ${glowColor} ${borderColor}
-          ${animClass}
-          max-w-[680px]`}
+        className={`relative inline-flex flex-col items-center gap-3 ${
+          exiting ? "animate-popup-exit" : "animate-popup-enter"
+        }`}
+        onMouseEnter={() => {
+          if (status === "idle") setHovered(true);
+        }}
+        onMouseLeave={() => {
+          if (status === "idle") setHovered(false);
+        }}
       >
-        {/* Left indicator */}
-        <div className="relative flex items-center justify-center w-8 h-8 shrink-0" key={`icon-${state}`}>
-          {isRecording ? (
-            <AudioBars rms={audioLevels.rms} peak={audioLevels.peak} />
-          ) : isProcessing ? (
-            <div className="w-5 h-5 rounded-full border-2 border-amber-400/60 border-t-transparent animate-spin animate-fade-in" />
-          ) : isError ? (
-            <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center animate-fade-in">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round">
-                <path d="M6 3.5v3M6 8v.5" />
-              </svg>
+        {notification && (
+          <div className="w-[300px] rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-white/6 shadow-2xl shadow-black/60 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-start gap-3">
+              <div className="size-8 grid place-items-center rounded-xl bg-fuchsia-500/15 text-fuchsia-300 shrink-0">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-medium text-white leading-tight">
+                  {notification.title}
+                </p>
+                <p className="mt-1 text-[12px] text-white/55 leading-snug">
+                  {notification.description}
+                </p>
+              </div>
+              <button
+                onClick={() => window.overlay.sendIdle()}
+                className="size-6 grid place-items-center rounded-full text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                aria-label="Dismiss"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center animate-fade-in">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round">
-                <path d="M2 4.5L5 8l5-5" />
-              </svg>
-            </div>
-          )}
-        </div>
+            {notification.actionLabel && (
+              <div className="mt-3 flex justify-end">
+                <button className="px-3 py-1.5 rounded-lg bg-white text-black text-[12px] font-medium hover:bg-white/90 transition-colors">
+                  {notification.actionLabel}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Center content */}
-        <div className="flex-1 min-w-0" key={`content-${state}`}>
-          {isRecording ? (
-            <div className="flex items-baseline gap-2 animate-fade-in">
-              <span className="text-sm font-semibold text-white">{label || "Recording"}</span>
-              <span className="text-xs text-surface-400 tabular-nums">{elapsed.toFixed(1)}s</span>
-            </div>
-          ) : isProcessing ? (
-            <p className="text-sm font-medium text-amber-300/90 animate-fade-in">{label || "Transcribing…"}</p>
-          ) : isError ? (
-            <p className="text-sm text-red-400/90 leading-snug break-words animate-fade-in">{text}</p>
-          ) : (
-            <p className="text-sm text-white/90 leading-snug break-words animate-fade-in">{text}</p>
-          )}
+        <div className="flex items-center gap-2">
+          <SideButton
+            visible={showSideButtons}
+            side="left"
+            tooltip="Change language"
+            onClick={() => window.overlay.sendIdle()}
+            ariaLabel="Change language"
+          >
+            <Globe className="size-[14px]" strokeWidth={2.25} />
+          </SideButton>
+
+          <div
+            className={`relative overflow-hidden flex items-center justify-center gap-2
+              bg-neutral-900/90 backdrop-blur-md border border-white/6
+              transition-all duration-[450ms] rounded-full
+              ${expanded ? "h-9 min-w-[180px] px-4" : "h-[14px] w-[80px] px-3 opacity-80"}
+              ${meta ? meta.ring : ""}`}
+            style={{
+              transitionTimingFunction: "cubic-bezier(0.34, 1.4, 0.64, 1)",
+              background: "rgba(23,23,23,0.9)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            {activeStatus === "recording" && (
+              <>
+                <Waveform rms={audioLevels.rms} />
+                <span className={`text-[13px] font-medium ${meta?.textColor}`}>
+                  {displayLabel} {elapsed.toFixed(1)}s
+                </span>
+              </>
+            )}
+            {activeStatus === "transcribing" && (
+              <>
+                <Spinner />
+                <span className={`text-[13px] font-medium ${meta?.textColor}`}>
+                  Transcribing
+                </span>
+              </>
+            )}
+            {activeStatus === "inserting" && (
+              <>
+                <Check className="size-4 text-emerald-400" strokeWidth={2.5} />
+                <span className="text-[13px] font-medium text-white/90 truncate max-w-[220px]">
+                  {text}
+                </span>
+              </>
+            )}
+            {!activeStatus && <DottedLine />}
+          </div>
+
+          <SideButton
+            visible={showSideButtons}
+            side="right"
+            tooltip={
+              <>
+                Click or press{" "}
+                <span className="bg-gradient-to-r from-fuchsia-300 to-pink-300 bg-clip-text text-transparent font-semibold">
+                  Win Alt 1
+                </span>{" "}
+                to polish
+              </>
+            }
+            onClick={() => window.overlay.sendIdle()}
+            ariaLabel="Polish text"
+          >
+            <Sparkles className="size-[14px] text-pink-300" strokeWidth={2.25} />
+          </SideButton>
         </div>
       </div>
     </div>
