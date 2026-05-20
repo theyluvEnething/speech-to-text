@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { MessageSquare, User, Settings, Mic, PanelLeftClose, PanelLeftOpen, Play, Pause, AppWindow } from "lucide-react";
+import { MessageSquare, User, Settings, Mic, PanelLeftClose, PanelLeftOpen, Play, Pause, AppWindow, Bug } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore, type Tab } from "@/store";
 import ProfileFooter from "@/components/ProfileFooter";
@@ -102,6 +102,26 @@ function Sidebar(): React.ReactElement {
           )}
           <AppWindow className={cn("h-4 w-4 shrink-0", activeTab === "app" ? "text-foreground/92" : "")} />
           {!collapsed && <span>{t("nav.app", "App")}</span>}
+        </button>
+
+        {/* Debug tab */}
+        <button
+          onClick={() => setActiveTab("debug")}
+          title={collapsed ? "Debug" : undefined}
+          className={cn(
+            "flex items-center gap-2.5 w-full h-8 rounded-md transition-colors duration-150 relative",
+            collapsed ? "justify-center px-0" : "px-2.5",
+            "text-[13px] font-medium",
+            activeTab === "debug"
+              ? "bg-accent text-foreground"
+              : "text-foreground/45 hover:text-foreground/70 hover:bg-accent/50",
+          )}
+        >
+          {activeTab === "debug" && !collapsed && (
+            <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-foreground/40" />
+          )}
+          <Bug className={cn("h-4 w-4 shrink-0", activeTab === "debug" ? "text-foreground/92" : "")} />
+          {!collapsed && <span>{t("nav.debug", "Debug")}</span>}
         </button>
 
         {/* Collapse toggle */}

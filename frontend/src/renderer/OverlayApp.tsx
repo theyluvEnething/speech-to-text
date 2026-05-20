@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Globe, Sparkles, Settings, Check } from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProximity } from "./hooks/useProximity";
 
 type PopupStatus = "idle" | "recording" | "transcribing" | "inserting";
@@ -170,68 +171,48 @@ function SideButton({
   ariaLabel: string;
   children: React.ReactNode;
 }): React.ReactElement {
-  const [hover, setHover] = useState(false);
-
   return (
-    <div
-      className={`relative overflow-visible transition-all duration-[450ms] ${
-        visible
-          ? "opacity-100 scale-100 pointer-events-auto"
-          : side === "left"
-            ? "opacity-0 -translate-x-2 scale-75 pointer-events-none"
-            : "opacity-0 translate-x-2 scale-75 pointer-events-none"
-      }`}
-      style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.4, 0.64, 1)" }}
-    >
-      <button
-        type="button"
-        aria-label={ariaLabel}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        onClick={onClick}
-        className="size-8 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
-        style={{
-          background: "rgba(23,23,23,0.9)",
-          backdropFilter: "blur(8px)",
-          border: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        {children}
-      </button>
-
-      {/* Tooltip with fixed positioning relative to viewport */}
-      {hover && (
-        <div
-          className="fixed z-[10000] px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 whitespace-nowrap pointer-events-none"
-          style={{
-            left: "50%",
-            transform: "translateX(-50%)",
-            top: "calc(var(--y, 0px) - 32px)",
-          }}
-        />
-      )}
-
-      {/* Custom positioned tooltip using absolute positioning with higher z-index and overflow visible */}
+    <Tooltip.Provider delayDuration={200}>
       <div
-        className={`absolute left-1/2 -translate-x-1/2 -top-[38px] whitespace-nowrap px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 transition-all duration-150 z-[9999] pointer-events-none shadow-lg ${
-          hover ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"
+        className={`relative overflow-visible transition-all duration-[450ms] ${
+          visible
+            ? "opacity-100 scale-100 pointer-events-auto"
+            : side === "left"
+              ? "opacity-0 -translate-x-2 scale-75 pointer-events-none"
+              : "opacity-0 translate-x-2 scale-75 pointer-events-none"
         }`}
-        style={{
-          left: "50%",
-          transform: "translateX(-50%)",
-          top: "-38px",
-          willChange: "opacity, transform",
-        }}
+        style={{ transitionTimingFunction: "cubic-bezier(0.34, 1.4, 0.64, 1)" }}
       >
-        {tooltip}
-        {/* Triangle arrow */}
-        <div className="absolute left-1/2 -translate-x-1/2 -bottom-[5px]">
-          <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-            <path d="M5 6L10 0H0L5 6Z" fill="rgba(0,0,0,0.9)" />
-          </svg>
-        </div>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <button
+              type="button"
+              aria-label={ariaLabel}
+              onClick={onClick}
+              className="size-8 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
+              style={{
+                background: "rgba(23,23,23,0.9)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              {children}
+            </button>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="top"
+              sideOffset={8}
+              collisionPadding={16}
+              className="z-[9999] px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 shadow-lg animate-in fade-in zoom-in-95 duration-150"
+            >
+              {tooltip}
+              <Tooltip.Arrow className="fill-black/90" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
       </div>
-    </div>
+    </Tooltip.Provider>
   );
 }
 
@@ -271,7 +252,7 @@ function OverlayApp(): React.ReactElement {
     const pillW = el.offsetWidth + 32;
     const pillH = el.offsetHeight + 32;
     // Increase max dimensions to accommodate tooltips and popovers
-    const w = Math.max(140, Math.min(900, pillW));
+    const w = Math.max(140, Math.min(1000, pillW));
     const h = Math.max(200, Math.min(700, pillH));
     if (w !== lastResize.current.w || h !== lastResize.current.h) {
       lastResize.current = { w, h };

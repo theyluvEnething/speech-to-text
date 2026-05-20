@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type Tab = "conversations" | "profiles" | "settings" | "app";
+export type Tab = "conversations" | "profiles" | "settings" | "app" | "debug";
 
 interface AppStore {
   activeTab: Tab;

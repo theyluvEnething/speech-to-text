@@ -8,6 +8,7 @@ import ConversationsView from "@/views/ConversationsView";
 import ProfilesView from "@/views/ProfilesView";
 import SettingsView from "@/views/SettingsView";
 import AppView from "@/views/AppView";
+import { DebugView } from "@/views/DebugView";
 
 function App(): React.ReactElement {
   const { i18n } = useTranslation();
@@ -68,7 +69,7 @@ function App(): React.ReactElement {
     });
 
     window.wavely.onSwitchTab((tab: string) => {
-      setActiveTab(tab as "conversations" | "profiles" | "settings" | "app");
+      setActiveTab(tab as "conversations" | "profiles" | "settings" | "app" | "debug");
     });
   }, []);
 
@@ -87,6 +88,7 @@ function App(): React.ReactElement {
             {activeTab === "profiles" && <ProfilesView />}
             {activeTab === "settings" && <SettingsView />}
             {activeTab === "app" && <AppView />}
+            {activeTab === "debug" && <DebugView />}
           </div>
         </main>
       </div>
