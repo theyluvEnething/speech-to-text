@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Globe, Sparkles, Check } from "lucide-react";
+import { Globe, Sparkles, Settings, Check } from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
 import { useHoverExpand } from "@/hooks/useHoverExpand";
 
@@ -81,6 +81,7 @@ function LanguagePopover({
 }): React.ReactElement {
   const [open, setOpen] = useState(false);
   const [recentProfiles, setRecentProfiles] = useState<Profile[]>([]);
+
   useEffect(() => {
     if (!open) return;
     window.overlay.getProfiles().then((profiles: Profile[]) => {
@@ -119,7 +120,8 @@ function LanguagePopover({
         <Popover.Content
           side="top"
           align="center"
-          sideOffset={8}
+          sideOffset={10}
+          collisionPadding={16}
           className="z-50 min-w-[180px] rounded-xl bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-150"
         >
           <div className="space-y-0.5">
@@ -152,7 +154,7 @@ function SideButton({
   visible,
   side,
   tooltip,
-  onClick: _onClick,
+  onClick,
   ariaLabel,
   children,
 }: {
@@ -181,8 +183,8 @@ function SideButton({
         aria-label={ariaLabel}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
-        onClick={_onClick}
-        className="size-7 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
+        onClick={onClick}
+        className="size-8 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
         style={{
           background: "rgba(23,23,23,0.9)",
           backdropFilter: "blur(8px)",
@@ -249,7 +251,7 @@ function OverlayApp(): React.ReactElement {
     const pillW = el.offsetWidth + 32;
     const pillH = el.offsetHeight + 32;
     const w = Math.max(140, Math.min(700, pillW));
-    const h = Math.max(72, Math.min(320, pillH));
+    const h = Math.max(200, Math.min(400, pillH));
     if (w !== lastResize.current.w || h !== lastResize.current.h) {
       lastResize.current = { w, h };
       window.overlay.requestResize(w, h);
@@ -325,7 +327,9 @@ function OverlayApp(): React.ReactElement {
   const expanded = isActive || isNear;
   const activeStatus = isActive ? status : null;
   const meta = activeStatus ? statusColor[activeStatus] : null;
-  const showSideButtons = expanded && !isActive;
+  const showSideButtons =
+    expanded && status !== "recording" && status !== "transcribing";
+  const hasText = text.length > 0;
 
   const displayText =
     text.length > 300 ? text.slice(0, 300) + "..." : text;
@@ -336,8 +340,20 @@ function OverlayApp(): React.ReactElement {
         ? "min-w-[180px]"
         : "w-[80px]";
 
+  const handleBarClick = () => {
+    if (status === "idle") {
+      window.overlay.startRecording();
+    } else if (status === "recording") {
+      window.overlay.stopRecording();
+    }
+  };
+
+  const handleOpenSettings = () => {
+    window.overlay.showSettings();
+  };
+
   return (
-    <div className="flex items-end justify-center w-full h-full pb-2">
+    <div className="flex items-center justify-center w-full h-full p-4">
       <div
         ref={contentRef}
         className="relative inline-flex flex-col items-center gap-3"
@@ -347,18 +363,19 @@ function OverlayApp(): React.ReactElement {
             <SideButton
               visible={showSideButtons}
               side="left"
-              tooltip="Change language"
-              ariaLabel="Change language"
+              tooltip="Change profile"
+              ariaLabel="Change profile"
             >
               <Globe className="size-[14px]" strokeWidth={2.25} />
             </SideButton>
           </LanguagePopover>
 
           <div
+            onClick={handleBarClick}
             className={`relative overflow-hidden flex items-center justify-center gap-2
               bg-neutral-900/90 backdrop-blur-md border border-white/6
-              transition-all duration-[450ms] rounded-full
-              ${expanded ? `h-9 ${barWidthClass} px-4` : "h-[14px] w-[80px] px-3 opacity-80"}
+              transition-all duration-[450ms] rounded-full cursor-pointer
+              ${expanded ? `h-10 ${barWidthClass} px-4` : "h-[16px] w-[80px] px-3 opacity-60"}
               ${meta ? meta.ring : ""}`}
             style={{
               transitionTimingFunction: "cubic-bezier(0.34, 1.4, 0.64, 1)",
@@ -391,27 +408,36 @@ function OverlayApp(): React.ReactElement {
                 </span>
               </>
             )}
-            {!activeStatus && <DottedLine />}
+            {!activeStatus && isNear && <DottedLine />}
           </div>
 
           <SideButton
             visible={showSideButtons}
             side="right"
             tooltip={
-              <>
-                Click or press{" "}
-                <span className="bg-gradient-to-r from-fuchsia-300 to-pink-300 bg-clip-text text-transparent font-semibold">
-                  Win Alt 1
-                </span>{" "}
-                to polish
-              </>
+              hasText ? (
+                <>
+                  Click or press{" "}
+                  <span className="bg-gradient-to-r from-fuchsia-300 to-pink-300 bg-clip-text text-transparent font-semibold">
+                    Win Alt 1
+                  </span>{" "}
+                  to polish
+                </>
+              ) : (
+                "Open settings"
+              )
             }
-            ariaLabel="Polish text"
+            onClick={hasText ? undefined : handleOpenSettings}
+            ariaLabel={hasText ? "Polish text" : "Open settings"}
           >
-            <Sparkles
-              className="size-[14px] text-pink-300"
-              strokeWidth={2.25}
-            />
+            {hasText ? (
+              <Sparkles
+                className="size-[14px] text-pink-300"
+                strokeWidth={2.25}
+              />
+            ) : (
+              <Settings className="size-[14px]" strokeWidth={2.25} />
+            )}
           </SideButton>
         </div>
       </div>

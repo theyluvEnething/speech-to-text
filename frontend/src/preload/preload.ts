@@ -44,6 +44,13 @@ contextBridge.exposeInMainWorld("wavely", {
       ipcRenderer.invoke("profiles:setActive", id),
   },
 
+
+  checkForUpdates: (): Promise<{ available: boolean; version: string | null; error: string | null }> =>
+    ipcRenderer.invoke("app:checkForUpdates"),
+
+  downloadAndInstallUpdate: (): Promise<void> =>
+    ipcRenderer.invoke("app:downloadAndInstallUpdate"),
+
   onSwitchTab: (callback: (tab: string) => void): void => {
     ipcRenderer.on("settings:switchTab", (_event, tab: string) => callback(tab));
   },

@@ -45,6 +45,9 @@ declare global {
     stopRecording(): void;
     hideWindow(): void;
     closeWindow(): void;
+    checkForUpdates(): Promise<{ available: boolean; version: string | null; error: string | null }>;
+    downloadAndInstallUpdate(): Promise<void>;
+
     onSwitchTab(callback: (tab: string) => void): void;
     profiles: WavelyProfiles;
     conversations: WavelyConversations;
@@ -73,6 +76,8 @@ declare global {
     onLevels(callback: (levels: { rms: number; peak: number }) => void): void;
     sendIdle(): void;
     requestResize(width: number, height: number): void;
+    startRecording(): void;
+    stopRecording(): void;
     setClickThrough(passthrough: boolean): Promise<void>;
     getProfiles(): Promise<Profile[]>;
     setActiveProfile(id: string): Promise<void>;

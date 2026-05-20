@@ -37,6 +37,14 @@ contextBridge.exposeInMainWorld("overlay", {
     return ipcRenderer.invoke("profiles:setActive", id);
   },
 
+  startRecording: (): void => {
+    ipcRenderer.send("recording:start");
+  },
+
+  stopRecording: (): void => {
+    ipcRenderer.send("recording:stop");
+  },
+
   showSettings: (tab?: string): Promise<void> => {
     return ipcRenderer.invoke("overlay:showSettings", tab);
   },

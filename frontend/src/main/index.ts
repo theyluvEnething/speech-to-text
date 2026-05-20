@@ -175,6 +175,11 @@ app.whenReady().then(() => {
 
   registerIpcHandlers(handleAudioBuffer, handleLevels, handleOverlayIdle);
 
+  // Allow the overlay to start/stop recording via click
+  ipcMain.on("recording:start", () => {
+    startRecording();
+  });
+
   // Renderer-side key-up fallback — when the window is focused, the renderer
   // can detect key-up events that uiohook might miss (e.g. Alt on Windows).
   ipcMain.on("recording:stop", () => {
@@ -240,6 +245,50 @@ app.whenReady().then(() => {
 
   autoUpdater.on("update-downloaded", (info) => {
     console.log(`[AutoUpdater] Update v${info.version} downloaded. It will be installed on restart.`);
+  });
+
+
+  // Manual update check from settings UI
+  ipcMain.handle("app:checkForUpdates", async () => {
+    return new Promise<{ available: boolean; version: string | null; error: string | null }>((resolve) => {
+      let settled = false;
+      const done = (result: { available: boolean; version: string | null; error: string | null }) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        autoUpdater.removeListener("update-available", onAvailable);
+        autoUpdater.removeListener("update-not-available", onNotAvailable);
+        autoUpdater.removeListener("error", onError);
+        resolve(result);
+      };
+
+      const timeout = setTimeout(() => {
+        done({ available: false, version: null, error: "Update check timed out" });
+      }, 30000);
+
+      const onAvailable = (info: { version: string }) => {
+        done({ available: true, version: info.version, error: null });
+      };
+      const onNotAvailable = () => {
+        done({ available: false, version: null, error: null });
+      };
+      const onError = (err: Error) => {
+        done({ available: false, version: null, error: err.message });
+      };
+
+      autoUpdater.on("update-available", onAvailable);
+      autoUpdater.on("update-not-available", onNotAvailable);
+      autoUpdater.on("error", onError);
+
+      autoUpdater.checkForUpdates().catch((err) => {
+        done({ available: false, version: null, error: (err as Error).message });
+      });
+    });
+  });
+
+  ipcMain.handle("app:downloadAndInstallUpdate", async () => {
+    await autoUpdater.downloadUpdate();
+    autoUpdater.quitAndInstall(true, true);
   });
 
   app.on("activate", () => {

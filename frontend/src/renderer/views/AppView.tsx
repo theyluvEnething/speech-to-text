@@ -1,9 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const APP_LANGUAGES = [
   { value: "en", label: "English" },
@@ -13,11 +21,18 @@ const APP_LANGUAGES = [
   { value: "ja", label: "日本語" },
 ];
 
+type UpdateStatus = "idle" | "checking" | "no-update" | "available" | "downloading" | "error";
+
 function AppView(): React.ReactElement {
   const { t, i18n } = useTranslation();
   const [appLanguage, setAppLanguage] = useState("en");
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
+
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>("idle");
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     window.wavely
@@ -66,6 +81,45 @@ function AppView(): React.ReactElement {
         toast(err instanceof Error ? err.message : t("appSettings.resetFailed", "Failed to reset settings"));
       });
   }
+
+  const handleCheckForUpdates = useCallback(() => {
+    setUpdateStatus("checking");
+    setUpdateError(null);
+    window.wavely
+      .checkForUpdates()
+      .then((result) => {
+        if (result.available && result.version) {
+          setUpdateStatus("available");
+          setUpdateVersion(result.version);
+          setConfirmOpen(true);
+        } else if (result.error) {
+          setUpdateStatus("error");
+          setUpdateError(result.error);
+        } else {
+          setUpdateStatus("no-update");
+        }
+      })
+      .catch((err) => {
+        setUpdateStatus("error");
+        setUpdateError(err instanceof Error ? err.message : "Unknown error");
+      });
+  }, []);
+
+  const handleConfirmUpdate = useCallback(() => {
+    setConfirmOpen(false);
+    setUpdateStatus("downloading");
+    window.wavely
+      .downloadAndInstallUpdate()
+      .catch((err) => {
+        setUpdateStatus("error");
+        setUpdateError(err instanceof Error ? err.message : "Download failed");
+      });
+  }, []);
+
+  const handleCancelUpdate = useCallback(() => {
+    setConfirmOpen(false);
+    setUpdateStatus("idle");
+  }, []);
 
   if (loading) {
     return (
@@ -137,6 +191,37 @@ function AppView(): React.ReactElement {
           </CardContent>
         </Card>
 
+        {/* Updates */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
+              Updates
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-[13px] text-foreground/70">Wavely v1.0.2</p>
+            {updateStatus === "no-update" && (
+              <p className="text-[13px] text-emerald-500/90">You're up to date.</p>
+            )}
+            {updateStatus === "error" && (
+              <p className="text-[13px] text-red-400/90">
+                {updateError || "Failed to check for updates."}
+              </p>
+            )}
+            {updateStatus === "downloading" && (
+              <p className="text-[13px] text-foreground/60">Downloading update, the app will restart shortly...</p>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCheckForUpdates}
+              disabled={updateStatus === "checking" || updateStatus === "downloading"}
+            >
+              {updateStatus === "checking" ? "Checking..." : "Check for Updates"}
+            </Button>
+          </CardContent>
+        </Card>
+
       </div>
 
       {/* Reset at very bottom */}
@@ -145,7 +230,7 @@ function AppView(): React.ReactElement {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-[13px] text-foreground/70">
-                {t("appSettings.aboutText", "Wavely v1.0.0 — Push-to-talk speech-to-text powered by Deepgram.")}
+                {t("appSettings.aboutText", "Wavely v1.0.2 — Push-to-talk speech-to-text powered by Deepgram.")}
               </p>
             </div>
             <Button variant="destructive" size="sm" onClick={handleReset}>
@@ -154,6 +239,26 @@ function AppView(): React.ReactElement {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Available</DialogTitle>
+            <DialogDescription>
+              Version {updateVersion} is available. You are currently on v1.0.2.
+              Would you like to update now? The app will restart to apply the update.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelUpdate}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmUpdate}>
+              Update
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
