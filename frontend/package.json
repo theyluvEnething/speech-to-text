@@ -64,6 +64,7 @@
     "appId": "com.wavely.app",
     "productName": "Wavely",
     "copyright": "Copyright (c) 2026 Enething",
+    "afterPack": "scripts/after-pack.js",
     "directories": {
       "output": "dist"
     },
@@ -75,7 +76,9 @@
       }
     ],
     "files": [
-      "dist/**/*",
+      "dist/main/**/*",
+      "dist/preload/**/*",
+      "dist/renderer/**/*",
       "assets/**/*"
     ],
     "win": {
