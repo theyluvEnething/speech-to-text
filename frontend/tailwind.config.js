@@ -67,6 +67,7 @@ module.exports = {
         "popup-enter": "popupEnter 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "popup-exit": "popupExit 280ms cubic-bezier(0.55, 0, 1, 0.45) forwards",
         "wave-bar": "waveBar 120ms linear",
+        wave: "wave 1s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -95,6 +96,10 @@ module.exports = {
           "0%": { opacity: "1", transform: "translateY(0) scale(1)" },
           "25%": { transform: "translateY(-3px) scale(1.02)" },
           "100%": { opacity: "0", transform: "translateY(18px) scale(0.85)" },
+        },
+        wave: {
+          "0%, 100%": { height: "2px" },
+          "50%": { height: "14px" },
         },
         waveBar: {
           "0%": { height: "var(--bar-from)" },

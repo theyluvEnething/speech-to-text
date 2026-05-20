@@ -1,35 +1,35 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Globe, Sparkles, Check } from "lucide-react";
+import * as Popover from "@radix-ui/react-popover";
+import { useHoverExpand } from "@/hooks/useHoverExpand";
 
-type PopupStatus = "idle" | "hover" | "recording" | "transcribing" | "inserting";
+type PopupStatus = "idle" | "recording" | "transcribing" | "inserting";
 
-interface NotificationPayload {
+interface Profile {
   id: string;
-  title: string;
-  description?: string;
-  actionLabel?: string;
-  onAction?: () => void;
-  icon?: "bell" | "sparkles" | "globe";
+  name: string;
+  color: string;
+  icon: string;
+  systemPrompt: string;
+  language?: string;
+  model?: string;
 }
 
 const statusColor: Record<
-  Exclude<PopupStatus, "idle" | "hover">,
-  { ring: string; textColor: string; iconColor: string }
+  Exclude<PopupStatus, "idle">,
+  { ring: string; textColor: string }
 > = {
   recording: {
     ring: "shadow-[0_0_0_1.5px_rgba(239,68,68,0.9),0_0_24px_-2px_rgba(239,68,68,0.6)]",
     textColor: "text-red-400",
-    iconColor: "bg-red-400",
   },
   transcribing: {
     ring: "shadow-[0_0_0_1.5px_rgba(245,158,11,0.9),0_0_24px_-2px_rgba(245,158,11,0.6)]",
     textColor: "text-amber-400",
-    iconColor: "border-amber-400/60",
   },
   inserting: {
     ring: "shadow-[0_0_0_1.5px_rgba(34,197,94,0.9),0_0_24px_-2px_rgba(34,197,94,0.6)]",
     textColor: "text-emerald-400",
-    iconColor: "text-emerald-400",
   },
 };
 
@@ -74,11 +74,85 @@ function DottedLine(): React.ReactElement {
   );
 }
 
+function LanguagePopover({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.ReactElement {
+  const [open, setOpen] = useState(false);
+  const [recentProfiles, setRecentProfiles] = useState<Profile[]>([]);
+  useEffect(() => {
+    if (!open) return;
+    window.overlay.getProfiles().then((profiles: Profile[]) => {
+      const recentIds: string[] = JSON.parse(
+        localStorage.getItem("recentProfiles") || "[]",
+      );
+      const recent = recentIds
+        .map((id) => profiles.find((p) => p.id === id))
+        .filter((p): p is Profile => !!p);
+      setRecentProfiles(recent.slice(0, 3));
+    });
+  }, [open]);
+
+  const handleSelect = (profile: Profile) => {
+    window.overlay.setActiveProfile(profile.id);
+    const recentIds: string[] = JSON.parse(
+      localStorage.getItem("recentProfiles") || "[]",
+    );
+    const updated = [
+      profile.id,
+      ...recentIds.filter((id) => id !== profile.id),
+    ].slice(0, 5);
+    localStorage.setItem("recentProfiles", JSON.stringify(updated));
+    setOpen(false);
+  };
+
+  const handleMore = () => {
+    setOpen(false);
+    window.overlay.showSettings("profiles");
+  };
+
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>{children}</Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          side="top"
+          align="center"
+          sideOffset={8}
+          className="z-50 min-w-[180px] rounded-xl bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-150"
+        >
+          <div className="space-y-0.5">
+            {recentProfiles.map((profile) => (
+              <button
+                key={profile.id}
+                onClick={() => handleSelect(profile)}
+                className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm hover:bg-white/10 transition-colors text-left"
+              >
+                <span className="text-base">{profile.icon}</span>
+                <span className="flex-1 text-white/90">{profile.name}</span>
+              </button>
+            ))}
+            <div className="h-px bg-white/10 my-1" />
+            <button
+              onClick={handleMore}
+              className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm hover:bg-white/10 transition-colors text-left"
+            >
+              <span className="text-base">⋯</span>
+              <span className="flex-1 text-white/70">More...</span>
+            </button>
+          </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
 function SideButton({
   visible,
   side,
   tooltip,
-  onClick,
+  onClick: _onClick,
   ariaLabel,
   children,
 }: {
@@ -105,9 +179,9 @@ function SideButton({
       <button
         type="button"
         aria-label={ariaLabel}
-        onClick={onClick}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
+        onClick={_onClick}
         className="size-7 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
         style={{
           background: "rgba(23,23,23,0.9)",
@@ -141,61 +215,40 @@ function SideButton({
 
 function OverlayApp(): React.ReactElement {
   const [status, setStatus] = useState<PopupStatus>("idle");
-  const [label, setLabel] = useState("");
   const [text, setText] = useState("");
   const [elapsed, setElapsed] = useState(0);
-  const [visible, setVisible] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [exiting, setExiting] = useState(false);
-  const [animKey, setAnimKey] = useState(0);
-  const [audioLevels, setAudioLevels] = useState<{ rms: number; peak: number }>({
-    rms: -60,
-    peak: -60,
-  });
-  const [notification] = useState<NotificationPayload | null>(null);
+  const [audioLevels, setAudioLevels] = useState<{ rms: number; peak: number }>(
+    { rms: -60, peak: -60 },
+  );
+
+  const barRef = useRef<HTMLDivElement>(null);
+  const isNear = useHoverExpand(barRef, 90);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const goIdleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const lastResize = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
-  const wasVisible = useRef(false);
 
-  const clearResultTimer = useCallback((): void => {
+  const clearResultTimer = useCallback(() => {
     if (resultTimeout.current) {
       clearTimeout(resultTimeout.current);
       resultTimeout.current = null;
     }
   }, []);
 
-  const clearGoIdleTimeout = useCallback((): void => {
-    if (goIdleTimeout.current) {
-      clearTimeout(goIdleTimeout.current);
-      goIdleTimeout.current = null;
-    }
-  }, []);
-
-  const goIdle = useCallback((): void => {
+  const goIdle = useCallback(() => {
     clearResultTimer();
-    clearGoIdleTimeout();
-    wasVisible.current = false;
-    setExiting(true);
-    setAnimKey((k) => k + 1);
-    goIdleTimeout.current = setTimeout(() => {
-      setVisible(false);
-      setStatus("idle");
-      setText("");
-      setExiting(false);
-      window.overlay.sendIdle();
-    }, 280);
-  }, [clearResultTimer, clearGoIdleTimeout]);
+    setStatus("idle");
+    setText("");
+    window.overlay.sendIdle();
+  }, [clearResultTimer]);
 
   const requestResize = useCallback(() => {
     const el = contentRef.current;
     if (!el) return;
     const pillW = el.offsetWidth + 32;
     const pillH = el.offsetHeight + 32;
-    const w = Math.max(360, Math.min(700, pillW));
+    const w = Math.max(140, Math.min(700, pillW));
     const h = Math.max(72, Math.min(320, pillH));
     if (w !== lastResize.current.w || h !== lastResize.current.h) {
       lastResize.current = { w, h };
@@ -204,24 +257,15 @@ function OverlayApp(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    if (visible) {
-      requestAnimationFrame(() => requestResize());
-    }
-  }, [text, status, visible, requestResize]);
+    requestAnimationFrame(() => requestResize());
+  }, [text, status, requestResize]);
 
   useEffect(() => {
-    window.overlay.onState((newState: string, displayLabel: string) => {
-      setLabel(displayLabel || "");
+    window.overlay.onState((newState: string, _displayLabel: string) => {
       if (newState === "recording") {
         clearResultTimer();
-        clearGoIdleTimeout();
-        const needsEnter = !wasVisible.current;
-        wasVisible.current = true;
-        setExiting(false);
         setStatus("recording");
-        setVisible(true);
         setElapsed(0);
-        if (needsEnter) setAnimKey((k) => k + 1);
         timer.current = setInterval(() => {
           setElapsed((e) => e + 0.1);
         }, 100);
@@ -231,8 +275,6 @@ function OverlayApp(): React.ReactElement {
           timer.current = null;
         }
         clearResultTimer();
-        clearGoIdleTimeout();
-        setExiting(false);
         setStatus("transcribing");
       } else if (newState === "idle") {
         if (timer.current) {
@@ -249,8 +291,6 @@ function OverlayApp(): React.ReactElement {
         timer.current = null;
       }
       clearResultTimer();
-      clearGoIdleTimeout();
-      setExiting(false);
       setStatus("inserting");
       setText(resultText);
       resultTimeout.current = setTimeout(() => {
@@ -264,8 +304,6 @@ function OverlayApp(): React.ReactElement {
         timer.current = null;
       }
       clearResultTimer();
-      clearGoIdleTimeout();
-      setExiting(false);
       setStatus("inserting");
       setText(msg);
       resultTimeout.current = setTimeout(() => {
@@ -280,122 +318,57 @@ function OverlayApp(): React.ReactElement {
     return () => {
       if (timer.current) clearInterval(timer.current);
       clearResultTimer();
-      clearGoIdleTimeout();
     };
-  }, [clearResultTimer, clearGoIdleTimeout, goIdle]);
+  }, [clearResultTimer, goIdle]);
 
-  const expanded =
-    status === "hover" ||
-    hovered ||
-    status === "recording" ||
-    status === "transcribing" ||
-    status === "inserting";
-  const activeStatus = ["recording", "transcribing", "inserting"].includes(status)
-    ? (status as "recording" | "transcribing" | "inserting")
-    : null;
+  const isActive = status !== "idle";
+  const expanded = isActive || isNear;
+  const activeStatus = isActive ? status : null;
   const meta = activeStatus ? statusColor[activeStatus] : null;
-  const showSideButtons = expanded && !activeStatus;
+  const showSideButtons = expanded && !isActive;
 
-  if (!visible) return <div />;
-
-  const displayLabel = label || "Recording";
+  const displayText =
+    text.length > 300 ? text.slice(0, 300) + "..." : text;
+  const barWidthClass =
+    activeStatus === "inserting" && displayText.length > 30
+      ? "min-w-[200px] max-w-[500px]"
+      : expanded
+        ? "min-w-[180px]"
+        : "w-[80px]";
 
   return (
     <div className="flex items-end justify-center w-full h-full pb-2">
       <div
-        key={animKey}
         ref={contentRef}
-        className={`relative inline-flex flex-col items-center gap-3 ${
-          exiting ? "animate-popup-exit" : "animate-popup-enter"
-        }`}
-        onMouseEnter={() => {
-          if (status === "idle") setHovered(true);
-        }}
-        onMouseLeave={() => {
-          if (status === "idle") setHovered(false);
-        }}
+        className="relative inline-flex flex-col items-center gap-3"
       >
-        {notification && (
-          <div className="w-[300px] rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-white/6 shadow-2xl shadow-black/60 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex items-start gap-3">
-              <div className="size-8 grid place-items-center rounded-xl bg-fuchsia-500/15 text-fuchsia-300 shrink-0">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-white leading-tight">
-                  {notification.title}
-                </p>
-                <p className="mt-1 text-[12px] text-white/55 leading-snug">
-                  {notification.description}
-                </p>
-              </div>
-              <button
-                onClick={() => window.overlay.sendIdle()}
-                className="size-6 grid place-items-center rounded-full text-white/60 hover:text-white hover:bg-white/5 transition-colors"
-                aria-label="Dismiss"
-              >
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            {notification.actionLabel && (
-              <div className="mt-3 flex justify-end">
-                <button className="px-3 py-1.5 rounded-lg bg-white text-black text-[12px] font-medium hover:bg-white/90 transition-colors">
-                  {notification.actionLabel}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-center gap-2">
-          <SideButton
-            visible={showSideButtons}
-            side="left"
-            tooltip="Change language"
-            onClick={() => window.overlay.sendIdle()}
-            ariaLabel="Change language"
-          >
-            <Globe className="size-[14px]" strokeWidth={2.25} />
-          </SideButton>
+        <div ref={barRef} className="flex items-center gap-2">
+          <LanguagePopover>
+            <SideButton
+              visible={showSideButtons}
+              side="left"
+              tooltip="Change language"
+              ariaLabel="Change language"
+            >
+              <Globe className="size-[14px]" strokeWidth={2.25} />
+            </SideButton>
+          </LanguagePopover>
 
           <div
             className={`relative overflow-hidden flex items-center justify-center gap-2
               bg-neutral-900/90 backdrop-blur-md border border-white/6
               transition-all duration-[450ms] rounded-full
-              ${expanded ? "h-9 min-w-[180px] px-4" : "h-[14px] w-[80px] px-3 opacity-80"}
+              ${expanded ? `h-9 ${barWidthClass} px-4` : "h-[14px] w-[80px] px-3 opacity-80"}
               ${meta ? meta.ring : ""}`}
             style={{
               transitionTimingFunction: "cubic-bezier(0.34, 1.4, 0.64, 1)",
-              background: "rgba(23,23,23,0.9)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,0.06)",
             }}
           >
             {activeStatus === "recording" && (
               <>
                 <Waveform rms={audioLevels.rms} />
                 <span className={`text-[13px] font-medium ${meta?.textColor}`}>
-                  {displayLabel} {elapsed.toFixed(1)}s
+                  Recording {elapsed.toFixed(1)}s
                 </span>
               </>
             )}
@@ -409,9 +382,12 @@ function OverlayApp(): React.ReactElement {
             )}
             {activeStatus === "inserting" && (
               <>
-                <Check className="size-4 text-emerald-400" strokeWidth={2.5} />
-                <span className="text-[13px] font-medium text-white/90 truncate max-w-[220px]">
-                  {text}
+                <Check
+                  className="size-4 text-emerald-400 shrink-0"
+                  strokeWidth={2.5}
+                />
+                <span className="text-[13px] font-medium text-white/90 truncate max-w-[440px]">
+                  {displayText}
                 </span>
               </>
             )}
@@ -430,10 +406,12 @@ function OverlayApp(): React.ReactElement {
                 to polish
               </>
             }
-            onClick={() => window.overlay.sendIdle()}
             ariaLabel="Polish text"
           >
-            <Sparkles className="size-[14px] text-pink-300" strokeWidth={2.25} />
+            <Sparkles
+              className="size-[14px] text-pink-300"
+              strokeWidth={2.25}
+            />
           </SideButton>
         </div>
       </div>

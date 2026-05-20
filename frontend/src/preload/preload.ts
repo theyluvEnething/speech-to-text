@@ -44,6 +44,10 @@ contextBridge.exposeInMainWorld("wavely", {
       ipcRenderer.invoke("profiles:setActive", id),
   },
 
+  onSwitchTab: (callback: (tab: string) => void): void => {
+    ipcRenderer.on("settings:switchTab", (_event, tab: string) => callback(tab));
+  },
+
   conversations: {
     list: (): Promise<unknown> =>
       ipcRenderer.invoke("conversations:list"),

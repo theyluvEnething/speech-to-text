@@ -186,6 +186,28 @@ app.whenReady().then(() => {
     return process.env["OPENAI_API_KEY"] || "";
   });
 
+  // Toggle overlay click-through for proximity hover
+  ipcMain.handle("overlay:setClickThrough", (_event, passthrough: boolean) => {
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.setIgnoreMouseEvents(passthrough, { forward: true });
+    }
+  });
+
+  // Open settings window from overlay, optionally switching to a tab
+  ipcMain.handle("overlay:showSettings", (_event, tab?: string) => {
+    const win = createSettingsWindow();
+    if (tab) {
+      win.webContents.once("did-finish-load", () => {
+        win.webContents.send("settings:switchTab", tab);
+      });
+      // If already loaded, send immediately
+      if (!win.webContents.isLoading()) {
+        win.webContents.send("settings:switchTab", tab);
+      }
+    }
+  });
+
   // Dynamic overlay window resize
   ipcMain.on("overlay:resize", (_event, width: number, height: number) => {
     const overlay = getOverlayWindow();

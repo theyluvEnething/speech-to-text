@@ -24,4 +24,20 @@ contextBridge.exposeInMainWorld("overlay", {
   requestResize: (width: number, height: number): void => {
     ipcRenderer.send("overlay:resize", width, height);
   },
+
+  setClickThrough: (passthrough: boolean): Promise<void> => {
+    return ipcRenderer.invoke("overlay:setClickThrough", passthrough);
+  },
+
+  getProfiles: (): Promise<unknown> => {
+    return ipcRenderer.invoke("profiles:list");
+  },
+
+  setActiveProfile: (id: string): Promise<void> => {
+    return ipcRenderer.invoke("profiles:setActive", id);
+  },
+
+  showSettings: (tab?: string): Promise<void> => {
+    return ipcRenderer.invoke("overlay:showSettings", tab);
+  },
 });

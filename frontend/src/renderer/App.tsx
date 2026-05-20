@@ -12,6 +12,7 @@ import AppView from "@/views/AppView";
 function App(): React.ReactElement {
   const { i18n } = useTranslation();
   const activeTab = useStore((s) => s.activeTab);
+  const setActiveTab = useStore((s) => s.setActiveTab);
   const setProfiles = useStore((s) => s.setProfiles);
   const setActiveProfile = useStore((s) => s.setActiveProfile);
   const setConversations = useStore((s) => s.setConversations);
@@ -64,6 +65,10 @@ function App(): React.ReactElement {
 
     window.wavely.conversations.onNew((conv) => {
       setConversations([conv as Conversation, ...useStore.getState().conversations]);
+    });
+
+    window.wavely.onSwitchTab((tab: string) => {
+      setActiveTab(tab as "conversations" | "profiles" | "settings" | "app");
     });
   }, []);
 
