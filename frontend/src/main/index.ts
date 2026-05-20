@@ -213,19 +213,25 @@ app.whenReady().then(() => {
     }
   });
 
-  // Dynamic overlay window resize
+  // Dynamic overlay window resize (debounced to prevent race conditions
+  // with proximity detection during expand/collapse transitions)
+  let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
   ipcMain.on("overlay:resize", (_event, width: number, height: number) => {
     const overlay = getOverlayWindow();
     if (overlay && !overlay.isDestroyed()) {
-      const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-      const bottomMargin = 100;
-      const newY = Math.round(screenHeight - bottomMargin - height);
-      overlay.setBounds({
-        x: Math.round((screenWidth - width) / 2),
-        y: newY,
-        width,
-        height,
-      });
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+        const bottomMargin = 92;
+        const newY = Math.round(screenHeight - bottomMargin - height);
+        overlay.setBounds({
+          x: Math.round((screenWidth - width) / 2),
+          y: newY,
+          width,
+          height,
+        });
+        resizeTimeout = null;
+      }, 50);
     }
   });
 

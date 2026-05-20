@@ -7,6 +7,7 @@ export function useProximity(
 ): boolean {
   const [isNear, setIsNear] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const element = ref.current;
@@ -14,14 +15,13 @@ export function useProximity(
 
     const halfW = width / 2;
     const halfH = height / 2;
-    let rafId: number | null = null;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (rafId) {
-        cancelAnimationFrame(rafId);
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
       }
 
-      rafId = requestAnimationFrame(() => {
+      rafIdRef.current = requestAnimationFrame(() => {
         if (!element) return;
 
         const rect = element.getBoundingClientRect();
@@ -31,19 +31,35 @@ export function useProximity(
           Math.abs(e.clientX - centerX) <= halfW &&
           Math.abs(e.clientY - centerY) <= halfH;
 
-        setIsNear(near);
-        window.overlay.setClickThrough(!near);
+        // Always clear the leave timeout when cursor is inside the bounding box,
+        // even if isNear hasn't transitioned to false in the closure yet.
+        if (near && timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = undefined;
+        }
+
+        if (near !== isNear) {
+          if (!near) {
+            timeoutRef.current = setTimeout(() => {
+              setIsNear(false);
+              window.overlay.setClickThrough(true);
+              timeoutRef.current = undefined;
+            }, 80);
+          } else {
+            setIsNear(true);
+            window.overlay.setClickThrough(false);
+          }
+        }
       });
     };
 
     const handleMouseLeaveDocument = () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = undefined;
       }
-      timeoutRef.current = setTimeout(() => {
-        setIsNear(false);
-        window.overlay.setClickThrough(true);
-      }, 100);
+      setIsNear(false);
+      window.overlay.setClickThrough(true);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -52,10 +68,10 @@ export function useProximity(
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeaveDocument);
-      if (rafId) cancelAnimationFrame(rafId);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [ref, width, height]);
+  }, [ref, width, height, isNear]);
 
   return isNear;
 }

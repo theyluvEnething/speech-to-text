@@ -189,7 +189,7 @@ function SideButton({
               type="button"
               aria-label={ariaLabel}
               onClick={onClick}
-              className="size-8 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
+              className="size-7 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
               style={{
                 background: "rgba(23,23,23,0.9)",
                 backdropFilter: "blur(8px)",
@@ -225,7 +225,7 @@ function OverlayApp(): React.ReactElement {
   );
 
   const barRef = useRef<HTMLDivElement>(null);
-  const isNear = useProximity(barRef, 300, 100);
+  const isNear = useProximity(barRef, 300, 60);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -252,8 +252,8 @@ function OverlayApp(): React.ReactElement {
     const pillW = el.offsetWidth + 32;
     const pillH = el.offsetHeight + 32;
     // Increase max dimensions to accommodate tooltips and popovers
-    const w = Math.max(140, Math.min(1000, pillW));
-    const h = Math.max(200, Math.min(700, pillH));
+    const w = Math.max(130, Math.min(920, pillW));
+    const h = Math.max(185, Math.min(644, pillH));
     if (w !== lastResize.current.w || h !== lastResize.current.h) {
       lastResize.current = { w, h };
       window.overlay.requestResize(w, h);
@@ -381,7 +381,7 @@ function OverlayApp(): React.ReactElement {
             className={`relative overflow-visible flex items-center justify-center gap-2
               bg-neutral-900/90 backdrop-blur-md border border-white/6
               transition-all duration-[450ms] rounded-full cursor-pointer
-              ${expanded ? `h-10 ${barWidthClass} px-4` : "h-[16px] w-[80px] px-3 opacity-60"}
+              ${expanded ? `h-9 ${barWidthClass} px-4` : "h-[15px] w-[75px] px-3 opacity-60"}
               ${meta ? meta.ring : ""}`}
             style={{
               transitionTimingFunction: "cubic-bezier(0.34, 1.4, 0.64, 1)",

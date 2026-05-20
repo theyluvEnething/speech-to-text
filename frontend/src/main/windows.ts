@@ -62,10 +62,10 @@ export function createOverlayWindow(): BrowserWindow {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
 
   overlayWindow = new BrowserWindow({
-    width: 1000,
-    height: 700,
-    x: Math.round((screenWidth - 1000) / 2),
-    y: screenHeight - 100 - 700,
+    width: 920,
+    height: 644,
+    x: Math.round((screenWidth - 920) / 2),
+    y: screenHeight - 92 - 644,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -99,9 +99,9 @@ export function createOverlayWindow(): BrowserWindow {
   overlayWindow.on("show", () => {
     const { width: w, height: h } = screen.getPrimaryDisplay().workAreaSize;
     const bounds = overlayWindow?.getBounds();
-    const winW = bounds?.width ?? 1000;
-    const winH = bounds?.height ?? 700;
-    overlayWindow?.setPosition(Math.round((w - winW) / 2), h - 100 - winH);
+    const winW = bounds?.width ?? 920;
+    const winH = bounds?.height ?? 644;
+    overlayWindow?.setPosition(Math.round((w - winW) / 2), h - 92 - winH);
     overlayWindow?.setAlwaysOnTop(true, "screen-saver");
   });
 
