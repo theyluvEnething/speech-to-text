@@ -37,25 +37,23 @@ const statusColor: Record<
 };
 
 function Waveform({ rms }: { rms: number }): React.ReactElement {
+  const bars = 12;
   const volumeNorm = Math.max(0, Math.min(1, (rms + 60) / 60));
-  const targetHeight = 2 + volumeNorm * 20;
-
   return (
-    <motion.div className="flex items-center gap-[2px] h-4">
-      {Array.from({ length: 12 }).map((_, i) => (
-        <motion.span
-          key={i}
-          className="w-[2px] rounded-full bg-red-400"
-          animate={{ height: targetHeight }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 20,
-            mass: 0.3,
-          }}
-        />
-      ))}
-    </motion.div>
+    <div className="flex items-center gap-[2px] h-5">
+      {Array.from({ length: bars }).map((_, i) => {
+        const positionFactor = 1 - Math.abs(i - 5.5) * 0.08;
+        const noise = (Math.random() - 0.5) * 2 * volumeNorm * 10;
+        const h = Math.max(3, (4 + volumeNorm * 24) * positionFactor + noise);
+        return (
+          <span
+            key={i}
+            className="w-[2.5px] rounded-full bg-red-400"
+            style={{ height: `${h}px`, transition: "height 80ms ease-out" }}
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -407,7 +405,7 @@ function OverlayApp(): React.ReactElement {
                 className="size-4 text-emerald-400 shrink-0"
                 strokeWidth={2.5}
               />
-              <span className="text-[13px] font-medium text-white/90 truncate max-w-[240px]">
+              <span className="text-[13px] font-medium text-white/90 truncate max-w-[420px]">
                 {displayText}
               </span>
             </>
