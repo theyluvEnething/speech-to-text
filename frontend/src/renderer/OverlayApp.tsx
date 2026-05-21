@@ -36,6 +36,39 @@ const statusColor: Record<
   },
 };
 
+function getDisplayText(text: string, maxLines: number = 4, maxWidthChars: number = 40): string {
+  if (text.length <= maxWidthChars) return text;
+
+  const charsPerLine = maxWidthChars;
+  const lines: string[] = [];
+  let remaining = text;
+
+  for (let i = 0; i < maxLines - 1; i++) {
+    if (remaining.length <= charsPerLine) {
+      lines.push(remaining);
+      remaining = "";
+      break;
+    }
+    let breakPoint = charsPerLine;
+    while (breakPoint > 0 && remaining[breakPoint] !== " ") {
+      breakPoint--;
+    }
+    if (breakPoint === 0) breakPoint = charsPerLine;
+    lines.push(remaining.slice(0, breakPoint));
+    remaining = remaining.slice(breakPoint).trimStart();
+  }
+
+  if (remaining.length > 0) {
+    const lastLine =
+      remaining.length > charsPerLine
+        ? remaining.slice(0, charsPerLine - 3) + "..."
+        : remaining;
+    lines.push(lastLine);
+  }
+
+  return lines.join("\n");
+}
+
 function Waveform({ rms }: { rms: number }): React.ReactElement {
   const bars = 12;
   const volumeNorm = Math.max(0, Math.min(1, (rms + 60) / 60));
@@ -86,7 +119,7 @@ function DottedLine(): React.ReactElement {
               scale: [0.5, 1.2, 0.5],
               transition: {
                 duration: 0.8,
-                repeat: Infinity,
+                repeat: 0,
                 delay: i * 0.03,
               },
             },
@@ -231,6 +264,12 @@ function OverlayApp(): React.ReactElement {
     { rms: -60, peak: -60 },
   );
   const [overlayTransparent, setOverlayTransparent] = useState(true);
+  const [pillAnimationComplete, setPillAnimationComplete] = useState(false);
+  const [previousExpanded, setPreviousExpanded] = useState(false);
+
+  // Bottom margin for the pill - adjust this value to move the pill up/down
+  // Higher value = pill higher up, Lower value = pill lower down
+  const PILL_BOTTOM_MARGIN = 32; // 32px = pb-8
 
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -252,8 +291,17 @@ function OverlayApp(): React.ReactElement {
     clearResultTimer();
     setStatus("idle");
     setText("");
+    setPillAnimationComplete(false);
     window.overlay.sendIdle();
   }, [clearResultTimer]);
+
+  // Reset pill animation flag when expanded state changes
+  useEffect(() => {
+    if (expanded && !previousExpanded) {
+      setPillAnimationComplete(false);
+    }
+    setPreviousExpanded(expanded);
+  }, [expanded, previousExpanded]);
 
   useEffect(() => {
     window.overlay.onState((newState: string, _displayLabel: string) => {
@@ -261,6 +309,7 @@ function OverlayApp(): React.ReactElement {
         clearResultTimer();
         setStatus("recording");
         setElapsed(0);
+        setPillAnimationComplete(false);
         if (timer.current) clearInterval(timer.current);
         timer.current = setInterval(() => {
           setElapsed((e) => e + 0.1);
@@ -270,6 +319,7 @@ function OverlayApp(): React.ReactElement {
           clearInterval(timer.current);
           timer.current = null;
         }
+        setPillAnimationComplete(false);
         clearResultTimer();
         setStatus("transcribing");
       } else if (newState === "idle") {
@@ -327,8 +377,10 @@ function OverlayApp(): React.ReactElement {
     expanded && status !== "recording" && status !== "transcribing";
   const hasText = text.length > 0;
 
-  const displayText =
-    text.length > 40 ? text.slice(0, 40) + "..." : text;
+  const displayText = getDisplayText(text, 4, 40);
+  const lineCount = displayText.split("\n").length;
+  const isMultiLine = lineCount > 1;
+  const pillHeight = isMultiLine ? `${24 + (lineCount - 1) * 18}px` : "36px";
 
   const handleBarClick = () => {
     if (status === "idle") {
@@ -343,114 +395,130 @@ function OverlayApp(): React.ReactElement {
   };
 
   return (
-    <div
-      className="flex items-center justify-center w-full h-full p-4 overflow-visible"
-      style={{ background: overlayTransparent ? "transparent" : "#0a0a0a" }}
-    >
-      <div
-        ref={barRef}
-        className="flex items-center gap-2 overflow-visible"
+    <div className="relative w-full h-full overflow-visible">
+      {/* Fixed bottom anchor - never moves */}
+      <div 
+        className="absolute left-0 right-0 flex justify-center"
+        style={{ bottom: `${PILL_BOTTOM_MARGIN}px` }}
       >
-        <AnimatePresence>
-          {showSideButtons && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.7, x: -15 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.7, x: -15 }}
-              transition={{ ...springPresets.button, delay: 0.05 }}
-            >
-              <LanguagePopover>
-                <SideButton
-                  tooltip="Change profile"
-                  ariaLabel="Change profile"
-                >
-                  <Globe className="size-[14px]" strokeWidth={2.25} />
-                </SideButton>
-              </LanguagePopover>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <motion.div
-          layout
-          onClick={handleBarClick}
-          className={`flex items-center justify-center gap-2 bg-neutral-900/90 backdrop-blur-md border border-white/6 rounded-full cursor-pointer ${
-            expanded ? "h-9 px-4" : "h-[15px] w-[75px] px-3"
-          }`}
-          animate={{ opacity: expanded ? 1 : 0.6 }}
-          transition={springPresets.pill}
-          style={{
-            boxShadow: meta ? meta.ring : undefined,
-          }}
+        <div
+          ref={barRef}
+          className="flex items-center gap-2 overflow-visible"
         >
-          {activeStatus === "recording" && (
-            <>
-              <Waveform rms={audioLevels.rms} />
-              <span className={`text-[13px] font-medium ${meta?.textColor}`}>
-                Recording {elapsed.toFixed(1)}s
-              </span>
-            </>
-          )}
-          {activeStatus === "transcribing" && (
-            <>
-              <Spinner />
-              <span className={`text-[13px] font-medium ${meta?.textColor}`}>
-                Transcribing
-              </span>
-            </>
-          )}
-          {activeStatus === "inserting" && (
-            <>
-              <Check
-                className="size-4 text-emerald-400 shrink-0"
-                strokeWidth={2.5}
-              />
-              <span className="text-[13px] font-medium text-white/90 truncate max-w-[420px]">
-                {displayText}
-              </span>
-            </>
-          )}
-          {status === "idle" && expanded && <DottedLine />}
-          {status === "idle" && !expanded && null}
-        </motion.div>
-
-        <AnimatePresence>
-          {showSideButtons && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.7, x: 15 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.7, x: 15 }}
-              transition={{ ...springPresets.button, delay: 0.05 }}
-            >
-              <SideButton
-                tooltip={
-                  hasText ? (
-                    <>
-                      Click or press{" "}
-                      <span className="bg-gradient-to-r from-fuchsia-300 to-pink-300 bg-clip-text text-transparent font-semibold">
-                        Win Alt 1
-                      </span>{" "}
-                      to polish
-                    </>
-                  ) : (
-                    "Open settings"
-                  )
-                }
-                onClick={hasText ? undefined : handleOpenSettings}
-                ariaLabel={hasText ? "Polish text" : "Open settings"}
+          <AnimatePresence>
+            {showSideButtons && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.7, x: -15 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.7, x: -15 }}
+                transition={{ ...springPresets.button, delay: 0.05 }}
               >
-                {hasText ? (
-                  <Sparkles
-                    className="size-[14px] text-pink-300"
-                    strokeWidth={2.25}
-                  />
-                ) : (
-                  <Settings className="size-[14px]" strokeWidth={2.25} />
+                <LanguagePopover>
+                  <SideButton
+                    tooltip="Change profile"
+                    ariaLabel="Change profile"
+                  >
+                    <Globe className="size-[14px]" strokeWidth={2.25} />
+                  </SideButton>
+                </LanguagePopover>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <motion.div
+            onClick={handleBarClick}
+            className="flex items-center justify-center gap-2 bg-neutral-900/90 backdrop-blur-md border border-white/6 rounded-full cursor-pointer"
+            animate={{
+              width: expanded ? "auto" : "75px",
+              height: expanded ? pillHeight : "15px",
+              opacity: expanded ? 1 : 0.6,
+              paddingLeft: expanded ? "16px" : "12px",
+              paddingRight: expanded ? "16px" : "12px",
+            }}
+            transition={springPresets.pill}
+            onAnimationComplete={() => {
+              // When expanding animation finishes, mark as complete
+              if (expanded && !pillAnimationComplete) {
+                setPillAnimationComplete(true);
+              }
+            }}
+            style={{
+              boxShadow: meta ? meta.ring : undefined,
+            }}
+          >
+            {activeStatus === "recording" && (
+              <>
+                <Waveform rms={audioLevels.rms} />
+                {pillAnimationComplete && (
+                  <span className={`text-[13px] font-medium whitespace-nowrap ${meta?.textColor}`}>
+                    Recording {elapsed.toFixed(1)}s
+                  </span>
                 )}
-              </SideButton>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </>
+            )}
+            {activeStatus === "transcribing" && (
+              <>
+                <Spinner />
+                <span className={`text-[13px] font-medium ${meta?.textColor}`}>
+                  Transcribing
+                </span>
+              </>
+            )}
+            {activeStatus === "inserting" && (
+              <>
+                <Check
+                  className={`size-4 text-emerald-400 shrink-0 ${isMultiLine ? "self-start mt-1" : ""}`}
+                  strokeWidth={2.5}
+                />
+                <span
+                  className={`text-[13px] font-medium text-white/90 ${isMultiLine ? "whitespace-pre-wrap text-justify" : "truncate"} max-w-[280px]`}
+                >
+                  {displayText}
+                </span>
+              </>
+            )}
+            {status === "idle" && expanded && <DottedLine />}
+            {status === "idle" && !expanded && null}
+          </motion.div>
+
+          <AnimatePresence>
+            {showSideButtons && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.7, x: 15 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.7, x: 15 }}
+                transition={{ ...springPresets.button, delay: 0.05 }}
+              >
+                <SideButton
+                  tooltip={
+                    hasText ? (
+                      <>
+                        Click or press{" "}
+                        <span className="bg-gradient-to-r from-fuchsia-300 to-pink-300 bg-clip-text text-transparent font-semibold">
+                          Win Alt 1
+                        </span>{" "}
+                        to polish
+                      </>
+                    ) : (
+                      "Open settings"
+                    )
+                  }
+                  onClick={hasText ? undefined : handleOpenSettings}
+                  ariaLabel={hasText ? "Polish text" : "Open settings"}
+                >
+                  {hasText ? (
+                    <Sparkles
+                      className="size-[14px] text-pink-300"
+                      strokeWidth={2.25}
+                    />
+                  ) : (
+                    <Settings className="size-[14px]" strokeWidth={2.25} />
+                  )}
+                </SideButton>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

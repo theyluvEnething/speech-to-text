@@ -62,13 +62,13 @@ export function createOverlayWindow(): BrowserWindow {
 
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   const FIXED_WIDTH = 460;
-  const FIXED_HEIGHT = 190;
+  const FIXED_HEIGHT = 180;
 
   overlayWindow = new BrowserWindow({
     width: FIXED_WIDTH,
     height: FIXED_HEIGHT,
     x: Math.round((screenWidth - FIXED_WIDTH) / 2),
-    y: screenHeight - 92 - FIXED_HEIGHT,
+    y: screenHeight - FIXED_HEIGHT,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
