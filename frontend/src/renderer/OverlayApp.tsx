@@ -427,7 +427,7 @@ function OverlayApp(): React.ReactElement {
 
           <motion.div
             onClick={handleBarClick}
-            className="flex items-center justify-center gap-2 bg-neutral-900/90 backdrop-blur-md border border-white/6 rounded-full cursor-pointer"
+            className="flex items-center justify-center gap-2 bg-neutral-900/90 backdrop-blur-md border border-white/6 cursor-pointer"
             animate={{
               width: expanded ? "auto" : "75px",
               height: expanded ? pillHeight : "15px",
@@ -443,6 +443,7 @@ function OverlayApp(): React.ReactElement {
               }
             }}
             style={{
+              borderRadius: "18px",
               boxShadow: meta ? meta.ring : undefined,
             }}
           >
