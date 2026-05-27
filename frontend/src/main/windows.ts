@@ -1,5 +1,18 @@
-import { BrowserWindow, screen } from "electron";
-import { join } from "path";
+import { app, BrowserWindow, screen, session, protocol } from "electron";
+import { join, extname } from "path";
+import { readFile } from "fs/promises";
+import { existsSync } from "fs";
+
+const RENDERER_BASE = join(app.getAppPath(), "dist/renderer");
+
+// It is Dev mode IF:
+// 1. NODE_ENV is explicitly set to development
+// 2. OR a Vite dev server URL is provided
+// 3. OR the app is not packaged AND the compiled index.html does not exist yet
+const isDev =
+  process.env.NODE_ENV === "development" ||
+  !!process.env.VITE_DEV_SERVER_URL ||
+  (!app.isPackaged && !existsSync(join(RENDERER_BASE, "index.html")));
 
 let settingsWindow: BrowserWindow | null = null;
 let overlayWindow: BrowserWindow | null = null;
@@ -9,7 +22,56 @@ let overlayTransparent = true;
 const PRELOAD_SETTINGS = join(__dirname, "../preload/preload.js");
 const PRELOAD_OVERLAY = join(__dirname, "../preload/preload-overlay.js");
 const PRELOAD_AUDIO = join(__dirname, "../preload/preload-audio.js");
-const RENDERER_BASE = join(__dirname, "../renderer");
+
+const MIME_TYPES: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+};
+
+export function registerAppProtocol(): void {
+  if (isDev) return;
+
+  protocol.handle("app", async (request) => {
+    const { pathname } = new URL(request.url);
+    const relativePath = pathname === "/" ? "index.html" : pathname.slice(1);
+    const filePath = join(RENDERER_BASE, relativePath);
+
+    try {
+      const data = await readFile(filePath);
+      const ext = extname(filePath).toLowerCase();
+      return new Response(data, {
+        status: 200,
+        headers: {
+          "content-type": MIME_TYPES[ext] ?? "application/octet-stream",
+          "cache-control": "no-store",
+        },
+      });
+    } catch (err) {
+      console.error("[Protocol] Failed to serve", filePath, err);
+      return new Response("Not found", { status: 404 });
+    }
+  });
+}
+
+let clerkSession: Electron.Session | null = null;
+export function getClerkSession(): Electron.Session {
+  if (!clerkSession) {
+    clerkSession = session.fromPartition("persist:wavely");
+  }
+  return clerkSession;
+}
 
 export function createSettingsWindow(): BrowserWindow {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
@@ -34,14 +96,18 @@ export function createSettingsWindow(): BrowserWindow {
       preload: PRELOAD_SETTINGS,
       contextIsolation: true,
       nodeIntegration: false,
+      session: getClerkSession(),
     },
   });
 
-  settingsWindow.loadFile(join(RENDERER_BASE, "index.html"));
+  if (isDev) {
+    settingsWindow.loadURL("http://localhost:5173/");
+  } else {
+    settingsWindow.loadURL("app://wavely/index.html");
+  }
+
   settingsWindow.setMenuBarVisibility(false);
 
-  // Prevent modifier keys from triggering system menus (e.g. Alt on Windows)
-  // which would break push-to-talk key-release detection via uiohook.
   settingsWindow.webContents.on("before-input-event", (event, input) => {
     if ((input.key === "Alt" || input.key === "Control" || input.key === "Shift") && input.type === "keyDown") {
       event.preventDefault();
@@ -81,15 +147,20 @@ export function createOverlayWindow(): BrowserWindow {
       preload: PRELOAD_OVERLAY,
       contextIsolation: true,
       nodeIntegration: false,
+      session: getClerkSession(),
     },
   });
 
-  overlayWindow.loadFile(join(RENDERER_BASE, "overlay.html"));
+  if (isDev) {
+    overlayWindow.loadURL("http://localhost:5173/overlay.html");
+  } else {
+    overlayWindow.loadURL("app://wavely/overlay.html");
+  }
+
   overlayWindow.setVisibleOnAllWorkspaces(true);
   overlayWindow.setAlwaysOnTop(true, "screen-saver");
   setWindowClickThrough(overlayWindow);
 
-  // Re-apply alwaysOnTop periodically — Windows drops it after screensaver / fullscreen apps
   const alwaysOnTopTimer = setInterval(() => {
     if (overlayWindow && !overlayWindow.isDestroyed()) {
       overlayWindow.setAlwaysOnTop(true, "screen-saver");
@@ -98,7 +169,6 @@ export function createOverlayWindow(): BrowserWindow {
     }
   }, 5000);
 
-  // Reposition and re-assert alwaysOnTop when the window is shown (e.g. after alt-tab)
   overlayWindow.on("show", () => {
     const { width: w, height: h } = screen.getPrimaryDisplay().workAreaSize;
     overlayWindow?.setPosition(Math.round((w - FIXED_WIDTH) / 2), h - 92 - FIXED_HEIGHT);
@@ -130,10 +200,15 @@ export function createAudioWindow(): BrowserWindow {
       preload: PRELOAD_AUDIO,
       contextIsolation: true,
       nodeIntegration: false,
+      session: getClerkSession(),
     },
   });
 
-  audioWindow.loadFile(join(RENDERER_BASE, "audio.html"));
+  if (isDev) {
+    audioWindow.loadURL("http://localhost:5173/audio.html");
+  } else {
+    audioWindow.loadURL("app://wavely/audio.html");
+  }
 
   audioWindow.on("closed", () => {
     audioWindow = null;
