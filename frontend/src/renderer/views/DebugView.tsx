@@ -35,6 +35,7 @@ export function DebugView(): React.ReactElement {
         toast("Full reset complete", {
           description: "All settings, profiles, and conversations have been restored to defaults.",
         });
+        setTimeout(() => window.location.reload(), 500);
       })
       .catch((err) => {
         toast("Reset failed", {

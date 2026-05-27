@@ -52,4 +52,8 @@ contextBridge.exposeInMainWorld("overlay", {
   onTransparencyChanged: (callback: (transparent: boolean) => void): void => {
     ipcRenderer.on("overlay:transparency-changed", (_event, transparent: boolean) => callback(transparent));
   },
+
+  onReset: (callback: () => void): void => {
+    ipcRenderer.on("app:reset", () => callback());
+  },
 });

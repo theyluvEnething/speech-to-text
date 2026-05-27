@@ -6,7 +6,6 @@ import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProximity } from "./hooks/useProximity";
 import { springPresets } from "./animations/presets";
-import { cn } from "@/lib/utils";
 
 type PopupStatus = "idle" | "recording" | "transcribing" | "inserting";
 
@@ -142,7 +141,8 @@ function LanguagePopover({
   onProfileChange: (profile: Profile) => void;
 }): React.ReactElement {
   const [open, setOpen] = useState(false);
-  const [recentProfiles, setRecentProfiles] = useState<Profile[]>([]);
+  const [otherProfiles, setOtherProfiles] = useState<Profile[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -150,30 +150,14 @@ function LanguagePopover({
       onProfileChange(profile);
     }).catch(() => {});
     window.overlay.getProfiles().then((profiles: Profile[]) => {
-      const recentIds: string[] = JSON.parse(
-        localStorage.getItem("recentProfiles") || "[]",
-      );
-      const recent = recentIds
-        .map((id) => profiles.find((p) => p.id === id))
-        .filter((p): p is Profile => !!p && p.id !== activeProfileId);
-      const others = recent.length > 0
-        ? recent
-        : profiles.filter((p) => p.id !== activeProfileId);
-      setRecentProfiles(others.slice(0, 3));
+      setOtherProfiles(profiles.filter((p) => p.id !== activeProfileId));
+      setTotalCount(profiles.length);
     });
   }, [open]);
 
   const handleSelect = (profile: Profile) => {
     window.overlay.setActiveProfile(profile.id);
     onProfileChange(profile);
-    const recentIds: string[] = JSON.parse(
-      localStorage.getItem("recentProfiles") || "[]",
-    );
-    const updated = [
-      profile.id,
-      ...recentIds.filter((id) => id !== profile.id),
-    ].slice(0, 5);
-    localStorage.setItem("recentProfiles", JSON.stringify(updated));
     setOpen(false);
   };
 
@@ -181,6 +165,8 @@ function LanguagePopover({
     setOpen(false);
     window.overlay.showSettings("profiles");
   };
+
+  const showMore = totalCount <= 1;
 
   return (
     <Tooltip.Provider delayDuration={200}>
@@ -213,27 +199,26 @@ function LanguagePopover({
               style={{ pointerEvents: "auto" }}
             >
               <div className="flex flex-col items-center gap-1 px-2 py-2 rounded-full bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl">
-                {recentProfiles.map((profile) => (
+                {otherProfiles.map((profile) => (
                   <button
                     key={profile.id}
                     onClick={() => handleSelect(profile)}
-                    className={cn(
-                      "size-7 grid place-items-center rounded-full transition-colors",
-                      profile.id === activeProfileId
-                        ? "bg-white/15 ring-1 ring-white/20"
-                        : "hover:bg-white/10",
-                    )}
+                    className="size-7 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
                   >
                     <span className="text-[13px] leading-none">{profile.icon}</span>
                   </button>
                 ))}
-                <div className="h-px w-4 bg-white/10 my-0.5" />
-                <button
-                  onClick={handleMore}
-                  className="size-7 grid place-items-center rounded-full hover:bg-white/10 transition-colors text-white/50 hover:text-white/80"
-                >
-                  <span className="text-[11px] leading-none">⋯</span>
-                </button>
+                {showMore && (
+                  <>
+                    {otherProfiles.length > 0 && <div className="h-px w-4 bg-white/10 my-0.5" />}
+                    <button
+                      onClick={handleMore}
+                      className="size-7 grid place-items-center rounded-full hover:bg-white/10 transition-colors text-white/50 hover:text-white/80"
+                    >
+                      <span className="text-[11px] leading-none">⋯</span>
+                    </button>
+                  </>
+                )}
               </div>
             </Popover.Content>
           </Popover.Portal>
@@ -408,6 +393,13 @@ function OverlayApp(): React.ReactElement {
 
     window.overlay.onTransparencyChanged((transparent: boolean) => {
       setOverlayTransparent(transparent);
+    });
+
+    window.overlay.onReset(() => {
+      window.overlay.getActiveProfile().then((profile: Profile) => {
+        setCurrentProfileIcon(profile.icon);
+        setActiveProfileId(profile.id);
+      }).catch(() => {});
     });
 
     return () => {

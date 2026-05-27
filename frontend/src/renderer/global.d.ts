@@ -86,6 +86,7 @@ declare global {
     setActiveProfile(id: string): Promise<void>;
     showSettings(tab?: string): Promise<void>;
     onTransparencyChanged(callback: (transparent: boolean) => void): void;
+    onReset(callback: () => void): void;
   }
 
   interface Window {

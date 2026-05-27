@@ -2,7 +2,7 @@ import { app, ipcMain, BrowserWindow } from "electron";
 import Store from "electron-store";
 import { randomUUID } from "crypto";
 import { updateHotkey } from "./hotkey";
-import { getSettingsWindow, toggleOverlayTransparency } from "./windows";
+import { getSettingsWindow, getOverlayWindow, toggleOverlayTransparency } from "./windows";
 
 interface Profile {
   id: string;
@@ -274,6 +274,16 @@ export function registerIpcHandlers(
       conversations: [],
     });
     console.log("[Wavely] Full reset: all data restored to defaults.");
+
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.webContents.send("app:reset");
+    }
+    const settingsWin = getSettingsWindow();
+    if (settingsWin && !settingsWin.isDestroyed()) {
+      settingsWin.webContents.send("app:reset");
+    }
+
     return { success: true };
   });
 }

@@ -84,6 +84,7 @@ function AppView(): React.ReactElement {
         setAppLanguage("en");
         i18n.changeLanguage("en");
         toast(t("appSettings.resetDone", "Settings reset to defaults"));
+        setTimeout(() => window.location.reload(), 500);
       })
       .catch((err) => {
         toast(err instanceof Error ? err.message : t("appSettings.resetFailed", "Failed to reset settings"));
