@@ -15,6 +15,12 @@ contextBridge.exposeInMainWorld("wavely", {
   togglePaused: (): Promise<boolean> =>
     ipcRenderer.invoke("app:togglePaused"),
 
+  getDebugProximity: (): Promise<boolean> =>
+    ipcRenderer.invoke("debug:getProximity"),
+
+  toggleDebugProximity: (): Promise<boolean> =>
+    ipcRenderer.invoke("debug:toggleProximity"),
+
   stopRecording: (): void => {
     ipcRenderer.send("recording:stop");
   },

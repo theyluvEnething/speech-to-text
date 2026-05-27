@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -13,7 +13,12 @@ import {
 
 export function DebugView(): React.ReactElement {
   const [transparent, setTransparent] = useState(true);
+  const [debugProximity, setDebugProximity] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    window.wavely.getDebugProximity().then(setDebugProximity).catch(() => {});
+  }, []);
 
   const showTestNotification = () => {
     toast("Test notification", {
@@ -25,6 +30,12 @@ export function DebugView(): React.ReactElement {
   const handleTransparencyToggle = (v: boolean) => {
     setTransparent(v);
     window.wavely.toggleOverlayTransparency(v);
+  };
+
+  const handleDebugProximityToggle = (v: boolean) => {
+    window.wavely.toggleDebugProximity().then((enabled: boolean) => {
+      setDebugProximity(enabled);
+    }).catch(() => {});
   };
 
   const handleFullReset = () => {
@@ -60,6 +71,21 @@ export function DebugView(): React.ReactElement {
         <Switch
           checked={transparent}
           onCheckedChange={handleTransparencyToggle}
+        />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
+            Show proximity debug overlay
+          </p>
+          <p className="text-[12px] text-foreground/45 mt-0.5">
+            Visualize proximity bounding boxes on the overlay window for debugging.
+          </p>
+        </div>
+        <Switch
+          checked={debugProximity}
+          onCheckedChange={handleDebugProximityToggle}
         />
       </div>
 

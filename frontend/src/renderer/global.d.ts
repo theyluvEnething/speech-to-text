@@ -42,6 +42,8 @@ declare global {
     setSettings(settings: Record<string, string | boolean>): Promise<{ success: boolean }>;
     getPaused(): Promise<boolean>;
     togglePaused(): Promise<boolean>;
+    getDebugProximity(): Promise<boolean>;
+    toggleDebugProximity(): Promise<boolean>;
     stopRecording(): void;
     hideWindow(): void;
     closeWindow(): void;
@@ -88,6 +90,8 @@ declare global {
     showSettings(tab?: string): Promise<void>;
     onTransparencyChanged(callback: (transparent: boolean) => void): void;
     onReset(callback: () => void): void;
+    getDebugProximity(): Promise<boolean>;
+    onDebugProximityChanged(callback: (enabled: boolean) => void): void;
   }
 
   interface Window {

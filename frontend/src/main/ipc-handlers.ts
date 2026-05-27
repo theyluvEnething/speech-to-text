@@ -32,6 +32,7 @@ interface StoreSchema {
   copyToClipboard: boolean;
   appLanguage: string;
   isPaused: boolean;
+  debugProximity: boolean;
   profiles: Profile[];
   activeProfileId: string;
   recentProfileIds: string[];
@@ -47,6 +48,7 @@ export const store = new Store<StoreSchema>({
     copyToClipboard: true,
     appLanguage: "en",
     isPaused: false,
+    debugProximity: false,
     profiles: [
       {
         id: "default",
@@ -251,6 +253,20 @@ export function registerIpcHandlers(
     return app.getVersion();
   });
 
+  ipcMain.handle("debug:getProximity", () => {
+    return store.get("debugProximity");
+  });
+
+  ipcMain.handle("debug:toggleProximity", () => {
+    const next = !store.get("debugProximity");
+    store.set("debugProximity", next);
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.webContents.send("overlay:debug-proximity-changed", next);
+    }
+    return next;
+  });
+
   ipcMain.handle("app:getPaused", () => {
     return store.get("isPaused");
   });
@@ -270,6 +286,7 @@ export function registerIpcHandlers(
       copyToClipboard: true,
       appLanguage: "en",
       isPaused: false,
+      debugProximity: false,
       profiles: [
         {
           id: "default",

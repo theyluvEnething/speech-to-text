@@ -6,6 +6,7 @@ import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProximity } from "./hooks/useProximity";
 import { springPresets } from "./animations/presets";
+import { ProximityDebugOverlay } from "@/components/ProximityDebugOverlay";
 
 type PopupStatus = "idle" | "recording" | "transcribing" | "inserting";
 
@@ -323,6 +324,8 @@ function OverlayApp(): React.ReactElement {
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const popoverContentRef = useRef<HTMLDivElement>(null);
 
+  const [debugProximity, setDebugProximity] = useState(false);
+
   // Bottom margin for the pill - adjust this value to move the pill up/down
   // Higher value = pill higher up, Lower value = pill lower down
   const PILL_BOTTOM_MARGIN = 32; // 32px = pb-8
@@ -428,6 +431,10 @@ function OverlayApp(): React.ReactElement {
       }).catch(() => {});
     });
 
+    window.overlay.onDebugProximityChanged((enabled: boolean) => {
+      setDebugProximity(enabled);
+    });
+
     return () => {
       if (timer.current) clearInterval(timer.current);
       clearResultTimer();
@@ -438,6 +445,9 @@ function OverlayApp(): React.ReactElement {
     window.overlay.getActiveProfile().then((profile: Profile) => {
       setCurrentProfileIcon(profile.icon);
       setActiveProfileId(profile.id);
+    }).catch(() => {});
+    window.overlay.getDebugProximity().then((enabled: boolean) => {
+      setDebugProximity(enabled);
     }).catch(() => {});
   }, []);
 
@@ -643,6 +653,15 @@ function OverlayApp(): React.ReactElement {
           </AnimatePresence>
         </div>
       </div>
+
+      {debugProximity && (
+        <ProximityDebugOverlay
+          barRef={barRef}
+          profileButtonRef={profileButtonRef}
+          popoverContentRef={popoverContentRef}
+          isProfileMenuOpen={isProfileMenuOpen}
+        />
+      )}
     </div>
   );
 }

@@ -60,4 +60,12 @@ contextBridge.exposeInMainWorld("overlay", {
   onReset: (callback: () => void): void => {
     ipcRenderer.on("app:reset", () => callback());
   },
+
+  getDebugProximity: (): Promise<boolean> => {
+    return ipcRenderer.invoke("debug:getProximity");
+  },
+
+  onDebugProximityChanged: (callback: (enabled: boolean) => void): void => {
+    ipcRenderer.on("overlay:debug-proximity-changed", (_event, enabled: boolean) => callback(enabled));
+  },
 });
