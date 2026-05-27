@@ -6,6 +6,7 @@ import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProximity } from "./hooks/useProximity";
 import { springPresets } from "./animations/presets";
+import { cn } from "@/lib/utils";
 
 type PopupStatus = "idle" | "recording" | "transcribing" | "inserting";
 
@@ -132,11 +133,13 @@ function DottedLine(): React.ReactElement {
 }
 
 function LanguagePopover({
-  children,
-  onIconChange,
+  icon,
+  activeProfileId,
+  onProfileChange,
 }: {
-  children: React.ReactNode;
-  onIconChange: (icon: string) => void;
+  icon: string;
+  activeProfileId: string;
+  onProfileChange: (profile: Profile) => void;
 }): React.ReactElement {
   const [open, setOpen] = useState(false);
   const [recentProfiles, setRecentProfiles] = useState<Profile[]>([]);
@@ -144,10 +147,8 @@ function LanguagePopover({
   useEffect(() => {
     if (!open) return;
     window.overlay.getActiveProfile().then((profile: Profile) => {
-      onIconChange(profile.icon);
-    }).catch(() => {
-      onIconChange("🌐");
-    });
+      onProfileChange(profile);
+    }).catch(() => {});
     window.overlay.getProfiles().then((profiles: Profile[]) => {
       const recentIds: string[] = JSON.parse(
         localStorage.getItem("recentProfiles") || "[]",
@@ -155,13 +156,13 @@ function LanguagePopover({
       const recent = recentIds
         .map((id) => profiles.find((p) => p.id === id))
         .filter((p): p is Profile => !!p);
-      setRecentProfiles(recent.slice(0, 3));
+      setRecentProfiles(recent.length > 0 ? recent.slice(0, 5) : profiles.slice(0, 5));
     });
   }, [open]);
 
   const handleSelect = (profile: Profile) => {
     window.overlay.setActiveProfile(profile.id);
-    onIconChange(profile.icon);
+    onProfileChange(profile);
     const recentIds: string[] = JSON.parse(
       localStorage.getItem("recentProfiles") || "[]",
     );
@@ -179,44 +180,74 @@ function LanguagePopover({
   };
 
   return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger asChild>{children}</Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
-          side="top"
-          align="center"
-          sideOffset={12}
-          collisionPadding={8}
-          avoidCollisions
-          className="z-[9999] min-w-[180px] rounded-xl bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-150"
-          style={{
-            maxWidth: "calc(100vw - 32px)",
-            pointerEvents: "auto",
-          }}
-        >
-          <div className="space-y-0.5">
-            {recentProfiles.map((profile) => (
+    <Tooltip.Provider delayDuration={200}>
+      <Tooltip.Root>
+        <Popover.Root open={open} onOpenChange={setOpen}>
+          <Tooltip.Trigger asChild>
+            <Popover.Trigger asChild>
               <button
-                key={profile.id}
-                onClick={() => handleSelect(profile)}
-                className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm hover:bg-white/10 transition-colors text-left"
+                type="button"
+                aria-label="Change profile"
+                className="size-7 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
+                style={{
+                  background: "rgba(23,23,23,0.9)",
+                  backdropFilter: "blur(8px)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}
               >
-                <span className="text-base"><ProfileIcon icon={profile.icon} className="text-base" /></span>
-                <span className="flex-1 text-white/90">{profile.name}</span>
+                <span className="text-[14px] leading-none">{icon}</span>
               </button>
-            ))}
-            <div className="h-px bg-white/10 my-1" />
-            <button
-              onClick={handleMore}
-              className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm hover:bg-white/10 transition-colors text-left"
+            </Popover.Trigger>
+          </Tooltip.Trigger>
+          <Popover.Portal>
+            <Popover.Content
+              side="top"
+              align="center"
+              sideOffset={12}
+              collisionPadding={8}
+              avoidCollisions
+              className="z-[9999] animate-in fade-in zoom-in-95 duration-150"
+              style={{ pointerEvents: "auto" }}
             >
-              <span className="text-base">⋯</span>
-              <span className="flex-1 text-white/70">More...</span>
-            </button>
-          </div>
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+              <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl">
+                {recentProfiles.map((profile) => (
+                  <button
+                    key={profile.id}
+                    onClick={() => handleSelect(profile)}
+                    className={cn(
+                      "size-7 grid place-items-center rounded-full transition-colors",
+                      profile.id === activeProfileId
+                        ? "bg-white/15 ring-1 ring-white/20"
+                        : "hover:bg-white/10",
+                    )}
+                  >
+                    <span className="text-[13px] leading-none">{profile.icon}</span>
+                  </button>
+                ))}
+                <div className="w-px h-4 bg-white/10 mx-0.5" />
+                <button
+                  onClick={handleMore}
+                  className="size-7 grid place-items-center rounded-full hover:bg-white/10 transition-colors text-white/50 hover:text-white/80"
+                >
+                  <span className="text-[11px] leading-none">⋯</span>
+                </button>
+              </div>
+            </Popover.Content>
+          </Popover.Portal>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="top"
+              sideOffset={8}
+              collisionPadding={16}
+              className="z-[9999] px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 shadow-lg animate-in fade-in zoom-in-95 duration-150"
+            >
+              Change profile
+              <Tooltip.Arrow className="fill-black/90" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Popover.Root>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   );
 }
 
@@ -275,7 +306,8 @@ function OverlayApp(): React.ReactElement {
   const [overlayTransparent, setOverlayTransparent] = useState(true);
   const [pillAnimationComplete, setPillAnimationComplete] = useState(false);
   const [previousExpanded, setPreviousExpanded] = useState(false);
-  const [currentProfileIcon, setCurrentProfileIcon] = useState("🌐");
+  const [currentProfileIcon, setCurrentProfileIcon] = useState("🌎");
+  const [activeProfileId, setActiveProfileId] = useState("default");
 
   // Bottom margin for the pill - adjust this value to move the pill up/down
   // Higher value = pill higher up, Lower value = pill lower down
@@ -384,6 +416,7 @@ function OverlayApp(): React.ReactElement {
   useEffect(() => {
     window.overlay.getActiveProfile().then((profile: Profile) => {
       setCurrentProfileIcon(profile.icon);
+      setActiveProfileId(profile.id);
     }).catch(() => {});
   }, []);
 
@@ -429,14 +462,14 @@ function OverlayApp(): React.ReactElement {
                 exit={{ opacity: 0, scale: 0.7, x: -15 }}
                 transition={{ ...springPresets.button, delay: 0.05 }}
               >
-                <LanguagePopover onIconChange={setCurrentProfileIcon}>
-                  <SideButton
-                    tooltip="Change profile"
-                    ariaLabel="Change profile"
-                  >
-                    <span className="text-[14px] leading-none">{currentProfileIcon}</span>
-                  </SideButton>
-                </LanguagePopover>
+                <LanguagePopover
+                  icon={currentProfileIcon}
+                  activeProfileId={activeProfileId}
+                  onProfileChange={(profile) => {
+                    setCurrentProfileIcon(profile.icon);
+                    setActiveProfileId(profile.id);
+                  }}
+                />
               </motion.div>
             )}
           </AnimatePresence>

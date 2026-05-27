@@ -51,7 +51,7 @@ export const store = new Store<StoreSchema>({
         id: "default",
         name: "Default",
         color: "#10b981",
-        icon: "🎙️",
+        icon: "🌎",
         systemPrompt: "",
       },
     ],
