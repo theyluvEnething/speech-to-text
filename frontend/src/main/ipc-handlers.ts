@@ -219,6 +219,10 @@ export function registerIpcHandlers(
     onOverlayIdle();
   });
 
+  ipcMain.handle("overlay:getActiveProfile", () => {
+    return getActiveProfile();
+  });
+
   ipcMain.handle("overlay:toggleTransparency", (_event, transparent: boolean) => {
     toggleOverlayTransparency(transparent);
   });

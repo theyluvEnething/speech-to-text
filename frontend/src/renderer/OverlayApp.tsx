@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Globe, Sparkles, Settings, Check } from "lucide-react";
+import { Sparkles, Settings, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfileIcon from "@/components/ProfileIcon";
 import * as Popover from "@radix-ui/react-popover";
@@ -133,14 +133,21 @@ function DottedLine(): React.ReactElement {
 
 function LanguagePopover({
   children,
+  onIconChange,
 }: {
   children: React.ReactNode;
+  onIconChange: (icon: string) => void;
 }): React.ReactElement {
   const [open, setOpen] = useState(false);
   const [recentProfiles, setRecentProfiles] = useState<Profile[]>([]);
 
   useEffect(() => {
     if (!open) return;
+    window.overlay.getActiveProfile().then((profile: Profile) => {
+      onIconChange(profile.icon);
+    }).catch(() => {
+      onIconChange("🌐");
+    });
     window.overlay.getProfiles().then((profiles: Profile[]) => {
       const recentIds: string[] = JSON.parse(
         localStorage.getItem("recentProfiles") || "[]",
@@ -154,6 +161,7 @@ function LanguagePopover({
 
   const handleSelect = (profile: Profile) => {
     window.overlay.setActiveProfile(profile.id);
+    onIconChange(profile.icon);
     const recentIds: string[] = JSON.parse(
       localStorage.getItem("recentProfiles") || "[]",
     );
@@ -267,6 +275,7 @@ function OverlayApp(): React.ReactElement {
   const [overlayTransparent, setOverlayTransparent] = useState(true);
   const [pillAnimationComplete, setPillAnimationComplete] = useState(false);
   const [previousExpanded, setPreviousExpanded] = useState(false);
+  const [currentProfileIcon, setCurrentProfileIcon] = useState("🌐");
 
   // Bottom margin for the pill - adjust this value to move the pill up/down
   // Higher value = pill higher up, Lower value = pill lower down
@@ -372,6 +381,12 @@ function OverlayApp(): React.ReactElement {
     };
   }, [clearResultTimer, goIdle]);
 
+  useEffect(() => {
+    window.overlay.getActiveProfile().then((profile: Profile) => {
+      setCurrentProfileIcon(profile.icon);
+    }).catch(() => {});
+  }, []);
+
   const activeStatus = isActive ? status : null;
   const meta = activeStatus ? statusColor[activeStatus] : null;
   const showSideButtons =
@@ -414,12 +429,12 @@ function OverlayApp(): React.ReactElement {
                 exit={{ opacity: 0, scale: 0.7, x: -15 }}
                 transition={{ ...springPresets.button, delay: 0.05 }}
               >
-                <LanguagePopover>
+                <LanguagePopover onIconChange={setCurrentProfileIcon}>
                   <SideButton
                     tooltip="Change profile"
                     ariaLabel="Change profile"
                   >
-                    <Globe className="size-[14px]" strokeWidth={2.25} />
+                    <span className="text-[14px] leading-none">{currentProfileIcon}</span>
                   </SideButton>
                 </LanguagePopover>
               </motion.div>
