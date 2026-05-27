@@ -13,17 +13,32 @@ const PRELOAD_OVERLAY = join(__dirname, "../preload/preload-overlay.js");
 const PRELOAD_AUDIO = join(__dirname, "../preload/preload-audio.js");
 const RENDERER_BASE = join(__dirname, "../../dist/renderer");
 
-export function registerAppProtocol(): void {
-  protocol.handle("app", (request) => {
-    const url = new URL(request.url);
-    const relativePath = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
-    const absolutePath = join(RENDERER_BASE, decodeURIComponent(relativePath));
+function serveAppFile(request: Request): Response | Promise<Response> {
+  const url = new URL(request.url);
+  let filePath = url.pathname;
+  if (filePath === "/") filePath = "/index.html";
 
-    return net.fetch(pathToFileURL(absolutePath).toString()).catch((err) => {
-      console.error("[Protocol] Failed to serve", absolutePath, err);
-      return new Response("Not found", { status: 404 });
-    });
+  const absolutePath = join(RENDERER_BASE, filePath);
+  return net.fetch(pathToFileURL(absolutePath).toString()).catch((err) => {
+    console.error("[Protocol] Failed to serve", absolutePath, err);
+    return new Response("Not Found", { status: 404 });
   });
+}
+
+// Must be called BEFORE app.whenReady()
+export function registerAppProtocol(): void {
+  protocol.registerSchemesAsPrivileged([
+    { scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
+  ]);
+}
+
+// Must be called AFTER app.whenReady()
+export function registerProtocolHandlers(): void {
+  // Default session
+  protocol.handle("app", serveAppFile);
+
+  // Clerk session — same handler so OAuth redirects work on the persistent partition
+  getClerkSession().protocol.handle("app", serveAppFile);
 }
 
 let clerkSession: Electron.Session | null = null;

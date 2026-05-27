@@ -1,6 +1,6 @@
-import { app, ipcMain, clipboard, protocol } from "electron";
+import { app, ipcMain, clipboard } from "electron";
 import { autoUpdater } from "electron-updater";
-import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow, registerAppProtocol } from "./windows";
+import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow, registerAppProtocol, registerProtocolHandlers } from "./windows";
 import { createTray } from "./tray";
 import { registerHotkey, unregisterAll } from "./hotkey";
 import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } from "./ipc-handlers";
@@ -157,22 +157,10 @@ function handleOverlayIdle(): void {
   console.log("[Wavely] Overlay returned to idle.");
 }
 
-// Must be called before app.whenReady()
-protocol.registerSchemesAsPrivileged([
-  {
-    scheme: "app",
-    privileges: {
-      standard: true,
-      secure: true,
-      supportFetchAPI: true,
-      corsEnabled: true,
-      stream: true,
-    },
-  },
-]);
+registerAppProtocol();
 
 app.whenReady().then(() => {
-  registerAppProtocol();
+  registerProtocolHandlers();
 
   const savedHotkey = store.get("hotkey");
   const savedLanguage = store.get("language");
