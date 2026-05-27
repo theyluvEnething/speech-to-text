@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
 import { toast } from "sonner";
 import { useStore } from "@/store";
 import { Button } from "@/components/ui/button";
@@ -21,16 +22,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import ProfileIcon from "@/components/ProfileIcon";
 
 const COLORS = ["#ef4444", "#f59e0b", "#eab308", "#10b981", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
-const ICONS = [
+const QUICK_ICONS = [
   "🇬🇧", "🇩🇪", "🇫🇷", "🇪🇸", "🇮🇹", "🇯🇵", "🇰🇷", "🇨🇳",
-  "🎙️", "💼", "📅", "📝", "💻",
-  "🏥", "💊", "⚖️", "🎓", "🔬",
-  "📞", "🎧", "🤝",
-  "🏠", "🎨",
+  "🎙️", "💼", "🏥", "🎓", "💻", "🎨", "📝",
 ];
 const SENTINEL = "__global__";
 
@@ -86,8 +89,7 @@ function ProfilesView(): React.ReactElement {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Profile>({ ...EMPTY_FORM });
-  const [customEmoji, setCustomEmoji] = useState("");
-  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [nameTouched, setNameTouched] = useState(false);
 
   useEffect(() => {
@@ -273,13 +275,10 @@ function ProfilesView(): React.ReactElement {
             <div className="space-y-2">
               <Label>Icon</Label>
               <div className="grid grid-cols-8 gap-1.5">
-                {ICONS.map((e) => (
+                {QUICK_ICONS.map((e) => (
                   <button
                     key={e}
-                    onClick={() => {
-                      setEditing((p) => ({ ...p, icon: e }));
-                      setShowCustomInput(false);
-                    }}
+                    onClick={() => setEditing((p) => ({ ...p, icon: e }))}
                     className={cn(
                       "flex items-center justify-center w-9 h-9 rounded-md text-lg transition-all",
                       editing.icon === e
@@ -290,52 +289,30 @@ function ProfilesView(): React.ReactElement {
                     <ProfileIcon icon={e} className="text-lg" />
                   </button>
                 ))}
-                {showCustomInput ? (
-                  <div className="flex items-center gap-1 col-span-2">
-                    <Input
-                      autoFocus
-                      value={customEmoji}
-                      onChange={(e) => setCustomEmoji(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && customEmoji.trim()) {
-                          setEditing((p) => ({ ...p, icon: customEmoji.trim() }));
-                          setShowCustomInput(false);
-                          setCustomEmoji("");
-                        }
-                        if (e.key === "Escape") {
-                          setShowCustomInput(false);
-                          setCustomEmoji("");
-                        }
-                      }}
-                      placeholder="Emoji…"
-                      className="h-9 w-full text-center text-lg"
-                      maxLength={4}
-                    />
+                <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                  <PopoverTrigger asChild>
                     <button
-                      onClick={() => {
-                        if (customEmoji.trim()) {
-                          setEditing((p) => ({ ...p, icon: customEmoji.trim() }));
-                        }
-                        setShowCustomInput(false);
-                        setCustomEmoji("");
-                      }}
-                      className="shrink-0 flex items-center justify-center w-9 h-9 rounded-md
-                        text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                      title="More emojis"
+                      className="flex items-center justify-center w-9 h-9 rounded-md text-lg
+                        text-muted-foreground hover:text-foreground hover:bg-accent transition-colors
+                        border border-dashed border-border"
                     >
-                      <Plus className="h-4 w-4" />
+                      +
                     </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setShowCustomInput(true)}
-                    title="Custom emoji"
-                    className="flex items-center justify-center w-9 h-9 rounded-md text-lg
-                      text-muted-foreground hover:text-foreground hover:bg-accent transition-colors
-                      border border-dashed border-border"
-                  >
-                    +
-                  </button>
-                )}
+                  </PopoverTrigger>
+                  <PopoverContent align="end" side="bottom" className="w-auto p-0 border-border" sideOffset={8}>
+                    <EmojiPicker
+                      onEmojiClick={(data: EmojiClickData) => {
+                        setEditing((p) => ({ ...p, icon: data.emoji }));
+                        setShowEmojiPicker(false);
+                      }}
+                      autoFocusSearch={true}
+                      theme="dark"
+                      width={350}
+                      height={400}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
