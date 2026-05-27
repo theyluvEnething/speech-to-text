@@ -149,8 +149,15 @@ function LanguagePopover({
     window.overlay.getActiveProfile().then((profile: Profile) => {
       onProfileChange(profile);
     }).catch(() => {});
-    window.overlay.getProfiles().then((profiles: Profile[]) => {
-      setOtherProfiles(profiles.filter((p) => p.id !== activeProfileId));
+    Promise.all([
+      window.overlay.getProfiles(),
+      window.overlay.getRecentProfileIds(),
+    ]).then(([profiles, recentIds]: [Profile[], string[]]) => {
+      const recent = recentIds
+        .map((id) => profiles.find((p) => p.id === id))
+        .filter((p): p is Profile => !!p && p.id !== activeProfileId)
+        .slice(0, 3);
+      setOtherProfiles(recent);
       setTotalCount(profiles.length);
     });
   }, [open]);
@@ -205,7 +212,7 @@ function LanguagePopover({
                     onClick={() => handleSelect(profile)}
                     className="size-7 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
                   >
-                    <span className="text-[13px] leading-none">{profile.icon}</span>
+                    <ProfileIcon icon={profile.icon} className="text-[13px]" />
                   </button>
                 ))}
                 {showMore && (

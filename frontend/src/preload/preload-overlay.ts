@@ -29,6 +29,10 @@ contextBridge.exposeInMainWorld("overlay", {
     return ipcRenderer.invoke("profiles:list");
   },
 
+  getRecentProfileIds: (): Promise<unknown> => {
+    return ipcRenderer.invoke("profiles:getRecent");
+  },
+
   getActiveProfile: (): Promise<unknown> => {
     return ipcRenderer.invoke("overlay:getActiveProfile");
   },

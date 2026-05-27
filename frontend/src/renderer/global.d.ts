@@ -82,6 +82,7 @@ declare global {
     stopRecording(): void;
     setClickThrough(passthrough: boolean): Promise<void>;
     getProfiles(): Promise<Profile[]>;
+    getRecentProfileIds(): Promise<string[]>;
     getActiveProfile(): Promise<Profile>;
     setActiveProfile(id: string): Promise<void>;
     showSettings(tab?: string): Promise<void>;

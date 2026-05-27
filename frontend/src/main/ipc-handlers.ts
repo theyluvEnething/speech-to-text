@@ -34,6 +34,7 @@ interface StoreSchema {
   isPaused: boolean;
   profiles: Profile[];
   activeProfileId: string;
+  recentProfileIds: string[];
   conversations: Conversation[];
 }
 
@@ -56,6 +57,7 @@ export const store = new Store<StoreSchema>({
       },
     ],
     activeProfileId: "default",
+    recentProfileIds: ["default"],
     conversations: [],
   },
 });
@@ -193,8 +195,15 @@ export function registerIpcHandlers(
     const profiles = store.get("profiles");
     if (profiles.some((p) => p.id === id)) {
       store.set("activeProfileId", id);
+      const recents = store.get("recentProfileIds");
+      const updated = [id, ...recents.filter((r) => r !== id)].slice(0, 3);
+      store.set("recentProfileIds", updated);
       console.log(`[Wavely] Active profile set: ${id}`);
     }
+  });
+
+  ipcMain.handle("profiles:getRecent", () => {
+    return store.get("recentProfileIds");
   });
 
   // ── Conversations ─────────────────────────────────────────
@@ -271,6 +280,7 @@ export function registerIpcHandlers(
         },
       ],
       activeProfileId: "default",
+      recentProfileIds: ["default"],
       conversations: [],
     });
     console.log("[Wavely] Full reset: all data restored to defaults.");
