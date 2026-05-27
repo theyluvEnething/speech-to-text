@@ -14,6 +14,7 @@
     "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.8",
     "@deepgram/sdk": "^5.2.0",
     "@fontsource/inter": "^5.2.8",
     "@nut-tree-fork/nut-js": "^4.2.6",
