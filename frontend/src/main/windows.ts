@@ -28,7 +28,17 @@ function serveAppFile(request: Request): Response | Promise<Response> {
 // Must be called BEFORE app.whenReady()
 export function registerAppProtocol(): void {
   protocol.registerSchemesAsPrivileged([
-    { scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
+    { 
+      scheme: "app", 
+      privileges: { 
+        standard: true, 
+        secure: true, 
+        supportFetchAPI: true, 
+        stream: true,
+        corsEnabled: true,  // ← ADD THIS
+        codeCache: true,    // ← ADD THIS (helpful for performance)
+      } 
+    },
   ]);
 }
 

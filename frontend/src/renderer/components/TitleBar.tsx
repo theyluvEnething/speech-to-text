@@ -12,7 +12,7 @@ function TitleBar(): React.ReactElement {
       {!isMac && (
         <div className="no-drag ml-auto flex items-center h-full">
           <button
-            onClick={() => window.wavely.closeWindow()}
+            onClick={() => window.wavely.hideWindow()}
             className="flex items-center justify-center w-10 h-full
               text-foreground/30 hover:text-foreground hover:bg-accent
               transition-colors duration-150"
