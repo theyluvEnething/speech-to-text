@@ -58,7 +58,7 @@ function Sidebar(): React.ReactElement {
       </div>
 
       {/* Main navigation */}
-      <nav className={cn("flex-1 py-3 space-y-0.5", collapsed ? "px-2" : "px-2")}>
+      <nav className={cn("flex-1 overflow-y-auto py-3 space-y-0.5", collapsed ? "px-2" : "px-2")}>
         {MAIN_NAV.map((item) => (
           <button
             key={item.tab}
@@ -83,7 +83,7 @@ function Sidebar(): React.ReactElement {
       </nav>
 
       {/* Bottom nav: App + collapse */}
-      <div className={cn("space-y-0.5 pb-1", collapsed ? "px-2" : "px-2")}>
+      <div className={cn("flex-shrink-0 space-y-0.5 pb-1", collapsed ? "px-2" : "px-2")}>
         {/* App tab */}
         <button
           onClick={() => setActiveTab("app")}
@@ -140,16 +140,16 @@ function Sidebar(): React.ReactElement {
       </div>
 
       {/* Profile footer */}
-      <div className="mx-3">
+      <div className="flex-shrink-0 mx-3">
         <Separator />
       </div>
-      <div className={cn("py-2", collapsed ? "px-1.5" : "px-3")}>
+      <div className={cn("flex-shrink-0 py-2", collapsed ? "px-1.5" : "px-3")}>
         <ProfileFooter collapsed={collapsed} />
       </div>
 
       {/* Status indicator */}
       {!collapsed && (
-        <div className="px-3 pb-3">
+        <div className="flex-shrink-0 px-3 pb-3">
           <div className="flex items-center justify-between px-2.5 py-1">
             <div className="flex items-center gap-2">
               <div className={cn(

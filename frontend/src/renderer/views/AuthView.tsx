@@ -207,7 +207,7 @@ function AuthView(): React.ReactElement {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center min-h-full py-12">
+    <div className="flex-1 flex items-center justify-center w-full h-full bg-background">
       <div className="w-full max-w-sm px-4">
         <div className="text-center mb-8">
           <span className="text-lg font-semibold tracking-tight text-foreground">

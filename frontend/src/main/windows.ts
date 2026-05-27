@@ -69,6 +69,7 @@ export function createSettingsWindow(): BrowserWindow {
     titleBarStyle: isMac ? "hiddenInset" : "default",
     transparent: true,
     backgroundColor: "#00000000",
+    roundedCorners: true,
     webPreferences: {
       preload: PRELOAD_SETTINGS,
       contextIsolation: true,
