@@ -5,6 +5,7 @@ import { useStore } from "@/store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import ProfileIcon from "@/components/ProfileIcon";
 
 interface Group {
   label: string;
@@ -93,7 +94,7 @@ function ConversationRow({
           </p>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-[12px] text-foreground/45">
-              {profileIcon} {profileName}
+              <ProfileIcon icon={profileIcon} className="text-[12px]" /> {profileName}
             </span>
             <span className="text-[12px] text-foreground/25">·</span>
             <span className="text-[12px] text-foreground/45">

@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import ProfileIcon from "@/components/ProfileIcon";
 
 const COLORS = ["#ef4444", "#f59e0b", "#eab308", "#10b981", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
 const ICONS = [
@@ -187,7 +188,7 @@ function ProfilesView(): React.ReactElement {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">{p.icon}</span>
+                        <span className="text-lg"><ProfileIcon icon={p.icon} className="text-lg" /></span>
                         <span className="text-[14px] font-medium tracking-[-0.01em] text-foreground/92 truncate">
                           {p.name}
                         </span>
@@ -286,7 +287,7 @@ function ProfilesView(): React.ReactElement {
                         : "hover:bg-accent/50",
                     )}
                   >
-                    {e}
+                    <ProfileIcon icon={e} className="text-lg" />
                   </button>
                 ))}
                 {showCustomInput ? (

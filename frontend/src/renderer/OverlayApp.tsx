@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Globe, Sparkles, Settings, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ProfileIcon from "@/components/ProfileIcon";
 import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProximity } from "./hooks/useProximity";
@@ -192,7 +193,7 @@ function LanguagePopover({
                 onClick={() => handleSelect(profile)}
                 className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm hover:bg-white/10 transition-colors text-left"
               >
-                <span className="text-base">{profile.icon}</span>
+                <span className="text-base"><ProfileIcon icon={profile.icon} className="text-base" /></span>
                 <span className="flex-1 text-white/90">{profile.name}</span>
               </button>
             ))}

@@ -1,6 +1,7 @@
 import React from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { UserPlus, Check } from "lucide-react";
+import ProfileIcon from "@/components/ProfileIcon";
 import { useStore, type Tab } from "@/store";
 
 function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNode; compact?: boolean }): React.ReactElement {
@@ -39,7 +40,7 @@ function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNo
                   data-[active=true]:bg-accent data-[active=true]:ring-1 data-[active=true]:ring-border"
                 data-active={activeProfile?.id === p.id}
               >
-                {p.icon}
+                <ProfileIcon icon={p.icon} className="text-lg" />
               </button>
             ))}
             <div className="w-px h-6 bg-border mx-0.5" />
@@ -73,7 +74,7 @@ function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNo
                 className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: p.color }}
               />
-              <span className="text-[16px] leading-none">{p.icon}</span>
+              <span className="text-[16px] leading-none"><ProfileIcon icon={p.icon} className="text-[16px]" /></span>
               <span className="flex-1 truncate text-foreground">{p.name}</span>
               {activeProfile?.id === p.id && (
                 <Check className="h-4 w-4 text-foreground/50 shrink-0" />

@@ -2,6 +2,7 @@ import React from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ProfileSwitcherPopover from "@/components/ProfileSwitcherPopover";
+import ProfileIcon from "@/components/ProfileIcon";
 import { useStore } from "@/store";
 
 function ProfileFooter({ collapsed }: { collapsed: boolean }): React.ReactElement {
@@ -19,14 +20,14 @@ function ProfileFooter({ collapsed }: { collapsed: boolean }): React.ReactElemen
         title={collapsed ? activeProfile.name : undefined}
       >
         {collapsed ? (
-          <span className="text-[18px] leading-none">{activeProfile.icon}</span>
+          <span className="text-[18px] leading-none"><ProfileIcon icon={activeProfile.icon} className="text-[18px]" /></span>
         ) : (
           <>
             <span
               className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ backgroundColor: activeProfile.color }}
             />
-            <span className="text-[16px] leading-none">{activeProfile.icon}</span>
+            <span className="text-[16px] leading-none"><ProfileIcon icon={activeProfile.icon} className="text-[16px]" /></span>
             <span className="flex-1 text-[13px] font-medium truncate text-foreground">
               {activeProfile.name}
             </span>
