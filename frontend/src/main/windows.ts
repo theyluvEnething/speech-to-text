@@ -1,18 +1,7 @@
-import { app, BrowserWindow, screen, session, protocol } from "electron";
-import { join, extname } from "path";
-import { readFile } from "fs/promises";
-import { existsSync } from "fs";
+import { app, BrowserWindow, screen, session, protocol, net } from "electron";
+import { join } from "path";
+import { pathToFileURL } from "url";
 
-const RENDERER_BASE = join(app.getAppPath(), "dist/renderer");
-
-// It is Dev mode IF:
-// 1. NODE_ENV is explicitly set to development
-// 2. OR a Vite dev server URL is provided
-// 3. OR the app is not packaged AND the compiled index.html does not exist yet
-const isDev =
-  process.env.NODE_ENV === "development" ||
-  !!process.env.VITE_DEV_SERVER_URL ||
-  (!app.isPackaged && !existsSync(join(RENDERER_BASE, "index.html")));
 
 let settingsWindow: BrowserWindow | null = null;
 let overlayWindow: BrowserWindow | null = null;
@@ -22,46 +11,18 @@ let overlayTransparent = true;
 const PRELOAD_SETTINGS = join(__dirname, "../preload/preload.js");
 const PRELOAD_OVERLAY = join(__dirname, "../preload/preload-overlay.js");
 const PRELOAD_AUDIO = join(__dirname, "../preload/preload-audio.js");
-
-const MIME_TYPES: Record<string, string> = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".mjs": "text/javascript; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
-  ".woff": "font/woff",
-  ".woff2": "font/woff2",
-  ".ttf": "font/ttf",
-  ".mp3": "audio/mpeg",
-  ".wav": "audio/wav",
-};
+const RENDERER_BASE = join(__dirname, "../../dist/renderer");
 
 export function registerAppProtocol(): void {
-  if (isDev) return;
+  protocol.handle("app", (request) => {
+    const url = new URL(request.url);
+    const relativePath = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
+    const absolutePath = join(RENDERER_BASE, decodeURIComponent(relativePath));
 
-  protocol.handle("app", async (request) => {
-    const { pathname } = new URL(request.url);
-    const relativePath = pathname === "/" ? "index.html" : pathname.slice(1);
-    const filePath = join(RENDERER_BASE, relativePath);
-
-    try {
-      const data = await readFile(filePath);
-      const ext = extname(filePath).toLowerCase();
-      return new Response(data, {
-        status: 200,
-        headers: {
-          "content-type": MIME_TYPES[ext] ?? "application/octet-stream",
-          "cache-control": "no-store",
-        },
-      });
-    } catch (err) {
-      console.error("[Protocol] Failed to serve", filePath, err);
+    return net.fetch(pathToFileURL(absolutePath).toString()).catch((err) => {
+      console.error("[Protocol] Failed to serve", absolutePath, err);
       return new Response("Not found", { status: 404 });
-    }
+    });
   });
 }
 
@@ -100,11 +61,7 @@ export function createSettingsWindow(): BrowserWindow {
     },
   });
 
-  if (isDev) {
-    settingsWindow.loadURL("http://localhost:5173/");
-  } else {
-    settingsWindow.loadURL("app://wavely/index.html");
-  }
+  settingsWindow.loadURL("app://wavely/index.html");
 
   settingsWindow.setMenuBarVisibility(false);
 
@@ -151,11 +108,7 @@ export function createOverlayWindow(): BrowserWindow {
     },
   });
 
-  if (isDev) {
-    overlayWindow.loadURL("http://localhost:5173/overlay.html");
-  } else {
-    overlayWindow.loadURL("app://wavely/overlay.html");
-  }
+  overlayWindow.loadURL("app://wavely/overlay.html");
 
   overlayWindow.setVisibleOnAllWorkspaces(true);
   overlayWindow.setAlwaysOnTop(true, "screen-saver");
@@ -204,11 +157,7 @@ export function createAudioWindow(): BrowserWindow {
     },
   });
 
-  if (isDev) {
-    audioWindow.loadURL("http://localhost:5173/audio.html");
-  } else {
-    audioWindow.loadURL("app://wavely/audio.html");
-  }
+  audioWindow.loadURL("app://wavely/audio.html");
 
   audioWindow.on("closed", () => {
     audioWindow = null;
