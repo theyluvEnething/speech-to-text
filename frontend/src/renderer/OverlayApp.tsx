@@ -135,12 +135,19 @@ function LanguagePopover({
   icon,
   activeProfileId,
   onProfileChange,
+  open,
+  onOpenChange,
+  triggerRef,
+  contentRef,
 }: {
   icon: string;
   activeProfileId: string;
   onProfileChange: (profile: Profile) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  triggerRef: React.RefObject<HTMLButtonElement>;
+  contentRef: React.RefObject<HTMLDivElement>;
 }): React.ReactElement {
-  const [open, setOpen] = useState(false);
   const [otherProfiles, setOtherProfiles] = useState<Profile[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -155,9 +162,15 @@ function LanguagePopover({
     ]).then(([profiles, recentIds]: [Profile[], string[]]) => {
       const recent = recentIds
         .map((id) => profiles.find((p) => p.id === id))
-        .filter((p): p is Profile => !!p && p.id !== activeProfileId)
-        .slice(0, 3);
-      setOtherProfiles(recent);
+        .filter((p): p is Profile => !!p && p.id !== activeProfileId);
+      if (recent.length < 3) {
+        const recentIdSet = new Set(recent.map((p) => p.id));
+        const fillers = profiles.filter(
+          (p) => p.id !== activeProfileId && !recentIdSet.has(p.id),
+        );
+        recent.push(...fillers.slice(0, 3 - recent.length));
+      }
+      setOtherProfiles(recent.slice(0, 3));
       setTotalCount(profiles.length);
     });
   }, [open]);
@@ -165,11 +178,11 @@ function LanguagePopover({
   const handleSelect = (profile: Profile) => {
     window.overlay.setActiveProfile(profile.id);
     onProfileChange(profile);
-    setOpen(false);
+    onOpenChange(false);
   };
 
   const handleMore = () => {
-    setOpen(false);
+    onOpenChange(false);
     window.overlay.showSettings("profiles");
   };
 
@@ -178,10 +191,11 @@ function LanguagePopover({
   return (
     <Tooltip.Provider delayDuration={200}>
       <Tooltip.Root>
-        <Popover.Root open={open} onOpenChange={setOpen}>
+        <Popover.Root open={open} onOpenChange={onOpenChange}>
           <Tooltip.Trigger asChild>
             <Popover.Trigger asChild>
               <button
+                ref={triggerRef}
                 type="button"
                 aria-label="Change profile"
                 className="size-7 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
@@ -197,6 +211,7 @@ function LanguagePopover({
           </Tooltip.Trigger>
           <Popover.Portal>
             <Popover.Content
+              ref={contentRef}
               side="top"
               align="center"
               sideOffset={12}
@@ -303,6 +318,10 @@ function OverlayApp(): React.ReactElement {
   const [previousExpanded, setPreviousExpanded] = useState(false);
   const [currentProfileIcon, setCurrentProfileIcon] = useState("🌎");
   const [activeProfileId, setActiveProfileId] = useState("default");
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
+  const popoverContentRef = useRef<HTMLDivElement>(null);
 
   // Bottom margin for the pill - adjust this value to move the pill up/down
   // Higher value = pill higher up, Lower value = pill lower down
@@ -422,6 +441,54 @@ function OverlayApp(): React.ReactElement {
     }).catch(() => {});
   }, []);
 
+  // Close profile menu when cursor leaves all safe zones
+  useEffect(() => {
+    if (!isProfileMenuOpen) return;
+
+    const isInside = (x: number, y: number, rect: { x: number; y: number; width: number; height: number }) =>
+      x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const mx = e.clientX;
+      const my = e.clientY;
+
+      const bar = barRef.current;
+      const btn = profileButtonRef.current;
+      const pop = popoverContentRef.current;
+
+      // Pill region (280×80, centered on bar)
+      if (bar) {
+        const r = bar.getBoundingClientRect();
+        const pill = { x: r.left + r.width / 2 - 140, y: r.top + r.height / 2 - 40, width: 280, height: 80 };
+        if (isInside(mx, my, pill)) return;
+      }
+
+      // Trigger button
+      if (btn) {
+        if (isInside(mx, my, btn.getBoundingClientRect())) return;
+      }
+
+      // Popover content
+      if (pop) {
+        if (isInside(mx, my, pop.getBoundingClientRect())) return;
+      }
+
+      // Secondary region (60×130, centered 80px above button)
+      if (btn) {
+        const b = btn.getBoundingClientRect();
+        const centerX = b.left + b.width / 2;
+        const topEdge = b.top;
+        const secondary = { x: centerX - 30, y: topEdge - 145, width: 60, height: 130 };
+        if (isInside(mx, my, secondary)) return;
+      }
+
+      setIsProfileMenuOpen(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [isProfileMenuOpen]);
+
   const activeStatus = isActive ? status : null;
   const meta = activeStatus ? statusColor[activeStatus] : null;
   const showSideButtons =
@@ -471,6 +538,10 @@ function OverlayApp(): React.ReactElement {
                     setCurrentProfileIcon(profile.icon);
                     setActiveProfileId(profile.id);
                   }}
+                  open={isProfileMenuOpen}
+                  onOpenChange={setIsProfileMenuOpen}
+                  triggerRef={profileButtonRef}
+                  contentRef={popoverContentRef}
                 />
               </motion.div>
             )}
