@@ -9,7 +9,8 @@
     "conversations": "Conversations",
     "profiles": "Profiles",
     "settings": "Settings",
-    "app": "App"
+    "app": "App",
+    "account": "Account"
   },
   "conversations": {
     "title": "Conversations",

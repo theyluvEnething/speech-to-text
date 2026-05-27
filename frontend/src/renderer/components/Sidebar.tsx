@@ -15,7 +15,7 @@ function Sidebar(): React.ReactElement {
   const isPaused = useStore((s) => s.isPaused);
   const setIsPaused = useStore((s) => s.setIsPaused);
 
-  const MAIN_NAV: { tab: Tab; icon: typeof MessageSquare; label: string }[] = [
+  const MAIN_NAV: { tab: Tab; icon: any; label: string }[] = [
     { tab: "conversations", icon: MessageSquare, label: t("nav.conversations", "Conversations") },
     { tab: "profiles", icon: User, label: t("nav.profiles", "Profiles") },
     { tab: "settings", icon: Settings, label: t("nav.settings", "Settings") },

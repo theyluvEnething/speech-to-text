@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@clerk/clerk-react";
+import { useStore } from "@/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,7 @@ type UpdateStatus = "idle" | "checking" | "no-update" | "available" | "downloadi
 
 function AppView(): React.ReactElement {
   const { t, i18n } = useTranslation();
+  const { signOut } = useAuth();
   const [appLanguage, setAppLanguage] = useState("en");
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
@@ -175,18 +178,23 @@ function AppView(): React.ReactElement {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-                <span className="text-sm text-foreground/70">U</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
+                  <span className="text-sm text-foreground/70">U</span>
+                </div>
+                <div>
+                  <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
+                    {t("appSettings.loggedIn", "Logged in")}
+                  </p>
+                  <p className="text-[12px] text-foreground/45">
+                    {t("appSettings.localSession", "Local session")}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
-                  {t("appSettings.loggedIn", "Logged in")}
-                </p>
-                <p className="text-[12px] text-foreground/45">
-                  {t("appSettings.localSession", "Local session")}
-                </p>
-              </div>
+              <Button variant="outline" size="sm" onClick={() => signOut()}>
+                Sign out
+              </Button>
             </div>
           </CardContent>
         </Card>

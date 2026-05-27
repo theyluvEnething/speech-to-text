@@ -17,6 +17,10 @@ interface AppStore {
   setTriggerNewProfile: (v: boolean) => void;
   isPaused: boolean;
   setIsPaused: (v: boolean) => void;
+  clerkLoaded: boolean;
+  isAuthenticated: boolean;
+  userEmail: string | null;
+  setIsAuthenticated: (v: boolean) => void;
 }
 
 export const useStore = create<AppStore>((set) => ({
@@ -34,4 +38,8 @@ export const useStore = create<AppStore>((set) => ({
   setTriggerNewProfile: (v) => set({ triggerNewProfile: v }),
   isPaused: false,
   setIsPaused: (v) => set({ isPaused: v }),
+  clerkLoaded: false,
+  isAuthenticated: false,
+  userEmail: null,
+  setIsAuthenticated: (v) => set({ isAuthenticated: v }),
 }));
