@@ -155,8 +155,11 @@ function LanguagePopover({
       );
       const recent = recentIds
         .map((id) => profiles.find((p) => p.id === id))
-        .filter((p): p is Profile => !!p);
-      setRecentProfiles(recent.length > 0 ? recent.slice(0, 5) : profiles.slice(0, 5));
+        .filter((p): p is Profile => !!p && p.id !== activeProfileId);
+      const others = recent.length > 0
+        ? recent
+        : profiles.filter((p) => p.id !== activeProfileId);
+      setRecentProfiles(others.slice(0, 3));
     });
   }, [open]);
 
@@ -209,7 +212,7 @@ function LanguagePopover({
               className="z-[9999] animate-in fade-in zoom-in-95 duration-150"
               style={{ pointerEvents: "auto" }}
             >
-              <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <div className="flex flex-col items-center gap-1 px-2 py-2 rounded-full bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl">
                 {recentProfiles.map((profile) => (
                   <button
                     key={profile.id}
@@ -224,7 +227,7 @@ function LanguagePopover({
                     <span className="text-[13px] leading-none">{profile.icon}</span>
                   </button>
                 ))}
-                <div className="w-px h-4 bg-white/10 mx-0.5" />
+                <div className="h-px w-4 bg-white/10 my-0.5" />
                 <button
                   onClick={handleMore}
                   className="size-7 grid place-items-center rounded-full hover:bg-white/10 transition-colors text-white/50 hover:text-white/80"

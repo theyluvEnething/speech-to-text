@@ -28,6 +28,7 @@ type UpdateStatus = "idle" | "checking" | "no-update" | "available" | "downloadi
 function AppView(): React.ReactElement {
   const { t, i18n } = useTranslation();
   const { signOut } = useAuth();
+  const [appVersion, setAppVersion] = useState("1.0.0");
   const [appLanguage, setAppLanguage] = useState("en");
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
@@ -38,6 +39,10 @@ function AppView(): React.ReactElement {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
+    window.wavely
+      .getVersion()
+      .then((v) => setAppVersion(v))
+      .catch(() => {});
     window.wavely
       .getSettings()
       .then((settings) => {
@@ -207,7 +212,7 @@ function AppView(): React.ReactElement {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-[13px] text-foreground/70">Wavely v1.0.2</p>
+            <p className="text-[13px] text-foreground/70">Wavely v{appVersion}</p>
             {updateStatus === "no-update" && (
               <p className="text-[13px] text-emerald-500/90">You're up to date.</p>
             )}
@@ -238,7 +243,7 @@ function AppView(): React.ReactElement {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-[13px] text-foreground/70">
-                {t("appSettings.aboutText", "Wavely v1.0.2 — Push-to-talk speech-to-text powered by Deepgram.")}
+                {t("appSettings.aboutText", `Wavely v${appVersion} — Push-to-talk speech-to-text powered by Deepgram.`)}
               </p>
             </div>
             <Button variant="destructive" size="sm" onClick={handleReset}>
@@ -253,7 +258,7 @@ function AppView(): React.ReactElement {
           <DialogHeader>
             <DialogTitle>Update Available</DialogTitle>
             <DialogDescription>
-              Version {updateVersion} is available. You are currently on v1.0.2.
+              Version {updateVersion} is available. You are currently on v{appVersion}.
               Would you like to update now? The app will restart to apply the update.
             </DialogDescription>
           </DialogHeader>

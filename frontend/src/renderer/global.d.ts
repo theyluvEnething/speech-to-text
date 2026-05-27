@@ -48,6 +48,8 @@ declare global {
     checkForUpdates(): Promise<{ available: boolean; version: string | null; error: string | null }>;
     downloadAndInstallUpdate(): Promise<void>;
     toggleOverlayTransparency(transparent: boolean): Promise<void>;
+    fullReset(): Promise<{ success: boolean }>;
+    getVersion(): Promise<string>;
 
     onSwitchTab(callback: (tab: string) => void): void;
     profiles: WavelyProfiles;

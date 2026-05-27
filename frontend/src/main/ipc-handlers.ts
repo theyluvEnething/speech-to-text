@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from "electron";
+import { app, ipcMain, BrowserWindow } from "electron";
 import Store from "electron-store";
 import { randomUUID } from "crypto";
 import { updateHotkey } from "./hotkey";
@@ -238,6 +238,10 @@ export function registerIpcHandlers(
   });
 
   // ── App state ─────────────────────────────────────────────
+  ipcMain.handle("app:getVersion", () => {
+    return app.getVersion();
+  });
+
   ipcMain.handle("app:getPaused", () => {
     return store.get("isPaused");
   });
@@ -246,6 +250,31 @@ export function registerIpcHandlers(
     const paused = !store.get("isPaused");
     store.set("isPaused", paused);
     return paused;
+  });
+
+  ipcMain.handle("app:fullReset", () => {
+    store.set({
+      hotkey: "ctrlright",
+      language: "auto",
+      model: "whisper-large-v3-turbo",
+      provider: "groq",
+      copyToClipboard: true,
+      appLanguage: "en",
+      isPaused: false,
+      profiles: [
+        {
+          id: "default",
+          name: "Default",
+          color: "#10b981",
+          icon: "🌎",
+          systemPrompt: "",
+        },
+      ],
+      activeProfileId: "default",
+      conversations: [],
+    });
+    console.log("[Wavely] Full reset: all data restored to defaults.");
+    return { success: true };
   });
 }
 
