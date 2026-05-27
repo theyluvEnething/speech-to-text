@@ -13,42 +13,33 @@ const PRELOAD_OVERLAY = join(__dirname, "../preload/preload-overlay.js");
 const PRELOAD_AUDIO = join(__dirname, "../preload/preload-audio.js");
 const RENDERER_BASE = join(__dirname, "../../dist/renderer");
 
-function serveAppFile(request: Request): Response | Promise<Response> {
-  const url = new URL(request.url);
-  let filePath = url.pathname;
-  if (filePath === "/") filePath = "/index.html";
-
-  const absolutePath = join(RENDERER_BASE, filePath);
-  return net.fetch(pathToFileURL(absolutePath).toString()).catch((err) => {
-    console.error("[Protocol] Failed to serve", absolutePath, err);
-    return new Response("Not Found", { status: 404 });
-  });
-}
-
-// Must be called BEFORE app.whenReady()
 export function registerAppProtocol(): void {
-  protocol.registerSchemesAsPrivileged([
-    { 
-      scheme: "app", 
-      privileges: { 
-        standard: true, 
-        secure: true, 
-        supportFetchAPI: true, 
-        stream: true,
-        corsEnabled: true,  // ← ADD THIS
-        codeCache: true,    // ← ADD THIS (helpful for performance)
-      } 
-    },
-  ]);
+  // No-op: we intercept http://localhost instead of using a custom scheme,
+  // so Chromium natively persists cookies to disk.
 }
 
-// Must be called AFTER app.whenReady()
 export function registerProtocolHandlers(): void {
-  // Default session
-  protocol.handle("app", serveAppFile);
+  const handler = (request: Request) => {
+    const url = new URL(request.url);
 
-  // Clerk session — same handler so OAuth redirects work on the persistent partition
-  getClerkSession().protocol.handle("app", serveAppFile);
+    // Only intercept requests to our local app UI
+    if (url.hostname === "localhost") {
+      let filePath = url.pathname;
+      if (filePath === "/") filePath = "/index.html";
+
+      const absolutePath = join(RENDERER_BASE, filePath);
+      return net.fetch(pathToFileURL(absolutePath).toString()).catch((err) => {
+        console.error("[Protocol] Failed to serve", absolutePath, err);
+        return new Response("Not Found", { status: 404 });
+      });
+    }
+
+    // Let all other HTTP requests pass through to the internet
+    return net.fetch(request, { bypassCustomProtocolHandlers: true });
+  };
+
+  protocol.handle("http", handler);
+  getClerkSession().protocol.handle("http", handler);
 }
 
 let clerkSession: Electron.Session | null = null;
@@ -86,7 +77,7 @@ export function createSettingsWindow(): BrowserWindow {
     },
   });
 
-  settingsWindow.loadURL("app://wavely/index.html");
+  settingsWindow.loadURL("http://localhost/index.html");
 
   settingsWindow.setMenuBarVisibility(false);
 
@@ -133,7 +124,7 @@ export function createOverlayWindow(): BrowserWindow {
     },
   });
 
-  overlayWindow.loadURL("app://wavely/overlay.html");
+  overlayWindow.loadURL("http://localhost/overlay.html");
 
   overlayWindow.setVisibleOnAllWorkspaces(true);
   overlayWindow.setAlwaysOnTop(true, "screen-saver");
@@ -182,7 +173,7 @@ export function createAudioWindow(): BrowserWindow {
     },
   });
 
-  audioWindow.loadURL("app://wavely/audio.html");
+  audioWindow.loadURL("http://localhost/audio.html");
 
   audioWindow.on("closed", () => {
     audioWindow = null;
