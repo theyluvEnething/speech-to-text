@@ -24,12 +24,12 @@ export function ProximityDebugOverlay({
     pill: Rect | null;
     button: Rect | null;
     popover: Rect | null;
-    secondary: Rect | null;
+    safeZone: Rect | null;
   }>({
     pill: null,
     button: null,
     popover: null,
-    secondary: null,
+    safeZone: null,
   });
 
   const updateRects = useCallback(() => {
@@ -47,28 +47,31 @@ export function ProximityDebugOverlay({
       };
     }
 
-    const btnRect = profileButtonRef.current?.getBoundingClientRect() ?? null;
+    const btnEl = profileButtonRef.current;
+    const popEl = popoverContentRef.current;
 
-    const popRect = popoverContentRef.current?.getBoundingClientRect() ?? null;
+    const btnRect = btnEl?.getBoundingClientRect() ?? null;
+    const popRect = popEl?.getBoundingClientRect() ?? null;
 
-    let secondaryRect: Rect | null = null;
-    if (isProfileMenuOpen && profileButtonRef.current) {
-      const btn = profileButtonRef.current.getBoundingClientRect();
-      const centerX = btn.left + btn.width / 2;
-      const topEdge = btn.top;
-      secondaryRect = {
-        x: centerX - 30,
-        y: topEdge - 145,
-        width: 60,
-        height: 130,
-      };
+    let safeZone: Rect | null = null;
+    if (isProfileMenuOpen && btnEl && popEl) {
+      const b = btnEl.getBoundingClientRect();
+      const p = popEl.getBoundingClientRect();
+      if (p.bottom <= b.top) {
+        safeZone = {
+          x: Math.min(b.left, p.left),
+          y: p.top,
+          width: Math.max(b.right, p.right) - Math.min(b.left, p.left),
+          height: b.bottom - p.top,
+        };
+      }
     }
 
     setRects({
       pill: pillRect,
       button: btnRect ? { x: btnRect.x, y: btnRect.y, width: btnRect.width, height: btnRect.height } : null,
       popover: popRect ? { x: popRect.x, y: popRect.y, width: popRect.width, height: popRect.height } : null,
-      secondary: secondaryRect,
+      safeZone,
     });
   }, [barRef, profileButtonRef, popoverContentRef, isProfileMenuOpen]);
 
@@ -126,9 +129,9 @@ export function ProximityDebugOverlay({
           <span style={{ ...labelStyle, color: "#f59e0b" }}>Popover content</span>
         </div>
       )}
-      {rects.secondary && (
-        <div style={{ ...rectStyle(rects.secondary, "#ec4899", "rgba(236, 72, 153, 0.15)") }}>
-          <span style={{ ...labelStyle, color: "#ec4899" }}>Secondary region (60x130)</span>
+      {rects.safeZone && (
+        <div style={{ ...rectStyle(rects.safeZone, "#ec4899", "rgba(236, 72, 153, 0.15)") }}>
+          <span style={{ ...labelStyle, color: "#ec4899" }}>Safe zone (btn→popover)</span>
         </div>
       )}
     </>

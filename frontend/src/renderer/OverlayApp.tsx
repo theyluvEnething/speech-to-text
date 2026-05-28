@@ -483,13 +483,18 @@ function OverlayApp(): React.ReactElement {
         if (isInside(mx, my, pop.getBoundingClientRect())) return;
       }
 
-      // Secondary region (60×130, centered 80px above button)
-      if (btn) {
-        const b = btn.getBoundingClientRect();
-        const centerX = b.left + b.width / 2;
-        const topEdge = b.top;
-        const secondary = { x: centerX - 30, y: topEdge - 145, width: 60, height: 130 };
-        if (isInside(mx, my, secondary)) return;
+      // Dynamic safe zone: union of button, popover, and the area between them
+      if (btn && pop) {
+        const btnRect = btn.getBoundingClientRect();
+        const popRect = pop.getBoundingClientRect();
+        if (popRect.bottom <= btnRect.top) {
+          const minX = Math.min(btnRect.left, popRect.left);
+          const maxX = Math.max(btnRect.right, popRect.right);
+          const minY = popRect.top;
+          const maxY = btnRect.bottom;
+          const safeZone = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+          if (isInside(mx, my, safeZone)) return;
+        }
       }
 
       setIsProfileMenuOpen(false);
