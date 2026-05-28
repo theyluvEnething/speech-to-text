@@ -206,7 +206,7 @@ function LanguagePopover({
                   border: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
-                <span className="text-[14px] leading-none">{icon}</span>
+                <ProfileIcon icon={icon} className="text-[14px]" />
               </button>
             </Popover.Trigger>
           </Tooltip.Trigger>
