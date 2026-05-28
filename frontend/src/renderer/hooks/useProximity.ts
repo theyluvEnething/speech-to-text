@@ -4,10 +4,23 @@ export function useProximity(
   ref: RefObject<HTMLElement>,
   width: number,
   height: number,
+  override: boolean = false,
 ): boolean {
   const [isNear, setIsNear] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const rafIdRef = useRef<number | null>(null);
+
+  // Immediately apply override if the menu opens
+  useEffect(() => {
+    if (override) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = undefined;
+      }
+      setIsNear(true);
+      window.overlay.setClickThrough(false);
+    }
+  }, [override]);
 
   useEffect(() => {
     const element = ref.current;
@@ -31,15 +44,16 @@ export function useProximity(
           Math.abs(e.clientX - centerX) <= halfW &&
           Math.abs(e.clientY - centerY) <= halfH;
 
-        // Always clear the leave timeout when cursor is inside the bounding box,
-        // even if isNear hasn't transitioned to false in the closure yet.
-        if (near && timeoutRef.current) {
+        // If override is true, force it to stay active
+        const active = near || override;
+
+        if (active && timeoutRef.current) {
           clearTimeout(timeoutRef.current);
           timeoutRef.current = undefined;
         }
 
-        if (near !== isNear) {
-          if (!near) {
+        if (active !== isNear) {
+          if (!active) {
             timeoutRef.current = setTimeout(() => {
               setIsNear(false);
               window.overlay.setClickThrough(true);
@@ -54,6 +68,7 @@ export function useProximity(
     };
 
     const handleMouseLeaveDocument = () => {
+      if (override) return; // Don't collapse if the menu is open
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = undefined;
@@ -71,7 +86,7 @@ export function useProximity(
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [ref, width, height, isNear]);
+  }, [ref, width, height, isNear, override]);
 
-  return isNear;
+  return isNear || override;
 }

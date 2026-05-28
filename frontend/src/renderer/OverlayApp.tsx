@@ -333,7 +333,7 @@ function OverlayApp(): React.ReactElement {
   const barRef = useRef<HTMLDivElement>(null);
 
   const isActive = status !== "idle";
-  const isNear = useProximity(barRef, 280, 80);
+  const isNear = useProximity(barRef, 280, 80, isProfileMenuOpen);
   const expanded = isActive || (status === "idle" && isNear);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);

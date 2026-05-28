@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 
 export function DebugView(): React.ReactElement {
-  const [transparent, setTransparent] = useState(true);
+  const [showBackground, setShowBackground] = useState(false);
   const [debugProximity, setDebugProximity] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
@@ -27,9 +27,9 @@ export function DebugView(): React.ReactElement {
     });
   };
 
-  const handleTransparencyToggle = (v: boolean) => {
-    setTransparent(v);
-    window.wavely.toggleOverlayTransparency(v);
+  const handleBackgroundToggle = (v: boolean) => {
+    setShowBackground(v);
+    window.wavely.toggleOverlayTransparency(!v);
   };
 
   const handleDebugProximityToggle = (v: boolean) => {
@@ -62,15 +62,15 @@ export function DebugView(): React.ReactElement {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
-            Transparent overlay background
+            Show window background overlay
           </p>
           <p className="text-[12px] text-foreground/45 mt-0.5">
-            Toggle between transparent and solid background on the overlay window.
+            Show a solid background behind the overlay window for debugging visibility.
           </p>
         </div>
         <Switch
-          checked={transparent}
-          onCheckedChange={handleTransparencyToggle}
+          checked={showBackground}
+          onCheckedChange={handleBackgroundToggle}
         />
       </div>
 
