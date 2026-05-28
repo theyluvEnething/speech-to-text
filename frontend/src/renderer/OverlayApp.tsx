@@ -692,6 +692,8 @@ function OverlayApp(): React.ReactElement {
           profileButtonRef={profileButtonRef}
           popoverContentRef={popoverContentRef}
           isProfileMenuOpen={isProfileMenuOpen}
+          menuOverrideActive={menuOverrideActive}
+          cachedMenuZones={cachedMenuZones}
         />
       )}
     </div>

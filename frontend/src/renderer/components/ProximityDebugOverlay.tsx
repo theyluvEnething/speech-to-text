@@ -12,6 +12,12 @@ interface Props {
   profileButtonRef: React.RefObject<HTMLButtonElement | null>;
   popoverContentRef: React.RefObject<HTMLDivElement | null>;
   isProfileMenuOpen: boolean;
+  menuOverrideActive?: boolean;
+  cachedMenuZones?: React.MutableRefObject<{
+    btn: Rect | null;
+    pop: Rect | null;
+    safe: Rect | null;
+  }>;
 }
 
 export function ProximityDebugOverlay({
@@ -19,6 +25,8 @@ export function ProximityDebugOverlay({
   profileButtonRef,
   popoverContentRef,
   isProfileMenuOpen,
+  menuOverrideActive,
+  cachedMenuZones,
 }: Props) {
   const [rects, setRects] = useState<{
     pill: Rect | null;
@@ -33,6 +41,7 @@ export function ProximityDebugOverlay({
   });
 
   const updateRects = useCallback(() => {
+    // 1. Always calculate the dynamic Pill Rect
     const pillEl = barRef.current;
     let pillRect: Rect | null = null;
     if (pillEl) {
@@ -47,33 +56,45 @@ export function ProximityDebugOverlay({
       };
     }
 
-    const btnEl = profileButtonRef.current;
-    const popEl = popoverContentRef.current;
-
-    const btnRect = btnEl?.getBoundingClientRect() ?? null;
-    const popRect = popEl?.getBoundingClientRect() ?? null;
-
+    let btnRect: Rect | null = null;
+    let popRect: Rect | null = null;
     let safeZone: Rect | null = null;
-    if (isProfileMenuOpen && btnEl && popEl) {
-      const b = btnEl.getBoundingClientRect();
-      const p = popEl.getBoundingClientRect();
-      if (p.bottom <= b.top) {
-        safeZone = {
-          x: Math.min(b.left, p.left),
-          y: p.top,
-          width: Math.max(b.right, p.right) - Math.min(b.left, p.left),
-          height: b.bottom - p.top,
-        };
+
+    // 2. Use Cached Zones if the menu is visually closed but override is active
+    if (menuOverrideActive && !isProfileMenuOpen && cachedMenuZones?.current) {
+      btnRect = cachedMenuZones.current.btn;
+      popRect = cachedMenuZones.current.pop;
+      safeZone = cachedMenuZones.current.safe;
+    }
+    // 3. Otherwise, use Live DOM elements
+    else {
+      const btnEl = profileButtonRef.current;
+      const popEl = popoverContentRef.current;
+
+      btnRect = btnEl ? { x: btnEl.getBoundingClientRect().x, y: btnEl.getBoundingClientRect().y, width: btnEl.getBoundingClientRect().width, height: btnEl.getBoundingClientRect().height } : null;
+      popRect = popEl ? { x: popEl.getBoundingClientRect().x, y: popEl.getBoundingClientRect().y, width: popEl.getBoundingClientRect().width, height: popEl.getBoundingClientRect().height } : null;
+
+      if (isProfileMenuOpen && btnEl && popEl) {
+        const b = btnEl.getBoundingClientRect();
+        const p = popEl.getBoundingClientRect();
+        if (p.bottom <= b.top) {
+          safeZone = {
+            x: Math.min(b.left, p.left),
+            y: p.top,
+            width: Math.max(b.right, p.right) - Math.min(b.left, p.left),
+            height: b.bottom - p.top,
+          };
+        }
       }
     }
 
     setRects({
       pill: pillRect,
-      button: btnRect ? { x: btnRect.x, y: btnRect.y, width: btnRect.width, height: btnRect.height } : null,
-      popover: popRect ? { x: popRect.x, y: popRect.y, width: popRect.width, height: popRect.height } : null,
+      button: btnRect,
+      popover: popRect,
       safeZone,
     });
-  }, [barRef, profileButtonRef, popoverContentRef, isProfileMenuOpen]);
+  }, [barRef, profileButtonRef, popoverContentRef, isProfileMenuOpen, menuOverrideActive, cachedMenuZones]);
 
   useEffect(() => {
     updateRects();
