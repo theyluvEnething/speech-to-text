@@ -77,7 +77,7 @@ function AppView(): React.ReactElement {
         language: "auto",
         model: "whisper-large-v3-turbo",
         provider: "groq",
-        copyToClipboard: true,
+        copyToClipboard: false,
         appLanguage: "en",
       })
       .then(() => {
@@ -244,7 +244,7 @@ function AppView(): React.ReactElement {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-[13px] text-foreground/70">
-                {t("appSettings.aboutText", `Wavely v${appVersion} — Push-to-talk speech-to-text powered by Deepgram.`)}
+                {t("appSettings.aboutText", `Wavely v${appVersion} — Push-to-talk driven speech to text program.`)}
               </p>
             </div>
             <Button variant="destructive" size="sm" onClick={handleReset}>

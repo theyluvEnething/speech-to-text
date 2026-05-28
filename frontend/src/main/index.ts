@@ -1,4 +1,4 @@
-import { app, ipcMain, clipboard } from "electron";
+import { app, ipcMain, clipboard, dialog } from "electron";
 import { autoUpdater } from "electron-updater";
 import { createSettingsWindow, createOverlayWindow, createAudioWindow, getOverlayWindow, getAudioWindow, registerAppProtocol, registerProtocolHandlers } from "./windows";
 import { createTray } from "./tray";
@@ -15,6 +15,7 @@ let audioActive = false;
 let lastDurationSec = 0;
 
 autoUpdater.logger = console;
+autoUpdater.autoDownload = false;
 
 const overlayLabels: Record<string, Record<string, string>> = {
   en: { recording: "Recording", processing: "Transcribing…", idle: "" },
@@ -167,7 +168,7 @@ app.whenReady().then(() => {
   const savedProvider = store.get("provider");
   const savedModel = store.get("model");
 
-  console.log("--- Wavely v1.0.0 ---");
+  console.log(`--- Wavely v${app.getVersion()} ---`);
   console.log(`  Hotkey: ${savedHotkey}  |  Language: ${savedLanguage}  |  Provider: ${savedProvider}  |  Model: ${savedModel}`);
   console.log(`  Platform: ${process.platform}`);
 
@@ -227,12 +228,24 @@ app.whenReady().then(() => {
 
   registerHotkey(savedHotkey, startRecording, stopRecording);
 
-  autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+  autoUpdater.checkForUpdates().catch((err) => {
     console.error("[AutoUpdater] Failed to check for updates:", err);
   });
 
-  autoUpdater.on("update-downloaded", (info) => {
-    console.log(`[AutoUpdater] Update v${info.version} downloaded. It will be installed on restart.`);
+  autoUpdater.once("update-available", async (info) => {
+    const { response } = await dialog.showMessageBox({
+      type: "info",
+      title: "Update Available",
+      message: `A new version of Wavely (v${info.version}) is available. Would you like to download and install it now?`,
+      buttons: ["Yes, Update Now", "Later"],
+    });
+    if (response === 0) {
+      autoUpdater.downloadUpdate();
+    }
+  });
+
+  autoUpdater.on("update-downloaded", () => {
+    autoUpdater.quitAndInstall(true, true);
   });
 
 
@@ -244,9 +257,6 @@ app.whenReady().then(() => {
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
-        autoUpdater.removeListener("update-available", onAvailable);
-        autoUpdater.removeListener("update-not-available", onNotAvailable);
-        autoUpdater.removeListener("error", onError);
         resolve(result);
       };
 
@@ -264,9 +274,9 @@ app.whenReady().then(() => {
         done({ available: false, version: null, error: err.message });
       };
 
-      autoUpdater.on("update-available", onAvailable);
-      autoUpdater.on("update-not-available", onNotAvailable);
-      autoUpdater.on("error", onError);
+      autoUpdater.once("update-available", onAvailable);
+      autoUpdater.once("update-not-available", onNotAvailable);
+      autoUpdater.once("error", onError);
 
       autoUpdater.checkForUpdates().catch((err) => {
         done({ available: false, version: null, error: (err as Error).message });

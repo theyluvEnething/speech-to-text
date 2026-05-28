@@ -73,7 +73,7 @@
     "loggedIn": "Accesso effettuato",
     "localSession": "Sessione locale",
     "about": "Informazioni",
-    "aboutText": "Wavely v1.0.0 — Push-to-talk speech-to-text basato su Deepgram.",
+    "aboutText": "Wavely — Programma speech-to-text controllato tramite push-to-talk.",
     "resetToDefaults": "Ripristina impostazioni predefinite",
     "resetDone": "Impostazioni ripristinate ai valori predefiniti",
     "resetFailed": "Ripristino impostazioni fallito"

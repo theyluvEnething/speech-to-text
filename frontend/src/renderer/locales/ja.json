@@ -73,7 +73,7 @@
     "loggedIn": "ログイン中",
     "localSession": "ローカルセッション",
     "about": "バージョン情報",
-    "aboutText": "Wavely v1.0.0 — Deepgram を利用したプッシュトゥトーク音声文字起こし。",
+    "aboutText": "Wavely — プッシュトゥトークで操作する音声文字起こしプログラム。",
     "resetToDefaults": "デフォルトにリセット",
     "resetDone": "設定をデフォルトにリセットしました",
     "resetFailed": "設定のリセットに失敗しました"

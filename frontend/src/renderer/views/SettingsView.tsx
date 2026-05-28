@@ -59,7 +59,7 @@ function SettingsView(): React.ReactElement {
   const [language, setLanguage] = useState("en");
   const [provider, setProvider] = useState("groq");
   const [model, setModel] = useState("whisper-large-v3-turbo");
-  const [copyToClipboard, setCopyToClipboard] = useState(true);
+  const [copyToClipboard, setCopyToClipboard] = useState(false);
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
 
@@ -71,7 +71,7 @@ function SettingsView(): React.ReactElement {
         setLanguage(settings.language || "en");
         setProvider(settings.provider || "groq");
         setModel(settings.model || "whisper-large-v3-turbo");
-        setCopyToClipboard(settings.copyToClipboard !== false);
+        setCopyToClipboard(settings.copyToClipboard === true);
         setLoading(false);
         initialLoad.current = false;
       })
