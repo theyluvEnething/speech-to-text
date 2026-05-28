@@ -321,6 +321,13 @@ function OverlayApp(): React.ReactElement {
   const [activeProfileId, setActiveProfileId] = useState("default");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
+  const [menuOverrideActive, setMenuOverrideActive] = useState(false);
+  const cachedMenuZones = useRef<{
+    btn: { x: number; y: number; width: number; height: number } | null;
+    pop: { x: number; y: number; width: number; height: number } | null;
+    safe: { x: number; y: number; width: number; height: number } | null;
+  }>({ btn: null, pop: null, safe: null });
+
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const popoverContentRef = useRef<HTMLDivElement>(null);
 
@@ -333,7 +340,7 @@ function OverlayApp(): React.ReactElement {
   const barRef = useRef<HTMLDivElement>(null);
 
   const isActive = status !== "idle";
-  const isNear = useProximity(barRef, 280, 80, isProfileMenuOpen);
+  const isNear = useProximity(barRef, 280, 80, menuOverrideActive);
   const expanded = isActive || (status === "idle" && isNear);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -451,58 +458,78 @@ function OverlayApp(): React.ReactElement {
     }).catch(() => {});
   }, []);
 
-  // Close profile menu when cursor leaves all safe zones
+  // Activate the override when the menu opens
   useEffect(() => {
-    if (!isProfileMenuOpen) return;
+    if (isProfileMenuOpen) {
+      setMenuOverrideActive(true);
+    }
+  }, [isProfileMenuOpen]);
+
+  // Close profile menu when cursor leaves the cached menu zones
+  useEffect(() => {
+    if (!menuOverrideActive) return;
+
+    let isStable = false;
+    const stabilityTimer = setTimeout(() => {
+      isStable = true;
+    }, 150);
 
     const isInside = (x: number, y: number, rect: { x: number; y: number; width: number; height: number }) =>
       x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
 
     const handleMouseMove = (e: MouseEvent) => {
+      if (!isStable && isProfileMenuOpen) return;
+
       const mx = e.clientX;
       const my = e.clientY;
 
-      const bar = barRef.current;
-      const btn = profileButtonRef.current;
-      const pop = popoverContentRef.current;
+      // Update cached zones only while the menu is open in the DOM
+      if (isProfileMenuOpen) {
+        const btn = profileButtonRef.current;
+        const pop = popoverContentRef.current;
 
-      // Pill region (280×80, centered on bar)
-      if (bar) {
-        const r = bar.getBoundingClientRect();
-        const pill = { x: r.left + r.width / 2 - 140, y: r.top + r.height / 2 - 40, width: 280, height: 80 };
-        if (isInside(mx, my, pill)) return;
-      }
+        if (btn && pop) {
+          const btnRect = btn.getBoundingClientRect();
+          const popRect = pop.getBoundingClientRect();
 
-      // Trigger button
-      if (btn) {
-        if (isInside(mx, my, btn.getBoundingClientRect())) return;
-      }
+          let safeZone = null;
+          if (popRect.bottom <= btnRect.top) {
+            const minX = Math.min(btnRect.left, popRect.left);
+            const maxX = Math.max(btnRect.right, popRect.right);
+            const minY = popRect.top;
+            const maxY = btnRect.bottom;
+            safeZone = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+          }
 
-      // Popover content
-      if (pop) {
-        if (isInside(mx, my, pop.getBoundingClientRect())) return;
-      }
-
-      // Dynamic safe zone: union of button, popover, and the area between them
-      if (btn && pop) {
-        const btnRect = btn.getBoundingClientRect();
-        const popRect = pop.getBoundingClientRect();
-        if (popRect.bottom <= btnRect.top) {
-          const minX = Math.min(btnRect.left, popRect.left);
-          const maxX = Math.max(btnRect.right, popRect.right);
-          const minY = popRect.top;
-          const maxY = btnRect.bottom;
-          const safeZone = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
-          if (isInside(mx, my, safeZone)) return;
+          cachedMenuZones.current = {
+            btn: { x: btnRect.x, y: btnRect.y, width: btnRect.width, height: btnRect.height },
+            pop: { x: popRect.x, y: popRect.y, width: popRect.width, height: popRect.height },
+            safe: safeZone,
+          };
         }
       }
 
-      setIsProfileMenuOpen(false);
+      const zones = cachedMenuZones.current;
+
+      let inMenuZone = false;
+      if (zones.btn && isInside(mx, my, zones.btn)) inMenuZone = true;
+      if (zones.pop && isInside(mx, my, zones.pop)) inMenuZone = true;
+      if (zones.safe && isInside(mx, my, zones.safe)) inMenuZone = true;
+
+      if (!inMenuZone) {
+        setMenuOverrideActive(false);
+        if (isProfileMenuOpen) {
+          setIsProfileMenuOpen(false);
+        }
+      }
     };
 
     window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [isProfileMenuOpen]);
+    return () => {
+      clearTimeout(stabilityTimer);
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [menuOverrideActive, isProfileMenuOpen]);
 
   const activeStatus = isActive ? status : null;
   const meta = activeStatus ? statusColor[activeStatus] : null;
