@@ -48,10 +48,9 @@ function Sidebar(): React.ReactElement {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full shrink-0 overflow-hidden transition-all duration-150",
+        "flex flex-col h-full shrink-0 overflow-hidden transition-all duration-150 bg-sidebar",
         collapsed ? "w-[52px]" : "w-[232px]",
       )}
-      style={{ background: "var(--sidebar)" }}
     >
       {/* Brand */}
       <div className={cn("flex items-center shrink-0", collapsed ? "h-12 justify-center" : "h-16 gap-3 px-3")}>
