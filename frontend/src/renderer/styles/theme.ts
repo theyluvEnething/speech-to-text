@@ -15,19 +15,17 @@
  * 1. COLOR PALETTE  (increments of 50/100)
  * ──────────────────────────────────────────────────────────────────────── */
 export const COLOR_PALETTE = {
-   50: "#eef4f6",
-  100: "#dde9ee",
-  200: "#bcd3dc",
-  300: "#9abccb",
-  400: "#78a6ba",
-  500: "#5790a8",
-  600: "#457387",
-  700: "#345665",
-  800: "#233a43",
-  825: "#1f333b",
-  850: "#1a2c33",
-  900: "#111d22",
-  950: "#0c1418",
+   50: "#ecf4f8",
+  100: "#daeaf1",
+  200: "#b5d5e3",
+  300: "#8fbfd6",
+  400: "#6aaac8",
+  500: "#4595ba",
+  600: "#377795",
+  700: "#295970",
+  800: "#1c3c4a",
+  900: "#0e1e25",
+  950: "#0a151a",
 } as const;
 
 export const ACCENT_AMBER = {
@@ -115,14 +113,14 @@ export interface ColorTokens {
 const P = COLOR_PALETTE;
 
 export const DARK: ColorTokens = {
-  background: P[825], foreground: P[50],
+  background: P[800], foreground: P[50],
   card: P[700], cardForeground: P[50],
   popover: P[800], popoverForeground: P[50],
   primary: P[50], primaryForeground: P[900],
   muted: P[700], mutedForeground: P[300],
   accent: P[600], accentForeground: P[50],
   border: P[600], input: P[700], ring: P[400],
-  sidebar: P[825],
+  sidebar: P[800],
 
   surface: P[800], raised: P[700], hover: P[600],
   line: P[600], lineSoft: P[700],

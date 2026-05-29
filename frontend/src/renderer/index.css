@@ -22,7 +22,7 @@
   /* DARK (default) */
   :root,
   :root[data-theme="dark"] {
-    --background: #1f333b;
+    --background: #1c3c4a;
     --foreground: #eff4f5;
     --card: #283b3e;
     --card-foreground: #eff4f5;
@@ -37,7 +37,7 @@
     --border: #3c595d;
     --input: #283b3e;
     --ring: #63949c;
-    --sidebar: #141e1f;
+    --sidebar: #1c3c4a;
 
     --surface: #141e1f;
     --raised: #283b3e;

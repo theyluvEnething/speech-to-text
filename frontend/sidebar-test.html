@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root, :root[data-theme="dark"] {
+      --background: #1f333b;
+      --foreground: #eff4f5;
+      --card: #283b3e;
+      --sidebar: #141e1f;
+      --raised: #283b3e;
+      --hover: #3c595d;
+      --line: #3c595d;
+      --ink: #eff4f5;
+      --ink-2: #c1d4d7;
+      --ink-3: #83a9af;
+      --ink-4: #50767c;
+      --border: #3c595d;
+      --badge-bg: #3c595d;
+      --badge-ink: #a2bfc3;
+    }
+    :root[data-theme="light"] {
+      --background: #e0eaeb;
+      --foreground: #0e1516;
+      --card: #eff4f5;
+      --sidebar: #eff4f5;
+      --raised: #eff4f5;
+      --hover: #e0eaeb;
+      --line: #c1d4d7;
+      --ink: #0e1516;
+      --ink-2: #3c595d;
+      --ink-3: #63949c;
+      --ink-4: #83a9af;
+      --border: #c1d4d7;
+      --badge-bg: #c1d4d7;
+      --badge-ink: #3c595d;
+    }
+    body { margin: 0; background: var(--background); height: 100vh; font-family: Inter, system-ui, sans-serif; }
+    
+    .wv-nav-spike {
+      position: relative;
+      background: var(--raised);
+      border-radius: 9px 0 0 9px;
+    }
+    .wv-nav-spike::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 2.5px;
+      background: #D4883A;
+      border-radius: 1px;
+    }
+    .wv-nav-spike::after {
+      content: '';
+      position: absolute;
+      right: -10px;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      background: var(--raised);
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+      z-index: 2;
+    }
+    * { border-color: var(--border); }
+  </style>
+</head>
+<body>
+  <div style="display:flex;height:100%;gap:0;">
+    <aside id="sidebar" style="background:var(--sidebar);width:232px;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;">
+      <div style="display:flex;align-items:center;height:64px;gap:12px;padding:0 12px;flex-shrink:0;">
+        <div style="width:34px;height:34px;border-radius:10px;background:#D4883A;display:grid;place-items:center;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FDECC8" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </div>
+        <span style="font-size:21px;font-weight:bold;color:var(--ink);letter-spacing:-0.02em;">Wavely</span>
+        <span style="padding:4px 11px;border-radius:999px;border:1px solid white;font-size:9.5px;font-weight:bold;color:#4A2840;background:linear-gradient(135deg,#E8A8C4,#F4D0E4,#C8C4D0,#EBEBF0,#FAFAFA,#E8E8EE,#D0C0CC,#F0D0E0,#E8A8C4);">Pro</span>
+      </div>
+      <hr style="margin:0 12px;border:none;height:1px;background:var(--line);flex-shrink:0;" />
+      <nav style="flex:1;overflow-y:auto;min-height:0;padding:12px 8px;display:flex;flex-direction:column;gap:4px;">
+        <button style="display:flex;align-items:center;gap:12px;width:100%;height:36px;padding:0 10px;border-radius:10px;font-size:13.5px;font-weight:500;border:none;cursor:pointer;color:var(--ink-3);background:transparent;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Conversations</span>
+        </button>
+        <button style="display:flex;align-items:center;gap:12px;width:100%;height:36px;padding:0 10px;border-radius:10px;font-size:13.5px;font-weight:500;border:none;cursor:pointer;color:var(--ink-3);background:transparent;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Insights</span>
+        </button>
+        <button class="wv-nav-spike" style="display:flex;align-items:center;gap:12px;width:100%;height:36px;padding:0 10px;font-size:13.5px;font-weight:500;border:none;cursor:pointer;color:var(--ink);background:transparent;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profiles</span>
+        </button>
+        <button style="display:flex;align-items:center;gap:12px;width:100%;height:36px;padding:0 10px;border-radius:10px;font-size:13.5px;font-weight:500;border:none;cursor:pointer;color:var(--ink-3);background:transparent;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+      <div style="padding:0 8px 4px;">
+        <button style="display:flex;align-items:center;justify-content:center;width:100%;height:28px;border-radius:10px;border:none;cursor:pointer;color:var(--ink-4);background:transparent;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+      </div>
+      <hr style="margin:0 12px;border:none;height:1px;background:var(--line);flex-shrink:0;" />
+      <div style="padding:8px 8px;flex-shrink:0;">
+        <button style="display:flex;align-items:center;gap:10px;width:100%;border-radius:10px;border:none;cursor:pointer;background:transparent;padding:8px 10px;color:var(--ink);">
+          <span style="width:10px;height:10px;border-radius:50%;background:#10b981;flex-shrink:0;"></span>
+          <span style="font-size:16px;">🌎</span>
+          <span style="flex:1;font-size:13px;font-weight:500;text-align:left;color:var(--ink);">Default</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ink-3);"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+    </aside>
+    <div style="width:1px;flex-shrink:0;background:var(--line);"></div>
+    <main style="flex:1;min-width:0;background:var(--raised);border:1px solid var(--line);border-radius:20px;margin-left:8px;"></main>
+  </div>
+  <div style="position:fixed;bottom:8px;right:8px;display:flex;gap:8px;">
+    <button onclick="document.documentElement.className='dark';document.documentElement.setAttribute('data-theme','dark')">Dark</button>
+    <button onclick="document.documentElement.className='';document.documentElement.setAttribute('data-theme','light')">Light</button>
+  </div>
+</body>
+</html>

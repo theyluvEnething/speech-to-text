@@ -41,3 +41,4 @@ npm-debug.log*
 
 # Electron builder
 release/
+/frontend/.playwright-mcp
