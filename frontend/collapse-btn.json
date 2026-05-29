@@ -1,0 +1,30 @@
+{
+  "collapseButton": {
+    "tag": "BUTTON",
+    "rect": {
+      "top": 784,
+      "bottom": 812,
+      "left": 8,
+      "right": 224,
+      "width": 216,
+      "height": 28
+    },
+    "bg": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box",
+    "color": "rgb(131, 169, 175)",
+    "display": "flex",
+    "innerText": "",
+    "innerHTML": "\n          <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"15 18 9 12 15 6\"></pol",
+    "visible": true
+  },
+  "siblingAbove": {
+    "tag": "NAV",
+    "rect": {
+      "top": 65,
+      "bottom": 784,
+      "height": 719
+    },
+    "className": "",
+    "innerText": "Conversations\nInsights\nProfiles\nSettings"
+  },
+  "nav": {}
+}

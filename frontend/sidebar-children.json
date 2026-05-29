@@ -1,0 +1,52 @@
+[
+  {
+    "tag": "DIV",
+    "rect": "0-64",
+    "height": 64,
+    "hasAfter": false,
+    "hasBefore": false
+  },
+  {
+    "tag": "HR",
+    "rect": "64-65",
+    "height": 1,
+    "hasAfter": false,
+    "hasBefore": false
+  },
+  {
+    "tag": "NAV",
+    "rect": "65-784",
+    "height": 719,
+    "hasAfter": false,
+    "hasBefore": false,
+    "pseudos": [
+      {
+        "tag": "BUTTON",
+        "rect": "157-193",
+        "after": true,
+        "before": true
+      }
+    ]
+  },
+  {
+    "tag": "DIV",
+    "rect": "784-816",
+    "height": 32,
+    "hasAfter": false,
+    "hasBefore": false
+  },
+  {
+    "tag": "HR",
+    "rect": "816-817",
+    "height": 1,
+    "hasAfter": false,
+    "hasBefore": false
+  },
+  {
+    "tag": "DIV",
+    "rect": "817-873",
+    "height": 56,
+    "hasAfter": false,
+    "hasBefore": false
+  }
+]

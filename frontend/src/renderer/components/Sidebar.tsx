@@ -48,7 +48,7 @@ function Sidebar(): React.ReactElement {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full shrink-0 overflow-hidden transition-all duration-150 bg-sidebar",
+        "flex flex-col h-full shrink-0 overflow-hidden transition-all duration-150 bg-sidebar rounded-[14px]",
         collapsed ? "w-[52px]" : "w-[232px]",
       )}
     >
@@ -80,7 +80,7 @@ function Sidebar(): React.ReactElement {
               activeTab === item.tab && "wv-nav-spike",
             )}
           >
-            <item.icon className="h-4 w-4 shrink-0" />
+            <item.icon className={cn("h-4 w-4 shrink-0", activeTab === item.tab && "text-amber-accent-300")} />
             {!collapsed && <span>{item.label}</span>}
           </button>
         ))}

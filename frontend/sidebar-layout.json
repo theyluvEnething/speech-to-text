@@ -1,0 +1,74 @@
+[
+  {
+    "index": 0,
+    "tag": "DIV",
+    "cls": "",
+    "rect": {
+      "top": 0,
+      "bottom": 64,
+      "height": 64,
+      "width": 232
+    },
+    "html": "Wavely\n        Pro"
+  },
+  {
+    "index": 1,
+    "tag": "HR",
+    "cls": "",
+    "rect": {
+      "top": 64,
+      "bottom": 65,
+      "height": 1,
+      "width": 208
+    },
+    "html": ""
+  },
+  {
+    "index": 2,
+    "tag": "NAV",
+    "cls": "",
+    "rect": {
+      "top": 65,
+      "bottom": 784,
+      "height": 719,
+      "width": 232
+    },
+    "html": "Conversations\n        \n        \n        "
+  },
+  {
+    "index": 3,
+    "tag": "DIV",
+    "cls": "",
+    "rect": {
+      "top": 784,
+      "bottom": 816,
+      "height": 32,
+      "width": 232
+    },
+    "html": ""
+  },
+  {
+    "index": 4,
+    "tag": "HR",
+    "cls": "",
+    "rect": {
+      "top": 816,
+      "bottom": 817,
+      "height": 1,
+      "width": 208
+    },
+    "html": ""
+  },
+  {
+    "index": 5,
+    "tag": "DIV",
+    "cls": "",
+    "rect": {
+      "top": 817,
+      "bottom": 873,
+      "height": 56,
+      "width": 232
+    },
+    "html": "🌎\n          Default"
+  }
+]

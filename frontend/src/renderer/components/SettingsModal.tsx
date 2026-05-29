@@ -204,7 +204,7 @@ function SettingsModal(): React.ReactElement {
                     className={cn(
                       "flex items-center gap-2.5 h-[34px] px-2.5 rounded-[9px] text-[13px] font-medium transition-colors",
                       pane === n.pane
-                        ? "bg-raised text-ink shadow-wv-card"
+                        ? "bg-raised text-ink shadow-wv-card border-l-2 border-amber-accent-500"
                         : "text-ink-3 hover:bg-hover hover:text-ink",
                     )}
                   >
