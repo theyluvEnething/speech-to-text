@@ -54,8 +54,8 @@ function Sidebar(): React.ReactElement {
     >
       {/* Brand */}
       <div className={cn("flex items-center shrink-0", collapsed ? "h-12 justify-center" : "h-16 gap-3 px-3")}>
-        <div className="grid place-items-center w-[34px] h-[34px] rounded-[10px] bg-[#D4883A] shadow-wv-card shrink-0">
-          <Mic className="h-[18px] w-[18px] text-[#FDECC8]" />
+        <div className="grid place-items-center w-[34px] h-[34px] rounded-[10px] bg-acc shadow-wv-card shrink-0">
+          <Mic className="h-[18px] w-[18px] text-primary-foreground" />
         </div>
         {!collapsed && (
           <>

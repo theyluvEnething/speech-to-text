@@ -189,7 +189,7 @@ function SettingsModal(): React.ReactElement {
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-[4px] data-[state=open]:animate-wv-fade" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 flex overflow-hidden relative
+          className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 flex overflow-hidden
             w-[min(920px,92vw)] h-[min(630px,88vh)] bg-surface border border-line rounded-modal shadow-wv-pop
             data-[state=open]:animate-wv-fade focus:outline-none"
         >
@@ -312,7 +312,7 @@ function SettingsModal(): React.ReactElement {
                   {provider !== "openai" ? (
                     <Row label="Model" desc="Faster models trade some accuracy for latency.">
                       <Select value={model} onValueChange={(v) => { setModel(v); save({ model: v }); }}>
-                        <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
                         <SelectContent>{models.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
                       </Select>
                     </Row>
@@ -329,7 +329,7 @@ function SettingsModal(): React.ReactElement {
             )}
 
             {pane === "account" && (
-              <>
+              <div className="flex flex-col h-full">
                 <PaneTitle>Account</PaneTitle>
                 <div className={cn(WV_PANEL, "px-[18px]")}>
                   <Row label="Name"><span className="text-[13px] text-ink-2">{user?.fullName ?? "—"}</span></Row>
@@ -353,7 +353,16 @@ function SettingsModal(): React.ReactElement {
                     )}
                   </Row>
                 </div>
-              </>
+                <div className="flex-1" />
+                <div className="flex justify-end shrink-0">
+                  <Button
+                    onClick={() => signOut()}
+                    className="bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold px-5 py-2 rounded-[9px] border-none shadow-md transition-colors"
+                  >
+                    Sign out
+                  </Button>
+                </div>
+              </div>
             )}
 
             {pane === "privacy" && (
@@ -388,15 +397,8 @@ function SettingsModal(): React.ReactElement {
                 </div>
               </>
             )}
-          </div>
 
-          {/* Sign out — bottom right of the modal */}
-          <Button
-            onClick={() => signOut()}
-            className="absolute bottom-4 right-6 bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold px-5 py-2 rounded-[9px] border-none shadow-md transition-colors"
-          >
-            Sign out
-          </Button>
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

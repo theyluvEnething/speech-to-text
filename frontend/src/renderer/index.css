@@ -103,8 +103,8 @@
     --acc: #50767c;
     --acc-strong: #3c595d;
     --acc-faint: #c1d4d7;
-    --key-bg: #a2bfc3;
-    --key-ink: #141e1f;
+    --key-bg: #D4883A;
+    --key-ink: #FDECC8;
     --badge-bg: #c1d4d7;
     --badge-ink: #3c595d;
     --toggle-on: #3c595d;
@@ -156,10 +156,8 @@ html, body, #root {
 :root {
   --premium-gradient: linear-gradient(
     135deg,
-    #E8A8C4  0%,  #F4D0E4 16%,
-    #C8C4D0 30%,  #EBEBF0 44%,
-    #FAFAFA 50%,  #E8E8EE 56%,
-    #D0C0CC 70%,  #F0D0E0 84%,
+    #E8A8C4 0%,
+    #FAFAFA 50%,
     #E8A8C4 100%
   );
 }
@@ -203,7 +201,7 @@ html, body, #root {
   top: 6px;
   bottom: 6px;
   width: 2.5px;
-  background: #D4883A;    /* ACCENT_AMBER[500] */
+  background: var(--acc-strong);    /* main palette — not accent/amber */
   border-radius: 1px;
 }
 .wv-nav-spike::after {

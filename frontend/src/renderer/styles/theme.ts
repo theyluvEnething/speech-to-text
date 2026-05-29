@@ -150,7 +150,7 @@ export const LIGHT: ColorTokens = {
   line: P[200], lineSoft: P[100],
   ink: P[950], ink2: P[700], ink3: P[500], ink4: P[400],
   acc: P[600], accStrong: P[700], accFaint: P[200],
-  keyBg: P[300], keyInk: P[900],
+  keyBg: ACCENT_AMBER[500], keyInk: ACCENT_AMBER[100],
   badgeBg: P[200], badgeInk: P[700],
   toggleOn: P[700],
   btnPrimary: P[900], btnPrimaryInk: P[50],
