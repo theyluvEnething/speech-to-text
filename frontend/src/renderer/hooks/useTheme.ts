@@ -22,11 +22,11 @@ export function useTheme(): {
     window.wavely
       .getSettings()
       .then((settings) => {
-        const saved = (settings.theme as ThemeMode) || "dark";
+        const saved = (settings.theme as ThemeMode) || "light";
         setThemeState(saved);
         applyTheme(saved);
       })
-      .catch(() => applyTheme("dark"));
+      .catch(() => applyTheme("light"));
   }, [setThemeState]);
 
   // Re-apply + persist whenever theme changes.

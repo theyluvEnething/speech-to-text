@@ -38,7 +38,7 @@ declare global {
 
   interface WavelyApi {
     platform: string;
-    getSettings(): Promise<{ hotkey: string; language: string; model: string; provider: string; copyToClipboard: boolean; appLanguage: string }>;
+    getSettings(): Promise<{ hotkey: string; language: string; model: string; provider: string; copyToClipboard: boolean; appLanguage: string; theme: string }>;
     setSettings(settings: Record<string, string | boolean>): Promise<{ success: boolean }>;
     getPaused(): Promise<boolean>;
     togglePaused(): Promise<boolean>;

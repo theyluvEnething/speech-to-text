@@ -61,7 +61,7 @@ export const useStore = create<AppStore>((set) => ({
   closeSettings: () => set({ settingsOpen: false }),
   setSettingsPane: (pane) => set({ settingsPane: pane }),
 
-  theme: "dark",
+  theme: "light",
   setTheme: (theme) => set({ theme }),
 
   profiles: [],

@@ -31,6 +31,7 @@ interface StoreSchema {
   provider: string;
   copyToClipboard: boolean;
   appLanguage: string;
+  theme: string;
   isPaused: boolean;
   debugProximity: boolean;
   profiles: Profile[];
@@ -47,6 +48,7 @@ export const store = new Store<StoreSchema>({
     provider: "groq",
     copyToClipboard: false,
     appLanguage: "en",
+    theme: "light",
     isPaused: false,
     debugProximity: false,
     profiles: [
@@ -103,13 +105,12 @@ export function registerIpcHandlers(
       provider: store.get("provider"),
       copyToClipboard: store.get("copyToClipboard"),
       appLanguage: store.get("appLanguage"),
+      theme: store.get("theme"),
     };
   });
 
   ipcMain.handle("settings:set", (_event, settings: Record<string, string | boolean>) => {
-    const oldHotkey = store.get("hotkey");
-
-    if (typeof settings['hotkey'] === "string" && settings['hotkey'] !== oldHotkey) {
+    if (typeof settings['hotkey'] === "string" && settings['hotkey'] !== store.get("hotkey")) {
       store.set("hotkey", settings['hotkey']);
       updateHotkey(settings['hotkey']);
     }
@@ -132,6 +133,10 @@ export function registerIpcHandlers(
 
     if (typeof settings['appLanguage'] === "string") {
       store.set("appLanguage", settings['appLanguage']);
+    }
+
+    if (typeof settings['theme'] === "string") {
+      store.set("theme", settings['theme']);
     }
 
     return { success: true };
