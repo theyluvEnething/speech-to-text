@@ -113,7 +113,12 @@ function SettingsModal(): React.ReactElement {
   const [provider, setProvider] = useState("groq");
   const [model, setModel] = useState("whisper-large-v3-turbo");
   const [copyToClipboard, setCopyToClipboard] = useState(false);
+  const [appVersion, setAppVersion] = useState("");
   const initial = useRef(true);
+
+  useEffect(() => {
+    window.wavely.getVersion().then(setAppVersion).catch(() => {});
+  }, []);
 
   // updates
   const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "none" | "available" | "error">("idle");
@@ -215,7 +220,7 @@ function SettingsModal(): React.ReactElement {
               </React.Fragment>
             ))}
             <div className="mt-auto flex items-center justify-between px-2.5 pt-2 text-[11.5px] text-ink-4">
-              <span>Wavely v1.0.0</span>
+              <span>Wavely v{appVersion}</span>
               <Cloud className="h-3.5 w-3.5" />
             </div>
           </nav>
@@ -336,7 +341,7 @@ function SettingsModal(): React.ReactElement {
                       updateStatus === "none" ? "You're up to date."
                       : updateStatus === "available" ? updateMsg
                       : updateStatus === "error" ? updateMsg
-                      : "Wavely v1.0.0"
+                      : `Wavely v${appVersion}`
                     }
                   >
                     {updateStatus === "available" ? (
