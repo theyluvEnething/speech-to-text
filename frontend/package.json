@@ -16,6 +16,7 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.61.8",
     "@deepgram/sdk": "^5.2.0",
+    "@fontsource/fraunces": "^5.2.9",
     "@fontsource/inter": "^5.2.8",
     "@nut-tree-fork/nut-js": "^4.2.6",
     "@radix-ui/react-dialog": "^1.1.15",

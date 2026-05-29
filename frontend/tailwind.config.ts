@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import { COLOR_PALETTE } from "./src/styles/theme";
+import { COLOR_PALETTE } from "./src/renderer/styles/theme";
 
 /**
  * tailwind.config.ts
