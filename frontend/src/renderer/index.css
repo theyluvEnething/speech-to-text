@@ -3,65 +3,135 @@
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
 @import "@fontsource/inter/700.css";
+@import "@fontsource/fraunces/400.css";
+@import "@fontsource/fraunces/500.css";
+@import "@fontsource/fraunces/600.css";
 @import "flag-icons/css/flag-icons.min.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   SEMANTIC TOKENS — generated from src/styles/theme.ts
+   (run console.log(toCSSVars(DARK)) / toCSSVars(LIGHT) to regenerate)
+   applyTheme() also injects these at runtime; these blocks are the
+   no-flash defaults so the first paint is already themed.
+   ============================================================ */
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
-    --primary: 210 90% 36%;
-    --primary-foreground: 0 0% 100%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 210 90% 36%;
-    --radius: 0.625rem;
+  /* DARK (default) */
+  :root,
+  :root[data-theme="dark"] {
+    --background: #0e1516;
+    --foreground: #eff4f5;
+    --card: #283b3e;
+    --card-foreground: #eff4f5;
+    --popover: #141e1f;
+    --popover-foreground: #eff4f5;
+    --primary: #eff4f5;
+    --primary-foreground: #0e1516;
+    --muted: #283b3e;
+    --muted-foreground: #83a9af;
+    --accent: #3c595d;
+    --accent-foreground: #eff4f5;
+    --border: #3c595d;
+    --input: #283b3e;
+    --ring: #63949c;
+    --sidebar: #141e1f;
+
+    --surface: #141e1f;
+    --raised: #283b3e;
+    --hover: #3c595d;
+    --line: #3c595d;
+    --line-soft: #283b3e;
+    --ink: #eff4f5;
+    --ink-2: #c1d4d7;
+    --ink-3: #83a9af;
+    --ink-4: #50767c;
+    --acc: #83a9af;
+    --acc-strong: #a2bfc3;
+    --acc-faint: #283b3e;
+    --key-bg: #3c595d;
+    --key-ink: #eff4f5;
+    --badge-bg: #3c595d;
+    --badge-ink: #a2bfc3;
+    --toggle-on: #63949c;
+    --btn-primary: #eff4f5;
+    --btn-primary-ink: #0e1516;
+    --btn-soft-bg: #283b3e;
+    --btn-soft-ink: #c1d4d7;
+    --chart-track: #283b3e;
+    --data-high: #63949c;
+    --data-mid: #83a9af;
+    --data-low: #a2bfc3;
+    --data-faint: #3c595d;
+    --heat-empty: #283b3e;
+
+    --wv-shadow-card: 0 1px 2px rgba(0,0,0,.18), 0 6px 20px rgba(0,0,0,.22);
+    --wv-shadow-pop: 0 2px 4px rgba(0,0,0,.30), 0 24px 60px rgba(0,0,0,.55);
+    --radius: 0.75rem;
   }
 
-  .dark {
-    --background: 0 0% 6.7%;
-    --foreground: 0 0% 93%;
-    --card: 0 0% 7.5%;
-    --card-foreground: 0 0% 93%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 93%;
-    --primary: 0 0% 88%;
-    --primary-foreground: 0 0% 7%;
-    --muted: 0 0% 9.2%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 13%;
-    --accent-foreground: 0 0% 93%;
-    --border: 0 0% 12%;
-    --input: 0 0% 8%;
-    --ring: 0 0% 25%;
-    --radius: 0.5rem;
-    --sidebar: 0 0% 6.7%;
-    --success: 0 0% 45%;
-    --warning: 0 0% 40%;
-    --danger: 0 0% 35%;
+  /* LIGHT */
+  :root[data-theme="light"] {
+    --background: #e0eaeb;
+    --foreground: #0e1516;
+    --card: #eff4f5;
+    --card-foreground: #0e1516;
+    --popover: #eff4f5;
+    --popover-foreground: #0e1516;
+    --primary: #141e1f;
+    --primary-foreground: #eff4f5;
+    --muted: #e0eaeb;
+    --muted-foreground: #63949c;
+    --accent: #e0eaeb;
+    --accent-foreground: #0e1516;
+    --border: #c1d4d7;
+    --input: #e0eaeb;
+    --ring: #63949c;
+    --sidebar: #eff4f5;
+
+    --surface: #eff4f5;
+    --raised: #eff4f5;
+    --hover: #e0eaeb;
+    --line: #c1d4d7;
+    --line-soft: #e0eaeb;
+    --ink: #0e1516;
+    --ink-2: #3c595d;
+    --ink-3: #63949c;
+    --ink-4: #83a9af;
+    --acc: #50767c;
+    --acc-strong: #3c595d;
+    --acc-faint: #c1d4d7;
+    --key-bg: #a2bfc3;
+    --key-ink: #141e1f;
+    --badge-bg: #c1d4d7;
+    --badge-ink: #3c595d;
+    --toggle-on: #3c595d;
+    --btn-primary: #141e1f;
+    --btn-primary-ink: #eff4f5;
+    --btn-soft-bg: #c1d4d7;
+    --btn-soft-ink: #283b3e;
+    --chart-track: #c1d4d7;
+    --data-high: #3c595d;
+    --data-mid: #50767c;
+    --data-low: #63949c;
+    --data-faint: #83a9af;
+    --heat-empty: #c1d4d7;
+
+    --wv-shadow-card: 0 1px 2px rgba(14,21,22,.06), 0 6px 20px rgba(14,21,22,.07);
+    --wv-shadow-pop: 0 2px 4px rgba(14,21,22,.06), 0 24px 60px rgba(14,21,22,.20);
   }
 
-  * {
-    border-color: hsl(var(--border));
-  }
+  * { border-color: var(--border); }
 
   body {
     background: transparent;
-    color: hsl(var(--foreground));
+    color: var(--foreground);
     font-family: "Inter", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color .22s ease, color .22s ease;
   }
 }
 
@@ -72,61 +142,20 @@ html, body, #root {
   background: transparent;
 }
 
-.drag-region {
-  -webkit-app-region: drag;
-}
+.drag-region { -webkit-app-region: drag; }
+.no-drag { -webkit-app-region: no-drag; }
 
-.no-drag {
-  -webkit-app-region: no-drag;
-}
-
-/* Window open/close animations */
+/* Window open animation */
 @keyframes window-open {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
-
-@keyframes window-close {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-}
-
-.window-enter {
-  animation: window-open 180ms ease-out;
-}
+.window-enter { animation: window-open 180ms ease-out; }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.10);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.20);
-}
-
-/* Focus ring */
-*:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.12);
-  outline-offset: 1px;
-}
+*:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
