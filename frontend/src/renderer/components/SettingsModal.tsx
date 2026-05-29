@@ -189,7 +189,7 @@ function SettingsModal(): React.ReactElement {
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-[4px] data-[state=open]:animate-wv-fade" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 flex overflow-hidden
+          className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 flex overflow-hidden relative
             w-[min(920px,92vw)] h-[min(630px,88vh)] bg-surface border border-line rounded-modal shadow-wv-pop
             data-[state=open]:animate-wv-fade focus:outline-none"
         >
@@ -353,9 +353,6 @@ function SettingsModal(): React.ReactElement {
                     )}
                   </Row>
                 </div>
-                <div className="mt-[18px]">
-                  <Button variant="outline" size="sm" onClick={() => signOut()}>Sign out</Button>
-                </div>
               </>
             )}
 
@@ -392,6 +389,14 @@ function SettingsModal(): React.ReactElement {
               </>
             )}
           </div>
+
+          {/* Sign out — bottom right of the modal */}
+          <Button
+            onClick={() => signOut()}
+            className="absolute bottom-4 right-6 bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold px-5 py-2 rounded-[9px] border-none shadow-md transition-colors"
+          >
+            Sign out
+          </Button>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
