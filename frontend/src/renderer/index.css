@@ -152,6 +152,72 @@ html, body, #root {
 }
 .window-enter { animation: window-open 180ms ease-out; }
 
+/* Premium gradient — single source, used by WV_BADGE_PRO and WV_BUTTON_UPGRADE */
+:root {
+  --premium-gradient: linear-gradient(
+    135deg,
+    #E8A8C4  0%,  #F4D0E4 16%,
+    #C8C4D0 30%,  #EBEBF0 44%,
+    #FAFAFA 50%,  #E8E8EE 56%,
+    #D0C0CC 70%,  #F0D0E0 84%,
+    #E8A8C4 100%
+  );
+}
+
+@keyframes wv-shine {
+  0%   { transform: translateX(-220%) skewX(-22deg); opacity: 0; }
+  8%   { opacity: 1; }
+  52%  { opacity: 1; }
+  62%  { opacity: 0; }
+  100% { transform: translateX(460%) skewX(-22deg); opacity: 0; }
+}
+
+/* Add wv-premium-shine to any element that should animate */
+.wv-premium-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: 0;
+  width: 38%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.62) 50%,
+    transparent 100%
+  );
+  transform: translateX(-220%) skewX(-22deg);
+  animation: wv-shine 3.8s ease-in-out 0.8s infinite;
+}
+
+/* Sidebar active nav spike — active item arrow pointing into main panel */
+.wv-nav-spike {
+  position: relative;
+  background: var(--raised);
+  border-radius: 9px 0 0 9px;
+}
+.wv-nav-spike::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2.5px;
+  background: #D4883A;    /* ACCENT_AMBER[500] */
+  border-radius: 1px;
+}
+.wv-nav-spike::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: var(--raised);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  z-index: 2;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

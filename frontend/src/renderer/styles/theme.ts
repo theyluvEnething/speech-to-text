@@ -30,6 +30,32 @@ export const COLOR_PALETTE = {
   950: "#0c1418",
 } as const;
 
+export const ACCENT_AMBER = {
+  100: "#FDECC8",
+  300: "#F5B860",
+  500: "#D4883A",
+  700: "#8A4E18",
+} as const;
+
+export const ACCENT_ROSE = {
+  100: "#FADDEC",
+  300: "#E8A4C4",
+  500: "#C46890",
+  700: "#7A3858",
+} as const;
+
+export const ACCENT_PREMIUM = {
+  roseDeep:   "#E8A8C4",
+  roseLight:  "#F4D0E4",
+  silverLav:  "#C8C4D0",
+  silverMid:  "#EBEBF0",
+  platinum:   "#FAFAFA",
+  silverFade: "#D0C0CC",
+  roseMid:    "#F0D0E0",
+  text:       "#4A2840",
+  border:     "rgba(255,255,255,0.55)",
+} as const;
+
 export type PaletteShade = keyof typeof COLOR_PALETTE;
 export type ThemeMode = "dark" | "light";
 
@@ -102,8 +128,8 @@ export const DARK: ColorTokens = {
   line: P[600], lineSoft: P[700],
   ink: P[50], ink2: P[100], ink3: P[300], ink4: P[500],
   acc: P[300], accStrong: P[200], accFaint: P[700],
-  keyBg: P[600], keyInk: P[50],
-  badgeBg: P[600], badgeInk: P[200],
+  keyBg: ACCENT_AMBER[500], keyInk: ACCENT_AMBER[100],
+  badgeBg: "var(--premium-gradient)", badgeInk: ACCENT_PREMIUM.text,
   toggleOn: P[400],
   btnPrimary: P[50], btnPrimaryInk: P[900],
   btnSoftBg: P[700], btnSoftInk: P[100],
@@ -191,6 +217,19 @@ export const WV_NAV_ITEM_ACTIVE =
   "before:w-[2.5px] before:rounded-full before:bg-acc";
 export const WV_BADGE =
   "inline-flex items-center rounded-full bg-badge text-badge-ink text-[10.5px] font-semibold px-2 py-[3px]";
+
+export const WV_BADGE_PRO =
+  "wv-premium-shine relative overflow-hidden rounded-full px-[11px] py-[4px] " +
+  "text-[9.5px] font-bold tracking-[.04em] border border-white/55 " +
+  "text-[#4A2840] [background:var(--premium-gradient)]";
+
+export const WV_BUTTON_UPGRADE =
+  "wv-premium-shine relative overflow-hidden rounded-[12px] w-full " +
+  "py-3 px-5 text-[13.5px] font-bold tracking-[.01em] " +
+  "text-[#4A2840] [background:var(--premium-gradient)] " +
+  "border border-white/55 " +
+  "shadow-[0_0_20px_rgba(196,104,144,.28),0_2px_6px_rgba(0,0,0,.18)]";
+
 export const WV_KEYCAP =
   "inline-flex items-center h-[26px] px-[9px] rounded-[6px] bg-keycap text-keycap-ink " +
   "font-bold text-[13px] shadow-[0_1.5px_0_rgba(0,0,0,.25)]";

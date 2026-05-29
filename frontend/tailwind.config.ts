@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import { COLOR_PALETTE } from "./src/renderer/styles/theme";
+import { COLOR_PALETTE, ACCENT_AMBER, ACCENT_ROSE } from "./src/renderer/styles/theme";
 
 /**
  * tailwind.config.ts
@@ -23,6 +23,8 @@ export default {
       colors: {
         // 1. raw palette
         "color-palette": COLOR_PALETTE,
+        "amber-accent": ACCENT_AMBER,
+        "rose-accent":  ACCENT_ROSE,
 
         // 2. shadcn-compatible semantic names (existing primitives keep working)
         background: "var(--background)",

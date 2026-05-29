@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore, type Tab } from "@/store";
-import { WV_NAV_ITEM, WV_NAV_ITEM_ACTIVE, WV_BADGE } from "@/styles/theme";
+import { WV_NAV_ITEM, WV_BADGE, WV_BADGE_PRO } from "@/styles/theme";
 import ProfileSwitcherPopover from "@/components/ProfileSwitcherPopover";
 import ProfileIcon from "@/components/ProfileIcon";
 import NotificationCard from "@/components/NotificationCard";
@@ -48,19 +48,20 @@ function Sidebar(): React.ReactElement {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full bg-sidebar shrink-0 overflow-hidden transition-all duration-150",
+        "flex flex-col h-full shrink-0 overflow-hidden transition-all duration-150",
         collapsed ? "w-[52px]" : "w-[232px]",
       )}
+      style={{ background: "var(--sidebar)" }}
     >
       {/* Brand */}
       <div className={cn("flex items-center shrink-0", collapsed ? "h-12 justify-center" : "h-16 gap-3 px-3")}>
-        <div className="grid place-items-center w-[34px] h-[34px] rounded-[10px] bg-btn-primary text-btn-primary-ink shadow-wv-card shrink-0">
-          <Mic className="h-[18px] w-[18px]" />
+        <div className="grid place-items-center w-[34px] h-[34px] rounded-[10px] bg-[#D4883A] shadow-wv-card shrink-0">
+          <Mic className="h-[18px] w-[18px] text-[#FDECC8]" />
         </div>
         {!collapsed && (
           <>
             <span className="text-[21px] font-bold tracking-[-0.02em] text-ink">Wavely</span>
-            <span className={WV_BADGE}>Pro</span>
+            <span className={cn(WV_BADGE_PRO)}>Pro</span>
           </>
         )}
       </div>
@@ -77,7 +78,7 @@ function Sidebar(): React.ReactElement {
             className={cn(
               WV_NAV_ITEM,
               collapsed && "justify-center px-0",
-              activeTab === item.tab && WV_NAV_ITEM_ACTIVE,
+              activeTab === item.tab && "wv-nav-spike",
             )}
           >
             <item.icon className="h-4 w-4 shrink-0" />
