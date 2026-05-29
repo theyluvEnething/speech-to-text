@@ -85,7 +85,6 @@ export function MainApp(): React.ReactElement {
   return (
     <div className="flex flex-1 min-h-0 p-2 pt-0 gap-0">
       <Sidebar />
-      <div className="w-px shrink-0 bg-line" />
       <main className="flex-1 min-w-0 bg-raised border border-line rounded-panel overflow-hidden ml-2 transition-colors">
         <div className="h-full px-8 py-6 overflow-x-hidden overflow-y-auto">
           {activeTab === "conversations" && <ConversationsView />}
