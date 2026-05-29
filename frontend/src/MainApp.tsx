@@ -87,7 +87,7 @@ export function MainApp(): React.ReactElement {
       <Sidebar />
       <div className="w-px shrink-0 bg-line" />
       <main className="flex-1 min-w-0 bg-raised border border-line rounded-panel overflow-hidden ml-2 transition-colors">
-        <div className="h-full px-8 py-6 overflow-y-auto">
+        <div className="h-full px-8 py-6 overflow-x-hidden overflow-y-auto">
           {activeTab === "conversations" && <ConversationsView />}
           {activeTab === "insights" && <InsightsView />}
           {activeTab === "profiles" && <ProfilesView />}

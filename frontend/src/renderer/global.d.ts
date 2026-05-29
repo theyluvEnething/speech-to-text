@@ -46,6 +46,7 @@ declare global {
     toggleDebugProximity(): Promise<boolean>;
     stopRecording(): void;
     hideWindow(): void;
+    minimizeWindow(): void;
     closeWindow(): void;
     checkForUpdates(): Promise<{ available: boolean; version: string | null; error: string | null }>;
     downloadAndInstallUpdate(): Promise<void>;

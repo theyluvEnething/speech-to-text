@@ -145,6 +145,14 @@ export function registerIpcHandlers(
     }
   });
 
+  ipcMain.on("settings:minimize", (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      console.log("[Wavely] Settings window minimized.");
+      win.minimize();
+    }
+  });
+
   ipcMain.on("settings:close", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     console.log("[Wavely] Settings window closed.");

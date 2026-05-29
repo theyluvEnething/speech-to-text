@@ -29,6 +29,10 @@ contextBridge.exposeInMainWorld("wavely", {
     ipcRenderer.send("settings:hide");
   },
 
+  minimizeWindow: (): void => {
+    ipcRenderer.send("settings:minimize");
+  },
+
   closeWindow: (): void => {
     ipcRenderer.send("settings:close");
   },

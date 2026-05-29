@@ -1,5 +1,5 @@
 import React from "react";
-import { X } from "lucide-react";
+import { Minus, X } from "lucide-react";
 
 function TitleBar(): React.ReactElement {
   const isMac = window.wavely.platform === "darwin";
@@ -11,6 +11,15 @@ function TitleBar(): React.ReactElement {
     >
       {!isMac && (
         <div className="no-drag ml-auto flex items-center h-full">
+          <button
+            onClick={() => window.wavely.minimizeWindow()}
+            className="flex items-center justify-center w-10 h-full
+              text-foreground/30 hover:text-foreground hover:bg-accent
+              transition-colors duration-150"
+            aria-label="Minimize"
+          >
+            <Minus className="h-3.5 w-3.5" />
+          </button>
           <button
             onClick={() => window.wavely.hideWindow()}
             className="flex items-center justify-center w-10 h-full

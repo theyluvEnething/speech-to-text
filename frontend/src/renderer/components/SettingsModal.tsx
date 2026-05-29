@@ -186,7 +186,7 @@ function SettingsModal(): React.ReactElement {
           aria-describedby={undefined}
           className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 flex overflow-hidden
             w-[min(920px,92vw)] h-[min(630px,88vh)] bg-surface border border-line rounded-modal shadow-wv-pop
-            data-[state=open]:animate-wv-pop focus:outline-none"
+            data-[state=open]:animate-wv-fade focus:outline-none"
         >
           <Dialog.Title className="sr-only">Settings</Dialog.Title>
 

@@ -131,7 +131,7 @@ function ConversationsView(): React.ReactElement {
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_290px] gap-6 items-start">
+      <div className="grid grid-cols-[minmax(0,1fr)_290px] gap-6 items-start">
         <div>
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-4" />
