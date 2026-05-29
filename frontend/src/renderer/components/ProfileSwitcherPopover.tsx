@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { UserPlus, Check } from "lucide-react";
 import ProfileIcon from "@/components/ProfileIcon";
@@ -11,11 +11,13 @@ function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNo
   const setActiveTab = useStore((s) => s.setActiveTab);
   const setProfiles = useStore((s) => s.setProfiles);
   const setTriggerNewProfile = useStore((s) => s.setTriggerNewProfile);
+  const [open, setOpen] = useState(false);
 
   function handleSelect(id: string): void {
     window.wavely.profiles.setActive(id).then(() => {
       const p = profiles.find((pr) => pr.id === id);
       if (p) setActiveProfile(p);
+      setOpen(false);
     });
   }
 
@@ -26,7 +28,7 @@ function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNo
 
   if (compact) {
     return (
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>{children}</PopoverTrigger>
         <PopoverContent align="start" side="top" className="w-auto p-1.5">
           <div className="flex items-center gap-1">
@@ -59,7 +61,7 @@ function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNo
   }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent align="start" side="top" className="w-56 p-1">
         <div className="space-y-0.5">
