@@ -22,7 +22,7 @@
   /* DARK (default) */
   :root,
   :root[data-theme="dark"] {
-    --background: #1a2c33;
+    --background: #1f333b;
     --foreground: #eff4f5;
     --card: #283b3e;
     --card-foreground: #eff4f5;

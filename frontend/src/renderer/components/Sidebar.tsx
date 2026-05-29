@@ -14,9 +14,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore, type Tab } from "@/store";
-import { WV_NAV_ITEM, WV_NAV_ITEM_ACTIVE, WV_BADGE, WV_BUTTON_PRIMARY } from "@/styles/theme";
+import { WV_NAV_ITEM, WV_NAV_ITEM_ACTIVE, WV_BADGE } from "@/styles/theme";
 import ProfileSwitcherPopover from "@/components/ProfileSwitcherPopover";
 import ProfileIcon from "@/components/ProfileIcon";
+import NotificationCard from "@/components/NotificationCard";
 import { Separator } from "@/components/ui/separator";
 
 function Sidebar(): React.ReactElement {
@@ -105,20 +106,7 @@ function Sidebar(): React.ReactElement {
         </button>
       </div>
 
-      {/* Upgrade card */}
-      {!collapsed && (
-        <div className="mx-2 mb-2 rounded-[14px] border border-line bg-raised p-3.5">
-          <div className="text-[12.5px] font-semibold text-ink">
-            {t("app.trialEnds", "Trial ends in")} <b className="text-acc-strong">6 {t("app.days", "days")}</b>
-          </div>
-          <p className="text-[11.5px] text-ink-2 leading-[1.55] my-1.5">
-            {t("app.upgradeHint", "Upgrade to keep unlimited transcriptions and Pro features.")}
-          </p>
-          <button className={cn(WV_BUTTON_PRIMARY, "w-full")}>
-            {t("app.upgrade", "Upgrade to Pro")}
-          </button>
-        </div>
-      )}
+      {/* Notification slot — pass a NotificationCard to show banners */}
 
       <div className="mx-3 shrink-0"><Separator /></div>
 
@@ -153,7 +141,7 @@ function Sidebar(): React.ReactElement {
         <div className="shrink-0 px-3 pb-3">
           <div className="flex items-center justify-between px-2.5 py-1">
             <div className="flex items-center gap-2">
-              <span className={cn("w-2 h-2 rounded-full shrink-0", isPaused ? "bg-ink-4" : "bg-acc")} />
+              <span className={cn("w-2 h-2 rounded-full shrink-0", isPaused ? "bg-red-500" : "bg-green-500")} />
               <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-ink-4">
                 {isPaused ? t("app.paused", "Paused") : t("app.active", "Active")}
               </span>

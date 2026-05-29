@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import ProfileIcon from "@/components/ProfileIcon";
 import { WV_CARD, WV_TITLE } from "@/styles/theme";
 
-const COLORS = ["#83a9af", "#63949c", "#50767c", "#3c595d", "#a2bfc3", "#c1d4d7", "#283b3e", "#eff4f5"];
+const COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981", "#14b8a6", "#3b82f6", "#6366f1", "#a855f7", "#ec4899"];
 const QUICK_ICONS = ["🇬🇧","🇩🇪","🇫🇷","🇪🇸","🇮🇹","🇯🇵","🇰🇷","🇨🇳","🎙️","💼","🏥","🎓","💻","🎨","📝"];
 const SENTINEL = "__global__";
 const LANGUAGES = [
