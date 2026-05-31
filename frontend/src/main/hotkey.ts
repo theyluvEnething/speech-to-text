@@ -132,6 +132,7 @@ export function unregisterAll(): void {
   try {
     const { uIOhook } = require("uiohook-napi");
     uIOhook.stop();
+    uIOhook.removeAllListeners();
   } catch {
     // uiohook not available
   }
