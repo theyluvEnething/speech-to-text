@@ -14,7 +14,7 @@ function TitleBar(): React.ReactElement {
           <button
             onClick={() => window.wavely.minimizeWindow()}
             className="flex items-center justify-center w-10 h-full
-              text-foreground/30 hover:text-foreground hover:bg-accent
+              text-ink-4 hover:text-ink hover:bg-hover
               transition-colors duration-150"
             aria-label="Minimize"
           >
@@ -23,7 +23,7 @@ function TitleBar(): React.ReactElement {
           <button
             onClick={() => window.wavely.hideWindow()}
             className="flex items-center justify-center w-10 h-full
-              text-foreground/30 hover:text-foreground hover:bg-accent
+              text-ink-4 hover:text-ink hover:bg-hover
               transition-colors duration-150"
             aria-label="Close"
           >

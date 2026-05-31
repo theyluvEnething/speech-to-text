@@ -68,4 +68,16 @@ contextBridge.exposeInMainWorld("overlay", {
   onDebugProximityChanged: (callback: (enabled: boolean) => void): void => {
     ipcRenderer.on("overlay:debug-proximity-changed", (_event, enabled: boolean) => callback(enabled));
   },
+
+  onNotification: (callback: (data: unknown) => void): void => {
+    ipcRenderer.on("overlay:notification", (_event, data) => callback(data));
+  },
+
+  getTheme: (): Promise<string> => {
+    return ipcRenderer.invoke("overlay:getTheme");
+  },
+
+  onThemeChanged: (callback: (mode: string) => void): void => {
+    ipcRenderer.on("overlay:theme-changed", (_event, mode: string) => callback(mode));
+  },
 });

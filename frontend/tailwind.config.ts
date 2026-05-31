@@ -77,6 +77,7 @@ export default {
         card: "16px",
         panel: "20px",
         modal: "22px",
+        notif: "14px",
       },
       boxShadow: {
         "wv-card": "var(--wv-shadow-card)",

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, screen, session, protocol, net } from "electron";
 import { join } from "path";
 import { pathToFileURL } from "url";
+import { setAppWindowFocused } from "./state";
 
 
 let settingsWindow: BrowserWindow | null = null;
@@ -88,7 +89,13 @@ export function createSettingsWindow(): BrowserWindow {
     }
   });
 
+  settingsWindow.on("focus", () => setAppWindowFocused(true));
+  settingsWindow.on("blur", () => setAppWindowFocused(false));
+  // Initialize: if window is created focused, set state
+  if (settingsWindow.isFocused()) setAppWindowFocused(true);
+
   settingsWindow.on("closed", () => {
+    setAppWindowFocused(false);
     settingsWindow = null;
   });
 

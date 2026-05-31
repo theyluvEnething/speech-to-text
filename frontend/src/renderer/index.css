@@ -22,50 +22,50 @@
   /* DARK (default) */
   :root,
   :root[data-theme="dark"] {
-    --background: #1c3c4a;
-    --foreground: #eff4f5;
-    --card: #283b3e;
-    --card-foreground: #eff4f5;
-    --popover: #141e1f;
-    --popover-foreground: #eff4f5;
-    --primary: #eff4f5;
-    --primary-foreground: #0e1516;
-    --muted: #283b3e;
-    --muted-foreground: #83a9af;
-    --accent: #3c595d;
-    --accent-foreground: #eff4f5;
-    --border: #3c595d;
-    --input: #283b3e;
-    --ring: #63949c;
-    --sidebar: #1c3c4a;
+    --background: #1e4148;
+    --foreground: #edf6f8;
+    --card: #2c616d;
+    --card-foreground: #edf6f8;
+    --popover: #1e4148;
+    --popover-foreground: #edf6f8;
+    --primary: #edf6f8;
+    --primary-foreground: #0f2024;
+    --muted: #2c616d;
+    --muted-foreground: #92c7d3;
+    --accent: #3b8191;
+    --accent-foreground: #edf6f8;
+    --border: #3b8191;
+    --input: #2c616d;
+    --ring: #6eb4c4;
+    --sidebar: #1e4148;
 
-    --surface: #141e1f;
-    --raised: #283b3e;
-    --hover: #3c595d;
-    --line: #3c595d;
-    --line-soft: #283b3e;
-    --ink: #eff4f5;
-    --ink-2: #c1d4d7;
-    --ink-3: #83a9af;
-    --ink-4: #50767c;
-    --acc: #83a9af;
-    --acc-strong: #a2bfc3;
-    --acc-faint: #283b3e;
-    --key-bg: #3c595d;
-    --key-ink: #eff4f5;
-    --badge-bg: #3c595d;
-    --badge-ink: #a2bfc3;
-    --toggle-on: #63949c;
-    --btn-primary: #eff4f5;
-    --btn-primary-ink: #0e1516;
-    --btn-soft-bg: #283b3e;
-    --btn-soft-ink: #c1d4d7;
-    --chart-track: #283b3e;
-    --data-high: #63949c;
-    --data-mid: #83a9af;
-    --data-low: #a2bfc3;
-    --data-faint: #3c595d;
-    --heat-empty: #283b3e;
+    --surface: #1e4148;
+    --raised: #2c616d;
+    --hover: #3b8191;
+    --line: #3b8191;
+    --line-soft: #2c616d;
+    --ink: #edf6f8;
+    --ink-2: #dbecf0;
+    --ink-3: #92c7d3;
+    --ink-4: #4aa1b5;
+    --acc: #6eb4c4;
+    --acc-strong: #92c7d3;
+    --acc-faint: #2c616d;
+    --key-bg: #D4883A;
+    --key-ink: #FDECC8;
+    --badge-bg: #3b8191;
+    --badge-ink: #b7dae1;
+    --toggle-on: #6eb4c4;
+    --btn-primary: #edf6f8;
+    --btn-primary-ink: #0f2024;
+    --btn-soft-bg: #2c616d;
+    --btn-soft-ink: #dbecf0;
+    --chart-track: #2c616d;
+    --data-high: #6eb4c4;
+    --data-mid: #92c7d3;
+    --data-low: #b7dae1;
+    --data-faint: #3b8191;
+    --heat-empty: #2c616d;
 
     --wv-shadow-card: 0 1px 2px rgba(0,0,0,.18), 0 6px 20px rgba(0,0,0,.22);
     --wv-shadow-pop: 0 2px 4px rgba(0,0,0,.30), 0 24px 60px rgba(0,0,0,.55);
@@ -74,50 +74,50 @@
 
   /* LIGHT */
   :root[data-theme="light"] {
-    --background: #e0eaeb;
-    --foreground: #0e1516;
-    --card: #eff4f5;
-    --card-foreground: #0e1516;
-    --popover: #eff4f5;
-    --popover-foreground: #0e1516;
-    --primary: #141e1f;
-    --primary-foreground: #eff4f5;
-    --muted: #e0eaeb;
-    --muted-foreground: #63949c;
-    --accent: #e0eaeb;
-    --accent-foreground: #0e1516;
-    --border: #c1d4d7;
-    --input: #e0eaeb;
-    --ring: #63949c;
-    --sidebar: #eff4f5;
+    --background: #dbecf0;
+    --foreground: #0a1719;
+    --card: #edf6f8;
+    --card-foreground: #0a1719;
+    --popover: #edf6f8;
+    --popover-foreground: #0a1719;
+    --primary: #0f2024;
+    --primary-foreground: #edf6f8;
+    --muted: #dbecf0;
+    --muted-foreground: #4aa1b5;
+    --accent: #dbecf0;
+    --accent-foreground: #0a1719;
+    --border: #b7dae1;
+    --input: #dbecf0;
+    --ring: #4aa1b5;
+    --sidebar: #edf6f8;
 
-    --surface: #eff4f5;
-    --raised: #eff4f5;
-    --hover: #e0eaeb;
-    --line: #c1d4d7;
-    --line-soft: #e0eaeb;
-    --ink: #0e1516;
-    --ink-2: #3c595d;
-    --ink-3: #63949c;
-    --ink-4: #83a9af;
-    --acc: #50767c;
-    --acc-strong: #3c595d;
-    --acc-faint: #c1d4d7;
+    --surface: #edf6f8;
+    --raised: #edf6f8;
+    --hover: #dbecf0;
+    --line: #b7dae1;
+    --line-soft: #dbecf0;
+    --ink: #0a1719;
+    --ink-2: #2c616d;
+    --ink-3: #4aa1b5;
+    --ink-4: #6eb4c4;
+    --acc: #4aa1b5;
+    --acc-strong: #3b8191;
+    --acc-faint: #b7dae1;
     --key-bg: #D4883A;
     --key-ink: #FDECC8;
-    --badge-bg: #c1d4d7;
-    --badge-ink: #3c595d;
-    --toggle-on: #3c595d;
-    --btn-primary: #141e1f;
-    --btn-primary-ink: #eff4f5;
-    --btn-soft-bg: #c1d4d7;
-    --btn-soft-ink: #283b3e;
-    --chart-track: #c1d4d7;
-    --data-high: #3c595d;
-    --data-mid: #50767c;
-    --data-low: #63949c;
-    --data-faint: #83a9af;
-    --heat-empty: #c1d4d7;
+    --badge-bg: #b7dae1;
+    --badge-ink: #2c616d;
+    --toggle-on: #2c616d;
+    --btn-primary: #0f2024;
+    --btn-primary-ink: #edf6f8;
+    --btn-soft-bg: #b7dae1;
+    --btn-soft-ink: #1e4148;
+    --chart-track: #b7dae1;
+    --data-high: #2c616d;
+    --data-mid: #3b8191;
+    --data-low: #4aa1b5;
+    --data-faint: #6eb4c4;
+    --heat-empty: #b7dae1;
 
     --wv-shadow-card: 0 1px 2px rgba(14,21,22,.06), 0 6px 20px rgba(14,21,22,.07);
     --wv-shadow-pop: 0 2px 4px rgba(14,21,22,.06), 0 24px 60px rgba(14,21,22,.20);
@@ -140,6 +140,14 @@ html, body, #root {
   padding: 0;
   height: 100%;
   background: transparent;
+}
+
+body {
+  border-radius: 20px;
+  overflow: hidden;
+  /* Establishes containing block for position:fixed descendants
+     so Radix's portaled overlays clip to body's rounded shape. */
+  transform: translateZ(0);
 }
 
 .drag-region { -webkit-app-region: drag; }
@@ -191,7 +199,11 @@ html, body, #root {
 /* Sidebar active nav spike — active item arrow pointing into main panel */
 .wv-nav-spike {
   position: relative;
-  background: var(--raised);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--acc) 12%, var(--raised)) 0%,
+    var(--raised) 70%
+  );
   border-radius: 9px 0 0 9px;
 }
 .wv-nav-spike::before {

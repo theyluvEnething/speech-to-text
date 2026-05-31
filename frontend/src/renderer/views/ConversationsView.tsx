@@ -6,8 +6,9 @@ import { useStore } from "@/store";
 import { cn } from "@/lib/utils";
 import ProfileIcon from "@/components/ProfileIcon";
 import {
-  WV_CARD, WV_INPUT, WV_SECTION_LABEL, WV_KEYCAP, WV_STAT_NUMBER, WV_BUTTON_SOFT,
+  WV_CARD, WV_INPUT, WV_SECTION_LABEL, WV_STAT_NUMBER, WV_BUTTON_SOFT,
 } from "@/styles/theme";
+import HotkeyChip from "@/components/HotkeyChip";
 
 interface Group { label: string; conversations: Conversation[]; }
 
@@ -118,7 +119,7 @@ function ConversationsView(): React.ReactElement {
     <div>
       <div className="flex items-center gap-2 flex-wrap mb-[22px] text-[22px] font-semibold text-ink">
         <span>Hey {firstName}, start recording with</span>
-        <span className={WV_KEYCAP}>Ctrl</span><span className="text-ink-3">+</span><span className={WV_KEYCAP}>Win</span>
+        <HotkeyChip />
       </div>
 
       {/* hero */}

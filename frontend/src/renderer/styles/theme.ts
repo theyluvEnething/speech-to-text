@@ -15,17 +15,17 @@
  * 1. COLOR PALETTE  (increments of 50/100)
  * ──────────────────────────────────────────────────────────────────────── */
 export const COLOR_PALETTE = {
-   50: "#ecf4f8",
-  100: "#daeaf1",
-  200: "#b5d5e3",
-  300: "#8fbfd6",
-  400: "#6aaac8",
-  500: "#4595ba",
-  600: "#377795",
-  700: "#295970",
-  800: "#1c3c4a",
-  900: "#0e1e25",
-  950: "#0a151a",
+   50: "#edf6f8",
+  100: "#dbecf0",
+  200: "#b7dae1",
+  300: "#92c7d3",
+  400: "#6eb4c4",
+  500: "#4aa1b5",
+  600: "#3b8191",
+  700: "#2c616d",
+  800: "#1e4148",
+  900: "#0f2024",
+  950: "#0a1719",
 } as const;
 
 export const ACCENT_AMBER = {
@@ -125,7 +125,7 @@ export const DARK: ColorTokens = {
   surface: P[800], raised: P[700], hover: P[600],
   line: P[600], lineSoft: P[700],
   ink: P[50], ink2: P[100], ink3: P[300], ink4: P[500],
-  acc: P[300], accStrong: P[200], accFaint: P[700],
+  acc: P[400], accStrong: P[300], accFaint: P[700],
   keyBg: ACCENT_AMBER[500], keyInk: ACCENT_AMBER[100],
   badgeBg: "var(--premium-gradient)", badgeInk: ACCENT_PREMIUM.text,
   toggleOn: P[400],
@@ -149,7 +149,7 @@ export const LIGHT: ColorTokens = {
   surface: P[50], raised: P[50], hover: P[100],
   line: P[200], lineSoft: P[100],
   ink: P[950], ink2: P[700], ink3: P[500], ink4: P[400],
-  acc: P[600], accStrong: P[700], accFaint: P[200],
+  acc: P[500], accStrong: P[600], accFaint: P[200],
   keyBg: ACCENT_AMBER[500], keyInk: ACCENT_AMBER[100],
   badgeBg: P[200], badgeInk: P[700],
   toggleOn: P[700],
@@ -171,6 +171,7 @@ export const RADII = {
   card: "16px",
   panel: "20px",
   modal: "22px",
+  notif: "14px",
 } as const;
 
 export const SPACE = {

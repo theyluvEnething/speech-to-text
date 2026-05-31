@@ -93,6 +93,19 @@ declare global {
     onReset(callback: () => void): void;
     getDebugProximity(): Promise<boolean>;
     onDebugProximityChanged(callback: (enabled: boolean) => void): void;
+    onNotification(callback: (data: OverlayNotificationData) => void): void;
+    getTheme(): Promise<"dark" | "light">;
+    onThemeChanged(callback: (mode: "dark" | "light") => void): void;
+  }
+
+  interface OverlayNotificationData {
+    id: string;
+    variant?: "tip" | "warning" | "premium";
+    badge?: string;
+    title: string;
+    description?: string;
+    action?: { label: string; type: string };
+    durationMs?: number;
   }
 
   interface Window {

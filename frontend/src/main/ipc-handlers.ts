@@ -137,6 +137,10 @@ export function registerIpcHandlers(
 
     if (typeof settings['theme'] === "string") {
       store.set("theme", settings['theme']);
+      const overlay = getOverlayWindow();
+      if (overlay && !overlay.isDestroyed()) {
+        overlay.webContents.send("overlay:theme-changed", settings['theme']);
+      }
     }
 
     return { success: true };
@@ -170,6 +174,12 @@ export function registerIpcHandlers(
   });
 
   ipcMain.handle("profiles:upsert", (_event, profile: Profile) => {
+    if (profile.id === "default") {
+      const existing = store.get("profiles").find((p) => p.id === "default");
+      if (existing && (existing.name !== profile.name || existing.icon !== profile.icon || existing.color !== profile.color || existing.systemPrompt !== profile.systemPrompt)) {
+        throw new Error("Default profile cannot be modified.");
+      }
+    }
     const profiles = store.get("profiles");
     const idx = profiles.findIndex((p) => p.id === profile.id);
 
@@ -185,6 +195,9 @@ export function registerIpcHandlers(
   });
 
   ipcMain.handle("profiles:delete", (_event, id: string) => {
+    if (id === "default") {
+      throw new Error("Default profile cannot be deleted.");
+    }
     let profiles = store.get("profiles");
     if (profiles.length <= 1) {
       throw new Error("Cannot delete the last profile.");
@@ -249,6 +262,11 @@ export function registerIpcHandlers(
 
   ipcMain.handle("overlay:toggleTransparency", (_event, transparent: boolean) => {
     toggleOverlayTransparency(transparent);
+  });
+
+  // ── Theme sync to overlay ─────────────────────────────
+  ipcMain.handle("overlay:getTheme", () => {
+    return store.get("theme") || "dark";
   });
 
   // ── Audio ─────────────────────────────────────────────────

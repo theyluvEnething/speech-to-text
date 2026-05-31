@@ -7,6 +7,8 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProximity } from "./hooks/useProximity";
 import { springPresets } from "./animations/presets";
 import { ProximityDebugOverlay } from "@/components/ProximityDebugOverlay";
+import OverlayNotification, { type OverlayNotificationData } from "@/components/overlay/OverlayNotification";
+import { useOverlayTheme } from "@/hooks/useOverlayTheme";
 
 type PopupStatus = "idle" | "recording" | "transcribing" | "inserting";
 
@@ -199,11 +201,10 @@ function LanguagePopover({
                 ref={triggerRef}
                 type="button"
                 aria-label="Change profile"
-                className="size-7 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
+                className="size-7 grid place-items-center rounded-full backdrop-blur-md text-ink-2 hover:text-ink transition-colors"
                 style={{
-                  background: "rgba(23,23,23,0.9)",
-                  backdropFilter: "blur(8px)",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "color-mix(in srgb, var(--raised) 92%, transparent)",
+                  border: "1px solid var(--line)",
                 }}
               >
                 <ProfileIcon icon={icon} className="text-[14px]" />
@@ -221,7 +222,13 @@ function LanguagePopover({
               className="z-[9999] animate-in fade-in zoom-in-95 duration-150"
               style={{ pointerEvents: "auto" }}
             >
-              <div className="flex flex-col items-center gap-1 px-2 py-2 rounded-full bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <div
+                className="flex flex-col items-center gap-1 px-2 py-2 rounded-full backdrop-blur-xl shadow-2xl"
+                style={{
+                  background: "color-mix(in srgb, var(--raised) 95%, transparent)",
+                  border: "1px solid var(--line)",
+                }}
+              >
                 {otherProfiles.map((profile) => (
                   <button
                     key={profile.id}
@@ -281,11 +288,10 @@ function SideButton({
             type="button"
             aria-label={ariaLabel}
             onClick={onClick}
-            className="size-7 grid place-items-center rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/6 text-white/80 hover:text-white hover:border-white/15 transition-colors"
+            className="size-7 grid place-items-center rounded-full backdrop-blur-md text-ink-2 hover:text-ink transition-colors"
             style={{
-              background: "rgba(23,23,23,0.9)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "color-mix(in srgb, var(--raised) 92%, transparent)",
+              border: "1px solid var(--line)",
             }}
           >
             {children}
@@ -308,6 +314,8 @@ function SideButton({
 }
 
 function OverlayApp(): React.ReactElement {
+  useOverlayTheme();
+
   const [status, setStatus] = useState<PopupStatus>("idle");
   const [text, setText] = useState("");
   const [elapsed, setElapsed] = useState(0);
@@ -320,6 +328,7 @@ function OverlayApp(): React.ReactElement {
   const [currentProfileIcon, setCurrentProfileIcon] = useState("🌎");
   const [activeProfileId, setActiveProfileId] = useState("default");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [notification, setNotification] = useState<OverlayNotificationData | null>(null);
 
   const [menuOverrideActive, setMenuOverrideActive] = useState(false);
   const cachedMenuZones = useRef<{
@@ -442,6 +451,10 @@ function OverlayApp(): React.ReactElement {
       setDebugProximity(enabled);
     });
 
+    window.overlay.onNotification((data: OverlayNotificationData) => {
+      setNotification(data);
+    });
+
     return () => {
       if (timer.current) clearInterval(timer.current);
       clearResultTimer();
@@ -464,6 +477,13 @@ function OverlayApp(): React.ReactElement {
       setMenuOverrideActive(true);
     }
   }, [isProfileMenuOpen]);
+
+  // When a notification is showing, force click-through off
+  useEffect(() => {
+    if (notification) {
+      window.overlay.setClickThrough(false);
+    }
+  }, [notification]);
 
   // Close profile menu when cursor leaves the cached menu zones
   useEffect(() => {
@@ -556,8 +576,28 @@ function OverlayApp(): React.ReactElement {
 
   return (
     <div className="relative w-full h-full overflow-visible">
+      {/* Notification card — sits above the pill */}
+      <div
+        className="absolute left-0 right-0 flex justify-center pointer-events-none"
+        style={{ bottom: `${PILL_BOTTOM_MARGIN + 70}px` }}
+      >
+        <AnimatePresence>
+          {notification && (
+            <OverlayNotification
+              key={notification.id}
+              data={notification}
+              onDismiss={() => setNotification(null)}
+              onAction={(type) => {
+                if (type === "open-settings") window.overlay.showSettings();
+                setNotification(null);
+              }}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
       {/* Fixed bottom anchor - never moves */}
-      <div 
+      <div
         className="absolute left-0 right-0 flex justify-center"
         style={{ bottom: `${PILL_BOTTOM_MARGIN}px` }}
       >
@@ -591,7 +631,13 @@ function OverlayApp(): React.ReactElement {
 
           <motion.div
             onClick={handleBarClick}
-            className="flex items-center justify-center gap-2 bg-neutral-900/90 backdrop-blur-md border border-white/6 cursor-pointer"
+            className="flex items-center justify-center gap-2 backdrop-blur-md cursor-pointer"
+            style={{
+              background: "color-mix(in srgb, var(--raised) 92%, transparent)",
+              border: "1px solid var(--line)",
+              borderRadius: "18px",
+              boxShadow: meta ? meta.ring : undefined,
+            }}
             animate={{
               width: expanded ? "auto" : "75px",
               height: expanded ? pillHeight : "15px",
@@ -605,10 +651,6 @@ function OverlayApp(): React.ReactElement {
               if (expanded && !pillAnimationComplete) {
                 setPillAnimationComplete(true);
               }
-            }}
-            style={{
-              borderRadius: "18px",
-              boxShadow: meta ? meta.ring : undefined,
             }}
           >
             {activeStatus === "recording" && (

@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import ProfileIcon from "@/components/ProfileIcon";
 import { WV_CARD, WV_TITLE } from "@/styles/theme";
 
+const DEFAULT_PROFILE_ID = "default";
 const COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981", "#14b8a6", "#3b82f6", "#6366f1", "#a855f7", "#ec4899"];
 const QUICK_ICONS = ["🇬🇧","🇩🇪","🇫🇷","🇪🇸","🇮🇹","🇯🇵","🇰🇷","🇨🇳","🎙️","💼","🏥","🎓","💻","🎨","📝"];
 const SENTINEL = "__global__";
@@ -59,7 +60,13 @@ function ProfilesView(): React.ReactElement {
   }, [triggerNewProfile, setTriggerNewProfile]);
 
   const openCreate = () => { setEditing({ ...EMPTY }); setNameTouched(false); setDialogOpen(true); };
-  const openEdit = (p: Profile) => { setEditing({ ...p }); setNameTouched(false); setDialogOpen(true); };
+  const openEdit = (p: Profile) => {
+    if (p.id === DEFAULT_PROFILE_ID) {
+      toast("Default profile can't be edited");
+      return;
+    }
+    setEditing({ ...p }); setNameTouched(false); setDialogOpen(true);
+  };
 
   function handleSave(): void {
     if (!editing.name.trim()) { setNameTouched(true); return; }
@@ -73,6 +80,10 @@ function ProfilesView(): React.ReactElement {
   }
 
   function handleDelete(id: string): void {
+    if (id === DEFAULT_PROFILE_ID) {
+      toast("Default profile can't be deleted");
+      return;
+    }
     if (profiles.length <= 1) { toast("Cannot delete the last profile."); return; }
     window.wavely.profiles.delete(id).then((r) => { setProfiles(r as Profile[]); toast("Profile deleted"); })
       .catch((e) => toast(e instanceof Error ? e.message : "Failed to delete profile"));
@@ -111,10 +122,16 @@ function ProfilesView(): React.ReactElement {
                   {p.language && <p className="text-[12px] text-ink-4 mt-1">Language: {p.language}</p>}
                   {p.model && <p className="text-[12px] text-ink-4">Model: {p.model}</p>}
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                  <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-1 rounded hover:bg-raised text-ink-3 hover:text-ink"><Pencil className="h-3.5 w-3.5" /></button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }} className="p-1 rounded hover:bg-raised text-ink-3 hover:text-ink"><Trash2 className="h-3.5 w-3.5" /></button>
-                </div>
+                {p.id === DEFAULT_PROFILE_ID ? (
+                  <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-ink-4 px-2 py-[3px] rounded-md bg-line-soft border border-line shrink-0">
+                    Default
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-1 rounded hover:bg-raised text-ink-3 hover:text-ink"><Pencil className="h-3.5 w-3.5" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }} className="p-1 rounded hover:bg-raised text-ink-3 hover:text-ink"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                )}
               </div>
             </div>
           );

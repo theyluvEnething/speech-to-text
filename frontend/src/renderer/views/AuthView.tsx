@@ -28,7 +28,7 @@ function PasswordInput({
 
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs text-foreground/60">
+      <Label htmlFor={id} className="text-xs text-ink-3">
         {label}
       </Label>
       <div className="relative">
@@ -40,12 +40,12 @@ function PasswordInput({
           placeholder={placeholder}
           required
           disabled={disabled}
-          className="bg-input border-transparent text-sm focus:border-primary h-8 pr-8"
+          className="bg-input border-line text-sm focus:border-ink-3 h-8 pr-8"
         />
         <button
           type="button"
           onClick={() => setShow((v) => !v)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground/60 transition-colors"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink-2 transition-colors"
           tabIndex={-1}
         >
           {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -201,7 +201,7 @@ function AuthView(): React.ReactElement {
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center h-full">
-        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-ink-3 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -210,14 +210,14 @@ function AuthView(): React.ReactElement {
     <div className="flex-1 flex items-center justify-center">
       <div className="w-full max-w-sm px-4">
         <div className="text-center mb-8">
-          <span className="text-lg font-semibold tracking-tight text-foreground">
+          <span className="text-2xl font-bold tracking-tight text-ink">
             Wavely
           </span>
         </div>
 
-        <Card className="border-border bg-[#0d0d0d] shadow-lg">
+        <Card className="border-line bg-background shadow-wv-card">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-foreground/80">
+            <CardTitle className="text-sm font-medium text-ink">
               {mode === "signin" && "Sign in"}
               {mode === "signup" && "Create account"}
               {mode === "forgot" && "Reset password"}
@@ -225,7 +225,7 @@ function AuthView(): React.ReactElement {
               {mode === "new_password" && "Choose a new password"}
             </CardTitle>
             {mode === "verify" && (
-              <p className="text-xs text-foreground/50">
+              <p className="text-xs text-ink-3">
                 We sent a 6-digit code to {email}
               </p>
             )}
@@ -243,7 +243,7 @@ function AuthView(): React.ReactElement {
               className="space-y-4"
             >
               {error && (
-                <div className="flex items-center gap-2 text-xs text-red-400 bg-red-400/10 rounded-md px-3 py-2 border border-red-400/20">
+                <div className="flex items-center gap-2 text-xs text-red-500 dark:text-red-300 bg-red-500/10 rounded-md px-3 py-2 border border-red-500/20">
                   <AlertCircle className="h-3 w-3 shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -251,7 +251,7 @@ function AuthView(): React.ReactElement {
 
               {(mode === "signin" || mode === "signup" || mode === "forgot") && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-xs text-foreground/60">
+                  <Label htmlFor="email" className="text-xs text-ink-3">
                     Email
                   </Label>
                   <Input
@@ -262,7 +262,7 @@ function AuthView(): React.ReactElement {
                     placeholder="you@example.com"
                     required
                     disabled={pending}
-                    className="bg-input border-transparent text-sm focus:border-primary h-8"
+                    className="bg-input border-line text-sm focus:border-ink-3 h-8"
                   />
                 </div>
               )}
@@ -280,7 +280,7 @@ function AuthView(): React.ReactElement {
 
               {mode === "verify" && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="code" className="text-xs text-foreground/60">
+                  <Label htmlFor="code" className="text-xs text-ink-3">
                     Verification code
                   </Label>
                   <Input
@@ -292,7 +292,7 @@ function AuthView(): React.ReactElement {
                     required
                     maxLength={6}
                     disabled={pending}
-                    className="bg-input border-transparent text-sm focus:border-primary h-8 tracking-[0.25em] text-center"
+                    className="bg-input border-line text-sm focus:border-ink-3 h-8 tracking-[0.25em] text-center"
                   />
                 </div>
               )}
@@ -300,10 +300,10 @@ function AuthView(): React.ReactElement {
               <Button
                 type="submit"
                 disabled={pending}
-                className="w-full h-9 text-sm bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="w-full h-9 text-sm bg-btn-primary hover:opacity-90 text-btn-primary-ink"
               >
                 {pending ? (
-                  <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                  <span className="w-4 h-4 border-2 border-btn-primary-ink border-t-transparent rounded-full animate-spin" />
                 ) : mode === "signin" ? (
                   "Sign in"
                 ) : mode === "signup" ? (
@@ -318,24 +318,24 @@ function AuthView(): React.ReactElement {
               </Button>
 
               {mode === "signin" || mode === "signup" ? (
-                <div className="flex items-center justify-between text-xs text-foreground/50 pt-1">
+                <div className="flex items-center justify-between text-xs text-ink-3 pt-1">
                   {mode === "signin" ? (
                     <>
-                      <button type="button" onClick={() => switchMode("signup")} className="hover:text-foreground/80 transition-colors">
+                      <button type="button" onClick={() => switchMode("signup")} className="hover:text-ink transition-colors">
                         Create account
                       </button>
-                      <button type="button" onClick={() => switchMode("forgot")} className="hover:text-foreground/80 transition-colors">
+                      <button type="button" onClick={() => switchMode("forgot")} className="hover:text-ink transition-colors">
                         Forgot password?
                       </button>
                     </>
                   ) : (
-                    <button type="button" onClick={() => switchMode("signin")} className="hover:text-foreground/80 transition-colors">
+                    <button type="button" onClick={() => switchMode("signin")} className="hover:text-ink transition-colors">
                       Already have an account?
                     </button>
                   )}
                 </div>
               ) : (mode === "forgot" || mode === "verify" || mode === "new_password") && (
-                <button type="button" onClick={() => switchMode("signin")} className="block text-xs text-foreground/50 hover:text-foreground/80 transition-colors text-center pt-1 w-full">
+                <button type="button" onClick={() => switchMode("signin")} className="block text-xs text-ink-3 hover:text-ink transition-colors text-center pt-1 w-full">
                   Back to sign in
                 </button>
               )}

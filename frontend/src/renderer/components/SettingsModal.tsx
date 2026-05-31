@@ -186,7 +186,7 @@ function SettingsModal(): React.ReactElement {
   return (
     <Dialog.Root open={open} onOpenChange={(o) => (o ? null : closeSettings())}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-[4px] data-[state=open]:animate-wv-fade" />
+        <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-[4px] rounded-[20px] data-[state=open]:animate-wv-fade" />
         <Dialog.Content
           aria-describedby={undefined}
           className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 flex overflow-hidden
@@ -209,7 +209,7 @@ function SettingsModal(): React.ReactElement {
                     className={cn(
                       "flex items-center gap-2.5 h-[34px] px-2.5 rounded-[9px] text-[13px] font-medium transition-colors",
                       pane === n.pane
-                        ? "bg-raised text-ink shadow-wv-card border-l-2 border-amber-accent-500"
+                        ? "bg-raised text-ink shadow-wv-card border-l-2 border-acc-strong"
                         : "text-ink-3 hover:bg-hover hover:text-ink",
                     )}
                   >

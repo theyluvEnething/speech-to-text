@@ -7,6 +7,7 @@ import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } 
 import { getProvider } from "../transcription/index";
 import type { ProviderName } from "../transcription/types";
 import { pasteText } from "./paste";
+import { getAppWindowFocused } from "./state";
 
 type AppState = "idle" | "recording" | "processing" | "showing-result";
 
@@ -33,7 +34,33 @@ function sendOverlayState(newState: string): void {
   overlay?.webContents.send("overlay:state", newState, label);
 }
 
+function showOverlayNotification(payload: {
+  variant?: "tip" | "warning" | "premium";
+  badge?: string;
+  title: string;
+  description?: string;
+  durationMs?: number;
+}): void {
+  const overlay = getOverlayWindow();
+  if (!overlay || overlay.isDestroyed()) return;
+  overlay.webContents.send("overlay:notification", {
+    id: `notif-${Date.now()}`,
+    durationMs: 5000,
+    ...payload,
+  });
+}
+
 function startRecording(): void {
+  if (getAppWindowFocused()) {
+    console.log("[Wavely] Recording blocked — Wavely window is focused.");
+    showOverlayNotification({
+      variant: "tip",
+      badge: "Tip",
+      title: "Can't transcribe while Wavely is open",
+      description: "Click into another app first, then press your hotkey.",
+    });
+    return;
+  }
   if (store.get("isPaused")) {
     console.log("[Wavely] Recording blocked — app is paused.");
     return;
