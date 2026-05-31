@@ -33,6 +33,7 @@ interface StoreSchema {
   appLanguage: string;
   theme: string;
   isPaused: boolean;
+  hidePill: boolean;
   debugProximity: boolean;
   profiles: Profile[];
   activeProfileId: string;
@@ -50,6 +51,7 @@ export const store = new Store<StoreSchema>({
     appLanguage: "en",
     theme: "light",
     isPaused: false,
+    hidePill: false,
     debugProximity: false,
     profiles: [
       {
@@ -106,6 +108,7 @@ export function registerIpcHandlers(
       copyToClipboard: store.get("copyToClipboard"),
       appLanguage: store.get("appLanguage"),
       theme: store.get("theme"),
+      hidePill: store.get("hidePill"),
     };
   });
 
@@ -140,6 +143,18 @@ export function registerIpcHandlers(
       const overlay = getOverlayWindow();
       if (overlay && !overlay.isDestroyed()) {
         overlay.webContents.send("overlay:theme-changed", settings['theme']);
+      }
+    }
+
+    if (typeof settings['hidePill'] === "boolean") {
+      store.set("hidePill", settings['hidePill']);
+      const overlay = getOverlayWindow();
+      if (overlay && !overlay.isDestroyed()) {
+        overlay.webContents.send("overlay:hide-pill-changed", settings['hidePill']);
+      }
+      const settingsWin = getSettingsWindow();
+      if (settingsWin && !settingsWin.isDestroyed()) {
+        settingsWin.webContents.send("settings:hide-pill-changed", settings['hidePill']);
       }
     }
 
@@ -317,6 +332,7 @@ export function registerIpcHandlers(
       copyToClipboard: false,
       appLanguage: "en",
       isPaused: false,
+      hidePill: false,
       debugProximity: false,
       profiles: [
         {

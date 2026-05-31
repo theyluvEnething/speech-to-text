@@ -78,6 +78,10 @@ contextBridge.exposeInMainWorld("wavely", {
     ipcRenderer.on("settings:switchTab", (_event, tab: string) => callback(tab));
   },
 
+  onHidePillChanged: (callback: (hidePill: boolean) => void): void => {
+    ipcRenderer.on("settings:hide-pill-changed", (_event, hidePill: boolean) => callback(hidePill));
+  },
+
   conversations: {
     list: (): Promise<unknown> =>
       ipcRenderer.invoke("conversations:list"),

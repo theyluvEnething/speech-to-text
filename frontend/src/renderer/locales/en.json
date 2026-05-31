@@ -9,7 +9,7 @@
     "pause": "Pause"
   },
   "nav": {
-    "conversations": "Conversations",
+    "conversations": "Dashboard",
     "insights": "Insights",
     "profiles": "Profiles",
     "settings": "Settings",
@@ -55,7 +55,7 @@
     "nova-2-general": "Nova-2 General"
   },
   "conversations": {
-    "title": "Conversations",
+    "title": "Dashboard",
     "search": "Search transcripts…",
     "noConversations": "No conversations yet",
     "noConversationsHint": "Hold your push-to-talk key to start your first transcription.",
@@ -124,6 +124,8 @@
     "languageOverridden": "Language overridden by profile",
     "provider": "Provider",
     "providerHint": "Select the transcription service provider.",
+    "hidePill": "Hide overlay pop-up",
+    "hidePillHint": "When enabled, the floating overlay pill will stay hidden while idle and only appear during recording.",
     "preferencesSaved": "Preferences saved",
     "appearance": "Appearance",
     "theme": "Theme",
@@ -206,7 +208,9 @@
     "openSettings": "Open settings",
     "recording": "Recording",
     "transcribing": "Transcribing",
-    "polishTooltip": "Click or press Win Alt 1 to polish"
+    "polishTooltip": "Click or press Win Alt 1 to polish",
+    "hidePill": "Hide pop-up",
+    "showPill": "Show pop-up again"
   },
   "insights": {
     "title": "Insights",

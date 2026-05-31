@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Sparkles, Settings, Check } from "lucide-react";
+import { Sparkles, Settings, Check, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfileIcon from "@/components/ProfileIcon";
 import * as Popover from "@radix-ui/react-popover";
@@ -302,6 +302,7 @@ function OverlayApp(): React.ReactElement {
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const popoverContentRef = useRef<HTMLDivElement>(null);
 
+  const [hidePill, setHidePill] = useState(false);
   const [debugProximity, setDebugProximity] = useState(false);
 
   // Bottom margin for the pill - adjust this value to move the pill up/down
@@ -417,6 +418,10 @@ function OverlayApp(): React.ReactElement {
       setNotification(data);
     });
 
+    window.overlay.onHidePillChanged((hidden: boolean) => {
+      setHidePill(hidden);
+    });
+
     return () => {
       if (timer.current) clearInterval(timer.current);
       clearResultTimer();
@@ -430,6 +435,9 @@ function OverlayApp(): React.ReactElement {
     }).catch(() => {});
     window.overlay.getDebugProximity().then((enabled: boolean) => {
       setDebugProximity(enabled);
+    }).catch(() => {});
+    window.overlay.getHidePill().then((hidden: boolean) => {
+      setHidePill(hidden);
     }).catch(() => {});
   }, []);
 
@@ -560,8 +568,12 @@ function OverlayApp(): React.ReactElement {
 
       {/* Fixed bottom anchor - never moves */}
       <div
-        className="absolute left-0 right-0 flex justify-center"
-        style={{ bottom: `${PILL_BOTTOM_MARGIN}px` }}
+        className="absolute left-0 right-0 flex justify-center transition-opacity duration-300"
+        style={{
+          bottom: `${PILL_BOTTOM_MARGIN}px`,
+          opacity: hidePill && status === "idle" ? 0 : undefined,
+          pointerEvents: hidePill && status === "idle" ? "none" : undefined,
+        }}
       >
         <div
           ref={barRef}
@@ -653,11 +665,22 @@ function OverlayApp(): React.ReactElement {
           <AnimatePresence>
             {showSideButtons && (
               <motion.div
+                className="flex items-center gap-2"
                 initial={{ opacity: 0, scale: 0.7, x: 15 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.7, x: 15 }}
                 transition={{ ...springPresets.button, delay: 0.05 }}
               >
+                <SideButton
+                  tooltip={t("overlay.hidePill")}
+                  onClick={() => {
+                    setHidePill(true);
+                    window.overlay.setSettings({ hidePill: true });
+                  }}
+                  ariaLabel={t("overlay.hidePill")}
+                >
+                  <ChevronDown className="size-[14px]" strokeWidth={2.25} />
+                </SideButton>
                 <SideButton
                   tooltip={
                     hasText ? (

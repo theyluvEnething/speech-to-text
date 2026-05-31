@@ -38,7 +38,7 @@ declare global {
 
   interface WavelyApi {
     platform: string;
-    getSettings(): Promise<{ hotkey: string; language: string; model: string; provider: string; copyToClipboard: boolean; appLanguage: string; theme: string }>;
+    getSettings(): Promise<{ hotkey: string; language: string; model: string; provider: string; copyToClipboard: boolean; appLanguage: string; theme: string; hidePill: boolean }>;
     setSettings(settings: Record<string, string | boolean>): Promise<{ success: boolean }>;
     getPaused(): Promise<boolean>;
     togglePaused(): Promise<boolean>;
@@ -56,6 +56,7 @@ declare global {
     getVersion(): Promise<string>;
 
     onSwitchTab(callback: (tab: string) => void): void;
+    onHidePillChanged(callback: (hidePill: boolean) => void): void;
     profiles: WavelyProfiles;
     conversations: WavelyConversations;
   }
@@ -97,6 +98,9 @@ declare global {
     onNotification(callback: (data: OverlayNotificationData) => void): void;
     getTheme(): Promise<"dark" | "light">;
     onThemeChanged(callback: (mode: "dark" | "light") => void): void;
+    setSettings(settings: Record<string, string | boolean>): Promise<{ success: boolean }>;
+    getHidePill(): Promise<boolean>;
+    onHidePillChanged(callback: (hidePill: boolean) => void): void;
   }
 
   interface OverlayNotificationData {

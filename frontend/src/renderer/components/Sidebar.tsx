@@ -11,6 +11,7 @@ import {
   Play,
   Pause,
   ChevronDown,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore, type Tab } from "@/store";
@@ -29,10 +30,11 @@ function Sidebar(): React.ReactElement {
   const toggleSidebar = useStore((s) => s.toggleSidebar);
   const isPaused = useStore((s) => s.isPaused);
   const setIsPaused = useStore((s) => s.setIsPaused);
+  const hidePill = useStore((s) => s.hidePill);
   const activeProfile = useStore((s) => s.activeProfile);
 
   const NAV: { tab: Tab; icon: typeof MessageSquare; label: string }[] = [
-    { tab: "conversations", icon: MessageSquare, label: t("nav.conversations", "Conversations") },
+    { tab: "conversations", icon: MessageSquare, label: t("nav.conversations", "Dashboard") },
     { tab: "insights", icon: BarChart3, label: t("nav.insights", "Insights") },
     { tab: "profiles", icon: User, label: t("nav.profiles", "Profiles") },
   ];
@@ -100,6 +102,23 @@ function Sidebar(): React.ReactElement {
           {!collapsed && <span>{t("nav.settings", "Settings")}</span>}
         </button>
       </nav>
+
+      {/* Show pop-up again — visible when pill is hidden */}
+      {hidePill && (
+        <div className="px-2 pb-1">
+          <button
+            onClick={() => window.wavely.setSettings({ hidePill: false })}
+            title={t("overlay.showPill")}
+            className={cn(
+              "flex items-center w-full h-7 rounded-[10px] text-ink-4 hover:text-ink-2 hover:bg-hover transition-colors",
+              collapsed ? "justify-center px-0" : "gap-2 px-2",
+            )}
+          >
+            <Eye className="h-3.5 w-3.5 shrink-0" />
+            {!collapsed && <span className="text-[12px]">{t("overlay.showPill")}</span>}
+          </button>
+        </div>
+      )}
 
       {/* Collapse toggle */}
       <div className="px-2 pb-1">

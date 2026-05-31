@@ -122,6 +122,7 @@ function SettingsModal(): React.ReactElement {
   const [provider, setProvider] = useState("groq");
   const [model, setModel] = useState("whisper-large-v3-turbo");
   const [copyToClipboard, setCopyToClipboard] = useState(false);
+  const [hidePill, setHidePill] = useState(false);
   const [appVersion, setAppVersion] = useState("");
   const initial = useRef(true);
 
@@ -145,6 +146,7 @@ function SettingsModal(): React.ReactElement {
         setProvider(s.provider || "groq");
         setModel(s.model || "whisper-large-v3-turbo");
         setCopyToClipboard(s.copyToClipboard === true);
+        setHidePill(s.hidePill === true);
         requestAnimationFrame(() => (initial.current = false));
       })
       .catch(() => (initial.current = false));
@@ -254,6 +256,9 @@ function SettingsModal(): React.ReactElement {
                       <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                       <SelectContent>{LANGUAGES.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
                     </Select>
+                  </Row>
+                  <Row label={t("settings.hidePill")} desc={t("settings.hidePillHint")}>
+                    <Switch checked={hidePill} onCheckedChange={(v) => { setHidePill(v); save({ hidePill: v }); }} />
                   </Row>
                 </div>
               </>

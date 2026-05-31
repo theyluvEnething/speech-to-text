@@ -80,4 +80,16 @@ contextBridge.exposeInMainWorld("overlay", {
   onThemeChanged: (callback: (mode: string) => void): void => {
     ipcRenderer.on("overlay:theme-changed", (_event, mode: string) => callback(mode));
   },
+
+  setSettings: (settings: Record<string, string | boolean>): Promise<{ success: boolean }> => {
+    return ipcRenderer.invoke("settings:set", settings);
+  },
+
+  getHidePill: (): Promise<boolean> => {
+    return ipcRenderer.invoke("settings:get").then((s: { hidePill: boolean }) => s.hidePill);
+  },
+
+  onHidePillChanged: (callback: (hidePill: boolean) => void): void => {
+    ipcRenderer.on("overlay:hide-pill-changed", (_event, hidePill: boolean) => callback(hidePill));
+  },
 });

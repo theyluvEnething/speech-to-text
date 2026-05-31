@@ -17,6 +17,7 @@ export function MainApp(): React.ReactElement {
   const setProfiles = useStore((s) => s.setProfiles);
   const setActiveProfile = useStore((s) => s.setActiveProfile);
   const setConversations = useStore((s) => s.setConversations);
+  const setHidePill = useStore((s) => s.setHidePill);
 
   // Boot + persist theme (injects CSS variables).
   useTheme();
@@ -63,8 +64,17 @@ export function MainApp(): React.ReactElement {
       })
       .catch((err) => console.error("[Wavely] Failed to load initial data:", err));
 
+    window.wavely
+      .getSettings()
+      .then((s) => setHidePill(s.hidePill === true))
+      .catch((err) => console.error("[Wavely] Failed to load initial data:", err));
+
     window.wavely.conversations.onNew((conv) => {
       setConversations([conv as Conversation, ...useStore.getState().conversations]);
+    });
+
+    window.wavely.onHidePillChanged((hidden: boolean) => {
+      setHidePill(hidden);
     });
 
     // The overlay's "showSettings(tab)" IPC now opens the settings MODAL at a
