@@ -44,6 +44,7 @@ declare global {
     togglePaused(): Promise<boolean>;
     getDebugProximity(): Promise<boolean>;
     toggleDebugProximity(): Promise<boolean>;
+    startRecording(): void;
     stopRecording(): void;
     hideWindow(): void;
     minimizeWindow(): void;

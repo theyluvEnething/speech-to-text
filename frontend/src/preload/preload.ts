@@ -25,6 +25,10 @@ contextBridge.exposeInMainWorld("wavely", {
     ipcRenderer.send("recording:stop");
   },
 
+  startRecording: (): void => {
+    ipcRenderer.send("recording:start");
+  },
+
   hideWindow: (): void => {
     ipcRenderer.send("settings:hide");
   },

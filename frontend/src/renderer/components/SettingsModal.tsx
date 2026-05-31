@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { toast } from "sonner";
+import i18n from "@/i18n";
 import {
   Settings as GeneralIcon,
   Monitor,
@@ -277,7 +278,7 @@ function SettingsModal(): React.ReactElement {
                 <GroupLabel>Interface language</GroupLabel>
                 <div className={cn(WV_PANEL, "px-[18px]")}>
                   <Row label="App language" desc="Language used for the app's own interface text.">
-                    <Select value={appLanguage} onValueChange={(v) => { setAppLanguage(v); save({ appLanguage: v }); }}>
+                    <Select value={appLanguage} onValueChange={(v) => { setAppLanguage(v); save({ appLanguage: v }); i18n.changeLanguage(v).then(() => window.location.reload()); }}>
                       <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                       <SelectContent>{APP_LANGUAGES.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
                     </Select>
