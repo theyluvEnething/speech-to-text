@@ -672,16 +672,6 @@ function OverlayApp(): React.ReactElement {
                 transition={{ ...springPresets.button, delay: 0.05 }}
               >
                 <SideButton
-                  tooltip={t("overlay.hidePill")}
-                  onClick={() => {
-                    setHidePill(true);
-                    window.overlay.setSettings({ hidePill: true });
-                  }}
-                  ariaLabel={t("overlay.hidePill")}
-                >
-                  <ChevronDown className="size-[14px]" strokeWidth={2.25} />
-                </SideButton>
-                <SideButton
                   tooltip={
                     hasText ? (
                       t("overlay.polishTooltip")
@@ -701,6 +691,38 @@ function OverlayApp(): React.ReactElement {
                     <Settings className="size-[14px]" strokeWidth={2.25} />
                   )}
                 </SideButton>
+                <Tooltip.Provider delayDuration={200}>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <button
+                        type="button"
+                        aria-label={t("overlay.hidePill")}
+                        onClick={() => {
+                          setHidePill(true);
+                          window.overlay.setSettings({ hidePill: true });
+                        }}
+                        className="size-[18px] grid place-items-center rounded-full backdrop-blur-md text-ink-2 hover:text-ink transition-colors"
+                        style={{
+                          background: "color-mix(in srgb, var(--raised) 92%, transparent)",
+                          border: "1px solid var(--line)",
+                        }}
+                      >
+                        <ChevronDown className="size-[8px]" strokeWidth={2.5} />
+                      </button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        side="top"
+                        sideOffset={8}
+                        collisionPadding={16}
+                        className="z-[9999] px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 shadow-lg animate-in fade-in zoom-in-95 duration-150"
+                      >
+                        {t("overlay.hidePill")}
+                        <Tooltip.Arrow className="fill-black/90" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                </Tooltip.Provider>
               </motion.div>
             )}
           </AnimatePresence>
