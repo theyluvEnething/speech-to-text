@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import OverlayApp from "./OverlayApp";
+import "@/i18n";
 import "./overlay.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

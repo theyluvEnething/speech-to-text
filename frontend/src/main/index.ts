@@ -26,6 +26,34 @@ const overlayLabels: Record<string, Record<string, string>> = {
   ja: { recording: "録音中…", processing: "文字起こし中…", idle: "" },
 };
 
+const notificationLabels: Record<string, { badge: string; title: string; description: string }> = {
+  en: {
+    badge: "Tip",
+    title: "Can't transcribe while Wavely is open",
+    description: "Click into another app first, then press your hotkey.",
+  },
+  de: {
+    badge: "Tipp",
+    title: "Keine Transkription bei geöffnetem Wavely",
+    description: "Klicke zuerst in eine andere App und drücke dann deine Hotkey.",
+  },
+  it: {
+    badge: "Consiglio",
+    title: "Impossibile trascrivere con Wavely aperto",
+    description: "Clicca prima su un'altra app, poi premi il tasto di scelta rapida.",
+  },
+  es: {
+    badge: "Consejo",
+    title: "No se puede transcribir con Wavely abierto",
+    description: "Haz clic en otra aplicación primero, luego presiona tu tecla de acceso rápido.",
+  },
+  ja: {
+    badge: "ヒント",
+    title: "Wavelyが開いている間は文字起こしできません",
+    description: "先に他のアプリをクリックしてから、ホットキーを押してください。",
+  },
+};
+
 function sendOverlayState(newState: string): void {
   const overlay = getOverlayWindow();
   const lang = store.get("appLanguage") || "en";
@@ -53,11 +81,13 @@ function showOverlayNotification(payload: {
 function startRecording(): void {
   if (getAppWindowFocused()) {
     console.log("[Wavely] Recording blocked — Wavely window is focused.");
+    const lang = store.get("appLanguage") || "en";
+    const labels = notificationLabels[lang] ?? notificationLabels["en"]!;
     showOverlayNotification({
       variant: "tip",
-      badge: "Tip",
-      title: "Can't transcribe while Wavely is open",
-      description: "Click into another app first, then press your hotkey.",
+      badge: labels.badge,
+      title: labels.title,
+      description: labels.description,
     });
     return;
   }
