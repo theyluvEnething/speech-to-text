@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useStore } from "@/store";
 import { cn } from "@/lib/utils";
 import { WV_CARD, WV_TITLE } from "@/styles/theme";
@@ -40,6 +41,7 @@ function StatCard({ value, cap, children }: { value: React.ReactNode; cap: strin
 const BAR_TONE = ["bg-data-high", "bg-data-mid", "bg-data-low", "bg-data-faint"];
 
 function InsightsView(): React.ReactElement {
+  const { t } = useTranslation();
   const conversations = useStore((s) => s.conversations);
   const profiles = useStore((s) => s.profiles);
   const [tab, setTab] = useState<"usage" | "voice">("usage");
@@ -56,11 +58,11 @@ function InsightsView(): React.ReactElement {
     return [...counts.entries()]
       .map(([id, count]) => {
         const p = profiles.find((pr) => pr.id === id);
-        return { name: p?.name ?? "Unknown", icon: p?.icon ?? "🎙️", count, pct: Math.round((count / total) * 100) };
+        return { name: p?.name ?? t("insights.unknown"), icon: p?.icon ?? "🎙️", count, pct: Math.round((count / total) * 100) };
       })
       .sort((a, b) => b.count - a.count)
       .slice(0, 4);
-  }, [conversations, profiles]);
+  }, [conversations, profiles, t]);
 
   // heatmap: last 182 days (26 weeks)
   const heat = useMemo(() => {
@@ -85,34 +87,34 @@ function InsightsView(): React.ReactElement {
 
   return (
     <div>
-      <h1 className={cn(WV_TITLE, "mb-[18px]")}>Insights</h1>
+      <h1 className={cn(WV_TITLE, "mb-[18px]")}>{t("insights.title")}</h1>
 
       <div className="flex gap-6 border-b border-line mb-6">
-        {(["usage", "voice"] as const).map((t) => (
+        {(["usage", "voice"] as const).map((tabKey) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
             className={cn(
               "py-2.5 text-[14px] font-semibold capitalize -mb-px border-b-[2.5px] transition-colors",
-              tab === t ? "text-ink border-acc-strong" : "text-ink-3 border-transparent",
+              tab === tabKey ? "text-ink border-acc-strong" : "text-ink-3 border-transparent",
             )}
           >
-            {t === "usage" ? "Your Usage" : "Your Voice"}
+            {tabKey === "usage" ? t("insights.yourUsage") : t("insights.yourVoice")}
           </button>
         ))}
       </div>
 
       <div className="grid grid-cols-[1fr_1fr_1.4fr] gap-4 mb-4">
         <div className={cn(WV_CARD, "p-5")}>
-          <Gauge pct={wpmPct} label="Words/min" value={String(avgWpm)} />
-          <div className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-ink-4 text-center mt-2.5">Average speaking speed</div>
+          <Gauge pct={wpmPct} label={t("insights.wordsPerMin")} value={String(avgWpm)} />
+          <div className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-ink-4 text-center mt-2.5">{t("insights.averageSpeakingSpeed")}</div>
         </div>
-        <StatCard value={conversations.length} cap="Total transcriptions">
-          <div className="border-t border-line-soft mt-3.5 pt-3.5 text-[12.5px] text-ink-2">{Math.round(totalSec)}s recorded</div>
+        <StatCard value={conversations.length} cap={t("insights.totalTranscriptions")}>
+          <div className="border-t border-line-soft mt-3.5 pt-3.5 text-[12.5px] text-ink-2">{Math.round(totalSec)}s {t("insights.recorded")}</div>
         </StatCard>
-        <StatCard value={totalWords} cap="Total words dictated">
+        <StatCard value={totalWords} cap={t("insights.totalWordsDictated")}>
           <div className="border-t border-line-soft mt-3.5 pt-3.5 text-[12.5px] text-ink-2 flex justify-between items-center">
-            <span>🖥️ Desktop · {totalWords} words</span>
+            <span>🖥️ {t("insights.desktopWords", { words: totalWords })}</span>
           </div>
         </StatCard>
       </div>
@@ -120,11 +122,11 @@ function InsightsView(): React.ReactElement {
       <div className="grid grid-cols-[1fr_1.2fr] gap-4">
         <div className={cn(WV_CARD, "p-5")}>
           <div className="flex justify-between items-baseline mb-4">
-            <span className="font-display text-[18px] font-medium text-ink">Usage by profile</span>
-            <span className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-ink-4">{conversations.length} total</span>
+            <span className="font-display text-[18px] font-medium text-ink">{t("insights.usageByProfile")}</span>
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-ink-4">{conversations.length} {t("insights.total")}</span>
           </div>
           {breakdown.length === 0 ? (
-            <p className="text-[12.5px] text-ink-3">No data yet.</p>
+            <p className="text-[12.5px] text-ink-3">{t("insights.noDataYet")}</p>
           ) : breakdown.map((b, i) => (
             <div key={b.name} className="flex items-center gap-2.5 mb-2.5">
               <span className="w-5 text-center text-[14px]">{b.icon}</span>
@@ -138,20 +140,20 @@ function InsightsView(): React.ReactElement {
 
         <div className={cn(WV_CARD, "p-5")}>
           <div className="flex justify-between items-baseline mb-1">
-            <span className="font-display text-[18px] font-medium text-ink">Activity</span>
-            <span className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-ink-4">last 26 weeks</span>
+            <span className="font-display text-[18px] font-medium text-ink">{t("insights.activity")}</span>
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.05em] text-ink-4">{t("insights.last26Weeks")}</span>
           </div>
           <div className="grid grid-cols-[repeat(26,1fr)] gap-[3px] mt-3">
             {heat.map((n, i) => <span key={i} className={cn("rounded-[3px] aspect-square", heatShade(n))} />)}
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-ink-4 mt-2.5">
-            Less
+            {t("insights.less")}
             <span className="w-2.5 h-2.5 rounded-[2.5px] bg-heat-empty" />
             <span className="w-2.5 h-2.5 rounded-[2.5px] bg-data-faint" />
             <span className="w-2.5 h-2.5 rounded-[2.5px] bg-data-low" />
             <span className="w-2.5 h-2.5 rounded-[2.5px] bg-data-mid" />
             <span className="w-2.5 h-2.5 rounded-[2.5px] bg-data-high" />
-            More
+            {t("insights.more")}
           </div>
         </div>
       </div>

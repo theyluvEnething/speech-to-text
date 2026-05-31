@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import {
   Settings as GeneralIcon,
@@ -25,59 +26,6 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { WV_PANEL, WV_BADGE } from "@/styles/theme";
 
-const HOTKEYS = [
-  { value: "alt", label: "Alt (Left)" },
-  { value: "altright", label: "Alt (Right)" },
-  { value: "ctrl", label: "Ctrl (Left)" },
-  { value: "ctrlright", label: "Ctrl (Right)" },
-  { value: "shift", label: "Shift (Left)" },
-  { value: "shiftright", label: "Shift (Right)" },
-];
-const LANGUAGES = [
-  { value: "auto", label: "Auto-detect" },
-  { value: "en", label: "English" },
-  { value: "de", label: "Deutsch" },
-  { value: "fr", label: "Français" },
-  { value: "es", label: "Español" },
-  { value: "it", label: "Italiano" },
-  { value: "ja", label: "Japanese" },
-  { value: "ko", label: "Korean" },
-  { value: "zh", label: "Chinese" },
-];
-const APP_LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "de", label: "Deutsch" },
-  { value: "it", label: "Italiano" },
-  { value: "es", label: "Español" },
-  { value: "ja", label: "日本語" },
-];
-const PROVIDERS = [
-  { value: "groq", label: "Groq" },
-  { value: "deepgram", label: "Deepgram" },
-  { value: "openai", label: "OpenAI" },
-  { value: "backend", label: "Backend" },
-];
-const MODELS_BY_PROVIDER: Record<string, { value: string; label: string }[]> = {
-  groq: [
-    { value: "whisper-large-v3-turbo", label: "Whisper Large V3 Turbo" },
-    { value: "whisper-large-v3", label: "Whisper Large V3" },
-  ],
-  deepgram: [
-    { value: "nova-2", label: "Nova-2" },
-    { value: "nova-2-general", label: "Nova-2 General" },
-  ],
-  backend: [{ value: "whisper-large-v3", label: "Whisper Large V3" }],
-  openai: [],
-};
-
-const NAV: { pane: SettingsPane; icon: typeof GeneralIcon; label: string; group: string }[] = [
-  { pane: "general", icon: GeneralIcon, label: "General", group: "Settings" },
-  { pane: "system", icon: Monitor, label: "System", group: "Settings" },
-  { pane: "transcription", icon: Hash, label: "Transcription", group: "Settings" },
-  { pane: "account", icon: AccountIcon, label: "Account", group: "Account" },
-  { pane: "privacy", icon: ShieldCheck, label: "Data & Privacy", group: "Account" },
-];
-
 /* ── row primitives ──────────────────────────────────────────────────────── */
 function Row({ label, desc, children }: { label: React.ReactNode; desc?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -98,6 +46,66 @@ function PaneTitle({ children }: { children: React.ReactNode }) {
 }
 
 function SettingsModal(): React.ReactElement {
+  const { t } = useTranslation();
+
+  const HOTKEYS = [
+    { value: "alt", label: `${t("hotkeys.alt")} (${t("hotkeys.left")})` },
+    { value: "altright", label: `${t("hotkeys.alt")} (${t("hotkeys.right")})` },
+    { value: "ctrl", label: `${t("hotkeys.ctrl")} (${t("hotkeys.left")})` },
+    { value: "ctrlright", label: `${t("hotkeys.ctrl")} (${t("hotkeys.right")})` },
+    { value: "shift", label: `${t("hotkeys.shift")} (${t("hotkeys.left")})` },
+    { value: "shiftright", label: `${t("hotkeys.shift")} (${t("hotkeys.right")})` },
+  ];
+  const LANGUAGES = [
+    { value: "auto", label: t("languages.auto") },
+    { value: "en", label: t("languages.en") },
+    { value: "de", label: t("languages.de") },
+    { value: "fr", label: t("languages.fr") },
+    { value: "es", label: t("languages.es") },
+    { value: "it", label: t("languages.it") },
+    { value: "ja", label: t("languages.ja") },
+    { value: "ko", label: t("languages.ko") },
+    { value: "zh", label: t("languages.zh") },
+  ];
+  const APP_LANGUAGES = [
+    { value: "en", label: t("languages.en") },
+    { value: "de", label: t("languages.de") },
+    { value: "it", label: t("languages.it") },
+    { value: "es", label: t("languages.es") },
+    { value: "ja", label: t("languages.ja") },
+  ];
+  const PROVIDERS = [
+    { value: "groq", label: t("providers.groq") },
+    { value: "deepgram", label: t("providers.deepgram") },
+    { value: "openai", label: t("providers.openai") },
+    { value: "backend", label: t("providers.backend") },
+  ];
+  const MODELS_BY_PROVIDER: Record<string, { value: string; label: string }[]> = {
+    groq: [
+      { value: "whisper-large-v3-turbo", label: t("models.whisper-large-v3-turbo") },
+      { value: "whisper-large-v3", label: t("models.whisper-large-v3") },
+    ],
+    deepgram: [
+      { value: "nova-2", label: t("models.nova-2") },
+      { value: "nova-2-general", label: t("models.nova-2-general") },
+    ],
+    backend: [{ value: "whisper-large-v3", label: t("models.whisper-large-v3") }],
+    openai: [],
+  };
+
+  const NAV: { pane: SettingsPane; icon: typeof GeneralIcon; label: string; group: string }[] = [
+    { pane: "general", icon: GeneralIcon, label: t("settings.general"), group: "Settings" },
+    { pane: "system", icon: Monitor, label: t("settings.system"), group: "Settings" },
+    { pane: "transcription", icon: Hash, label: t("settings.transcription"), group: "Settings" },
+    { pane: "account", icon: AccountIcon, label: t("settings.account"), group: "Account" },
+    { pane: "privacy", icon: ShieldCheck, label: t("settings.privacy"), group: "Account" },
+  ];
+
+  const groupLabels: Record<string, string> = {
+    Settings: t("settings.title"),
+    Account: t("settings.account"),
+  };
+
   const open = useStore((s) => s.settingsOpen);
   const pane = useStore((s) => s.settingsPane);
   const closeSettings = useStore((s) => s.closeSettings);
@@ -146,9 +154,9 @@ function SettingsModal(): React.ReactElement {
     if (initial.current) return;
     window.wavely
       .setSettings(patch)
-      .then(() => toast("Preferences saved"))
+      .then(() => toast(t("settings.preferencesSaved")))
       .catch((e) => console.error("[Wavely] save failed:", e));
-  }, []);
+  }, [t]);
 
   const handleCheckUpdates = useCallback(() => {
     setUpdateStatus("checking");
@@ -168,19 +176,19 @@ function SettingsModal(): React.ReactElement {
       })
       .catch((e) => {
         setUpdateStatus("error");
-        setUpdateMsg(e instanceof Error ? e.message : "Update check failed");
+        setUpdateMsg(e instanceof Error ? e.message : t("settings.updateCheckFailed"));
       });
-  }, []);
+  }, [t]);
 
   const handleReset = useCallback(() => {
     window.wavely
       .fullReset()
       .then(() => {
-        toast("Reset complete", { description: "All data restored to defaults." });
+        toast(t("settings.resetComplete"), { description: t("settings.resetCompleteHint") });
         setTimeout(() => window.location.reload(), 500);
       })
-      .catch((e) => toast("Reset failed", { description: e instanceof Error ? e.message : "Unknown error" }));
-  }, []);
+      .catch((e) => toast(t("settings.resetFailed"), { description: e instanceof Error ? e.message : t("settings.unknownError") }));
+  }, [t]);
 
   const models = MODELS_BY_PROVIDER[provider] ?? [];
 
@@ -194,14 +202,14 @@ function SettingsModal(): React.ReactElement {
             w-[min(920px,92vw)] h-[min(630px,88vh)] bg-surface border border-line rounded-modal shadow-wv-pop
             data-[state=open]:animate-wv-fade focus:outline-none"
         >
-          <Dialog.Title className="sr-only">Settings</Dialog.Title>
+          <Dialog.Title className="sr-only">{t("settings.title")}</Dialog.Title>
 
           {/* sub-nav */}
           <nav className="w-[224px] shrink-0 bg-background border-r border-line p-[18px_12px] flex flex-col">
             {["Settings", "Account"].map((group) => (
               <React.Fragment key={group}>
                 <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-4 px-2.5 pt-3.5 pb-1.5 first:pt-0">
-                  {group}
+                  {groupLabels[group]}
                 </div>
                 {NAV.filter((n) => n.group === group).map((n) => (
                   <button
@@ -221,7 +229,7 @@ function SettingsModal(): React.ReactElement {
               </React.Fragment>
             ))}
             <div className="mt-auto flex items-center justify-between px-2.5 pt-2 text-[11.5px] text-ink-4">
-              <span>Wavely v{appVersion}</span>
+              <span>{t("settings.version", { version: appVersion })}</span>
               <Cloud className="h-3.5 w-3.5" />
             </div>
           </nav>
@@ -230,18 +238,18 @@ function SettingsModal(): React.ReactElement {
           <div className="flex-1 p-[28px_32px] overflow-y-auto">
             {pane === "general" && (
               <>
-                <PaneTitle>General</PaneTitle>
+                <PaneTitle>{t("settings.general")}</PaneTitle>
                 <div className={cn(WV_PANEL, "px-[18px]")}>
-                  <Row label="Push-to-talk key" desc="Hold this key while speaking, release to transcribe.">
+                  <Row label={t("settings.pushToTalkKey")} desc={t("settings.pushToTalkHint")}>
                     <Select value={hotkey} onValueChange={(v) => { setHotkey(v); save({ hotkey: v }); }}>
                       <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                       <SelectContent>{HOTKEYS.map((k) => <SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>)}</SelectContent>
                     </Select>
                   </Row>
-                  <Row label="Microphone" desc="Captured from your default system input device.">
-                    <span className="text-[12.5px] text-ink-3">Auto-detect</span>
+                  <Row label={t("settings.microphone")} desc={t("settings.microphoneHint")}>
+                    <span className="text-[12.5px] text-ink-3">{t("settings.autoDetect")}</span>
                   </Row>
-                  <Row label="Transcription language" desc="Auto lets the model detect the spoken language.">
+                  <Row label={t("settings.transcriptionLanguage")} desc={t("settings.transcriptionLanguageHint")}>
                     <Select value={language} onValueChange={(v) => { setLanguage(v); save({ language: v }); }}>
                       <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                       <SelectContent>{LANGUAGES.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
@@ -253,10 +261,10 @@ function SettingsModal(): React.ReactElement {
 
             {pane === "system" && (
               <>
-                <PaneTitle>System</PaneTitle>
-                <GroupLabel>Appearance</GroupLabel>
+                <PaneTitle>{t("settings.system")}</PaneTitle>
+                <GroupLabel>{t("settings.appearance")}</GroupLabel>
                 <div className={cn(WV_PANEL, "px-[18px]")}>
-                  <Row label="Theme" desc="Choose how Wavely looks across the interface.">
+                  <Row label={t("settings.theme")} desc={t("settings.themeHint")}>
                     <div className="flex gap-1.5">
                       {(["dark", "light"] as const).map((t) => (
                         <button
@@ -275,9 +283,9 @@ function SettingsModal(): React.ReactElement {
                     </div>
                   </Row>
                 </div>
-                <GroupLabel>Interface language</GroupLabel>
+                <GroupLabel>{t("settings.interfaceLanguage")}</GroupLabel>
                 <div className={cn(WV_PANEL, "px-[18px]")}>
-                  <Row label="App language" desc="Language used for the app's own interface text.">
+                  <Row label={t("settings.appLanguage")} desc={t("settings.appLanguageHint")}>
                     <Select value={appLanguage} onValueChange={(v) => { setAppLanguage(v); save({ appLanguage: v }); i18n.changeLanguage(v).then(() => window.location.reload()); }}>
                       <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                       <SelectContent>{APP_LANGUAGES.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
@@ -289,9 +297,9 @@ function SettingsModal(): React.ReactElement {
 
             {pane === "transcription" && (
               <>
-                <PaneTitle>Transcription</PaneTitle>
+                <PaneTitle>{t("settings.transcription")}</PaneTitle>
                 <div className={cn(WV_PANEL, "px-[18px]")}>
-                  <Row label="Provider" desc="Select the transcription service provider.">
+                  <Row label={t("settings.provider")} desc={t("settings.providerHint")}>
                     <Select
                       value={provider}
                       onValueChange={(v) => {
@@ -311,18 +319,18 @@ function SettingsModal(): React.ReactElement {
                     </Select>
                   </Row>
                   {provider !== "openai" ? (
-                    <Row label="Model" desc="Faster models trade some accuracy for latency.">
+                    <Row label={t("settings.model")} desc={t("settings.modelHint")}>
                       <Select value={model} onValueChange={(v) => { setModel(v); save({ model: v }); }}>
                         <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
                         <SelectContent>{models.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
                       </Select>
                     </Row>
                   ) : (
-                    <Row label="Model" desc="OpenAI provider is not yet implemented — pick another provider.">
-                      <span className="text-[12.5px] text-ink-4">Unavailable</span>
+                    <Row label={t("settings.model")} desc={t("settings.openaiUnavailable")}>
+                      <span className="text-[12.5px] text-ink-4">{t("settings.unavailable")}</span>
                     </Row>
                   )}
-                  <Row label="Copy to clipboard" desc="Keep transcribed text in the clipboard after pasting.">
+                  <Row label={t("settings.copyToClipboard")} desc={t("settings.copyToClipboardHint")}>
                     <Switch checked={copyToClipboard} onCheckedChange={(v) => { setCopyToClipboard(v); save({ copyToClipboard: v }); }} />
                   </Row>
                 </div>
@@ -331,25 +339,25 @@ function SettingsModal(): React.ReactElement {
 
             {pane === "account" && (
               <div className="flex flex-col h-full">
-                <PaneTitle>Account</PaneTitle>
+                <PaneTitle>{t("settings.account")}</PaneTitle>
                 <div className={cn(WV_PANEL, "px-[18px]")}>
-                  <Row label="Name"><span className="text-[13px] text-ink-2">{user?.fullName ?? "—"}</span></Row>
-                  <Row label="Email"><span className="text-[13px] text-ink-2">{user?.primaryEmailAddress?.emailAddress ?? "—"}</span></Row>
-                  <Row label="Plan"><span className={WV_BADGE}>Pro Trial · 6 days left</span></Row>
+                  <Row label={t("settings.name")}><span className="text-[13px] text-ink-2">{user?.fullName ?? "—"}</span></Row>
+                  <Row label={t("settings.email")}><span className="text-[13px] text-ink-2">{user?.primaryEmailAddress?.emailAddress ?? "—"}</span></Row>
+                  <Row label={t("settings.plan")}><span className={WV_BADGE}>{t("settings.proTrial")}</span></Row>
                   <Row
-                    label="Software updates"
+                    label={t("settings.softwareUpdates")}
                     desc={
-                      updateStatus === "none" ? "You're up to date."
+                      updateStatus === "none" ? t("settings.upToDate")
                       : updateStatus === "available" ? updateMsg
                       : updateStatus === "error" ? updateMsg
-                      : `Wavely v${appVersion}`
+                      : t("settings.version", { version: appVersion })
                     }
                   >
                     {updateStatus === "available" ? (
-                      <Button size="sm" onClick={() => window.wavely.downloadAndInstallUpdate()}>Update now</Button>
+                      <Button size="sm" onClick={() => window.wavely.downloadAndInstallUpdate()}>{t("settings.updateNow")}</Button>
                     ) : (
                       <Button variant="outline" size="sm" disabled={updateStatus === "checking"} onClick={handleCheckUpdates}>
-                        {updateStatus === "checking" ? "Checking…" : "Check for updates"}
+                        {updateStatus === "checking" ? t("settings.checking") : t("settings.checkForUpdates")}
                       </Button>
                     )}
                   </Row>
@@ -360,7 +368,7 @@ function SettingsModal(): React.ReactElement {
                     onClick={() => signOut()}
                     className="bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold px-5 py-2 rounded-[9px] border-none shadow-md transition-colors"
                   >
-                    Sign out
+                    {t("settings.signOut")}
                   </Button>
                 </div>
               </div>
@@ -368,31 +376,31 @@ function SettingsModal(): React.ReactElement {
 
             {pane === "privacy" && (
               <>
-                <PaneTitle>Data &amp; Privacy</PaneTitle>
+                <PaneTitle>{t("settings.privacy")}</PaneTitle>
                 <div className={cn(WV_PANEL, "px-[18px]")}>
-                  <Row label="Local-only storage" desc="Conversations and settings are stored locally on this device.">
-                    <span className="text-[12.5px] text-ink-3">Enabled</span>
+                  <Row label={t("settings.localOnlyStorage")} desc={t("settings.localOnlyStorageHint")}>
+                    <span className="text-[12.5px] text-ink-3">{t("settings.enabled")}</span>
                   </Row>
-                  <Row label="Clear all conversations" desc="Permanently delete every saved transcript.">
+                  <Row label={t("settings.clearAllConversations")} desc={t("settings.clearAllConversationsHint")}>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() =>
                         window.wavely.conversations.clear().then(() => {
                           useStore.getState().setConversations([]);
-                          toast("All conversations cleared");
+                          toast(t("settings.allConversationsCleared"));
                         })
                       }
                     >
-                      Clear
+                      {t("settings.clear")}
                     </Button>
                   </Row>
                 </div>
                 <div className="mt-6">
-                  <GroupLabel>Danger zone</GroupLabel>
+                  <GroupLabel>{t("settings.dangerZone")}</GroupLabel>
                   <div className={cn(WV_PANEL, "px-[18px]")}>
-                    <Row label="Full reset" desc="Delete all settings, profiles, and conversations and restore factory defaults.">
-                      <Button variant="destructive" size="sm" onClick={handleReset}>Reset everything</Button>
+                    <Row label={t("settings.fullReset")} desc={t("settings.fullResetHint")}>
+                      <Button variant="destructive" size="sm" onClick={handleReset}>{t("settings.resetEverything")}</Button>
                     </Row>
                   </div>
                 </div>

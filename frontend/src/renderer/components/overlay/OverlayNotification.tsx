@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { X, Info, AlertTriangle, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { springPresets } from "@/animations/presets";
@@ -28,6 +29,7 @@ const variantStyle: Record<NotificationVariant, { bg: string; ink: string; icon:
 };
 
 function OverlayNotification({ data, onDismiss, onAction }: Props): React.ReactElement {
+  const { t } = useTranslation();
   const duration = data.durationMs ?? 6000;
   const variant = data.variant ?? "tip";
   const style = variantStyle[variant];
@@ -99,7 +101,7 @@ function OverlayNotification({ data, onDismiss, onAction }: Props): React.ReactE
 
         <button
           onClick={onDismiss}
-          aria-label="Dismiss"
+          aria-label={t("overlay.dismiss")}
           className="relative shrink-0 grid place-items-center text-ink-3 hover:text-ink transition-colors mt-0.5"
           style={{ width: ringSize, height: ringSize }}
         >

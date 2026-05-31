@@ -1,4 +1,5 @@
 import React, { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { useSignIn, useSignUp, useAuth } from "@clerk/clerk-react";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -56,6 +57,7 @@ function PasswordInput({
 }
 
 function AuthView(): React.ReactElement {
+  const { t } = useTranslation();
   const { signIn, isLoaded: signInLoaded, setActive: setSignInActive } = useSignIn();
   const { signUp, isLoaded: signUpLoaded, setActive: setSignUpActive } = useSignUp();
   const { isLoaded: authLoaded } = useAuth();
@@ -85,10 +87,10 @@ function AuthView(): React.ReactElement {
         setMode("verify");
         setError("");
       } else {
-        setError(`Unhandled sign-in status: ${result.status}`);
+        setError(t("auth.unhandledSignInStatus", { status: result.status }));
       }
     } catch (err: any) {
-      setError(err.errors?.[0]?.message || err.message || "Sign in failed.");
+      setError(err.errors?.[0]?.message || err.message || t("auth.signInFailed"));
     } finally {
       setPending(false);
     }
@@ -109,10 +111,10 @@ function AuthView(): React.ReactElement {
         setMode("verify");
         setError("");
       } else {
-        setError(`Unhandled sign-up status: ${result.status}`);
+        setError(t("auth.unhandledSignUpStatus", { status: result.status }));
       }
     } catch (err: any) {
-      setError(err.errors?.[0]?.message || err.message || "Sign up failed.");
+      setError(err.errors?.[0]?.message || err.message || t("auth.signUpFailed"));
     } finally {
       setPending(false);
     }
@@ -132,10 +134,10 @@ function AuthView(): React.ReactElement {
         await setSignInActive({ session: result.createdSessionId });
         useStore.setState({ isAuthenticated: true });
       } else {
-        setError("Invalid or expired verification code. Please try again.");
+        setError(t("auth.invalidCode"));
       }
     } catch (err: any) {
-      setError(err.errors?.[0]?.message || err.message || "Verification failed.");
+      setError(err.errors?.[0]?.message || err.message || t("auth.verificationFailed"));
     } finally {
       setPending(false);
     }
@@ -155,7 +157,7 @@ function AuthView(): React.ReactElement {
       setMode("verify");
       setError("");
     } catch (err: any) {
-      setError(err.errors?.[0]?.message || err.message || "Failed to send reset code.");
+      setError(err.errors?.[0]?.message || err.message || t("auth.sendCodeFailed"));
     } finally {
       setPending(false);
     }
@@ -176,10 +178,10 @@ function AuthView(): React.ReactElement {
         await setSignInActive({ session: result.createdSessionId });
         useStore.setState({ isAuthenticated: true });
       } else {
-        setError("Password reset failed.");
+        setError(t("auth.resetFailed"));
       }
     } catch (err: any) {
-      setError(err.errors?.[0]?.message || err.message || "Password reset failed.");
+      setError(err.errors?.[0]?.message || err.message || t("auth.resetFailed"));
     } finally {
       setPending(false);
     }
@@ -218,15 +220,15 @@ function AuthView(): React.ReactElement {
         <Card className="border-line bg-background shadow-wv-card">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-ink">
-              {mode === "signin" && "Sign in"}
-              {mode === "signup" && "Create account"}
-              {mode === "forgot" && "Reset password"}
-              {mode === "verify" && "Check your email"}
-              {mode === "new_password" && "Choose a new password"}
+              {mode === "signin" && t("auth.signIn")}
+              {mode === "signup" && t("auth.createAccount")}
+              {mode === "forgot" && t("auth.resetPassword")}
+              {mode === "verify" && t("auth.checkEmail")}
+              {mode === "new_password" && t("auth.chooseNewPassword")}
             </CardTitle>
             {mode === "verify" && (
               <p className="text-xs text-ink-3">
-                We sent a 6-digit code to {email}
+                {t("auth.emailSentTo", { email })}
               </p>
             )}
           </CardHeader>
@@ -252,14 +254,14 @@ function AuthView(): React.ReactElement {
               {(mode === "signin" || mode === "signup" || mode === "forgot") && (
                 <div className="space-y-1.5">
                   <Label htmlFor="email" className="text-xs text-ink-3">
-                    Email
+                    {t("auth.email")}
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder={t("auth.emailPlaceholder")}
                     required
                     disabled={pending}
                     className="bg-input border-line text-sm focus:border-ink-3 h-8"
@@ -270,10 +272,10 @@ function AuthView(): React.ReactElement {
               {(mode === "signin" || mode === "signup" || mode === "new_password") && (
                 <PasswordInput
                   id="password"
-                  label={mode === "new_password" ? "New password" : "Password"}
+                  label={mode === "new_password" ? t("auth.newPassword") : t("auth.password")}
                   value={password}
                   onChange={setPassword}
-                  placeholder="••••••••"
+                  placeholder={t("auth.passwordPlaceholder")}
                   disabled={pending}
                 />
               )}
@@ -281,14 +283,14 @@ function AuthView(): React.ReactElement {
               {mode === "verify" && (
                 <div className="space-y-1.5">
                   <Label htmlFor="code" className="text-xs text-ink-3">
-                    Verification code
+                    {t("auth.verificationCode")}
                   </Label>
                   <Input
                     id="code"
                     type="text"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    placeholder="123456"
+                    placeholder={t("auth.codePlaceholder")}
                     required
                     maxLength={6}
                     disabled={pending}
@@ -305,15 +307,15 @@ function AuthView(): React.ReactElement {
                 {pending ? (
                   <span className="w-4 h-4 border-2 border-btn-primary-ink border-t-transparent rounded-full animate-spin" />
                 ) : mode === "signin" ? (
-                  "Sign in"
+                  t("auth.signIn")
                 ) : mode === "signup" ? (
-                  "Create account"
+                  t("auth.createAccount")
                 ) : mode === "forgot" ? (
-                  "Send reset code"
+                  t("auth.sendResetCode")
                 ) : mode === "verify" ? (
-                  "Verify code"
+                  t("auth.verifyCode")
                 ) : (
-                  "Set password"
+                  t("auth.setPassword")
                 )}
               </Button>
 
@@ -322,21 +324,21 @@ function AuthView(): React.ReactElement {
                   {mode === "signin" ? (
                     <>
                       <button type="button" onClick={() => switchMode("signup")} className="hover:text-ink transition-colors">
-                        Create account
+                        {t("auth.createAccount")}
                       </button>
                       <button type="button" onClick={() => switchMode("forgot")} className="hover:text-ink transition-colors">
-                        Forgot password?
+                        {t("auth.forgotPassword")}
                       </button>
                     </>
                   ) : (
                     <button type="button" onClick={() => switchMode("signin")} className="hover:text-ink transition-colors">
-                      Already have an account?
+                      {t("auth.alreadyHaveAccount")}
                     </button>
                   )}
                 </div>
               ) : (mode === "forgot" || mode === "verify" || mode === "new_password") && (
                 <button type="button" onClick={() => switchMode("signin")} className="block text-xs text-ink-3 hover:text-ink transition-colors text-center pt-1 w-full">
-                  Back to sign in
+                  {t("auth.backToSignIn")}
                 </button>
               )}
             </form>

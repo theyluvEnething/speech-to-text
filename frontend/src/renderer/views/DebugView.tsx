@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 
 export function DebugView(): React.ReactElement {
+  const { t } = useTranslation();
   const [showBackground, setShowBackground] = useState(false);
   const [debugProximity, setDebugProximity] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
@@ -21,8 +23,8 @@ export function DebugView(): React.ReactElement {
   }, []);
 
   const showTestNotification = () => {
-    toast("Test notification", {
-      description: "This will disappear in 2 seconds",
+    toast(t("debug.testNotificationTitle"), {
+      description: t("debug.testNotificationDesc"),
       duration: 2000,
     });
   };
@@ -43,29 +45,29 @@ export function DebugView(): React.ReactElement {
     window.wavely
       .fullReset()
       .then(() => {
-        toast("Full reset complete", {
-          description: "All settings, profiles, and conversations have been restored to defaults.",
+        toast(t("debug.fullResetComplete"), {
+          description: t("debug.fullResetCompleteHint"),
         });
         setTimeout(() => window.location.reload(), 500);
       })
       .catch((err) => {
-        toast("Reset failed", {
-          description: err instanceof Error ? err.message : "Unknown error",
+        toast(t("debug.resetFailed"), {
+          description: err instanceof Error ? err.message : t("debug.unknownError"),
         });
       });
   };
 
   return (
     <div className="p-6 space-y-6">
-      <h2 className="text-lg font-semibold">Debug Tools</h2>
+      <h2 className="text-lg font-semibold">{t("debug.title")}</h2>
 
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
-            Show window background overlay
+            {t("debug.backgroundOverlay")}
           </p>
           <p className="text-[12px] text-foreground/45 mt-0.5">
-            Show a solid background behind the overlay window for debugging visibility.
+            {t("debug.backgroundOverlayHint")}
           </p>
         </div>
         <Switch
@@ -77,10 +79,10 @@ export function DebugView(): React.ReactElement {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
-            Show proximity debug overlay
+            {t("debug.proximityOverlay")}
           </p>
           <p className="text-[12px] text-foreground/45 mt-0.5">
-            Visualize proximity bounding boxes on the overlay window for debugging.
+            {t("debug.proximityOverlayHint")}
           </p>
         </div>
         <Switch
@@ -90,36 +92,35 @@ export function DebugView(): React.ReactElement {
       </div>
 
       <Button onClick={showTestNotification}>
-        Show Test Notification
+        {t("debug.testNotification")}
       </Button>
 
       <div className="pt-4 border-t border-border">
         <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em] mb-1">
-          Full Reset
+          {t("debug.fullReset")}
         </p>
         <p className="text-[12px] text-foreground/45 mb-3">
-          This will delete ALL data (settings, profiles, conversations) and restore factory defaults.
+          {t("debug.fullResetHint")}
         </p>
         <Button variant="destructive" onClick={() => setResetConfirmOpen(true)}>
-          FULL RESET
+          {t("debug.fullResetButton")}
         </Button>
       </div>
 
       <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Full Reset</DialogTitle>
+            <DialogTitle>{t("debug.fullResetDialogTitle")}</DialogTitle>
             <DialogDescription>
-              This will permanently delete all settings, profiles, and conversations.
-              This action cannot be undone.
+              {t("debug.fullResetDialogHint")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setResetConfirmOpen(false)}>
-              Cancel
+              {t("debug.cancel")}
             </Button>
             <Button variant="destructive" onClick={handleFullReset}>
-              Reset Everything
+              {t("debug.resetEverything")}
             </Button>
           </DialogFooter>
         </DialogContent>

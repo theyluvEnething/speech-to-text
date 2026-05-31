@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { UserPlus, Check } from "lucide-react";
 import ProfileIcon from "@/components/ProfileIcon";
 import { useStore, type Tab } from "@/store";
 
 function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNode; compact?: boolean }): React.ReactElement {
+  const { t } = useTranslation();
   const profiles = useStore((s) => s.profiles);
   const activeProfile = useStore((s) => s.activeProfile);
   const setActiveProfile = useStore((s) => s.setActiveProfile);
@@ -48,7 +50,7 @@ function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNo
             <div className="w-px h-6 bg-border mx-0.5" />
             <button
               onClick={handleNewProfile}
-              title="New profile"
+              title={t("profiles.newProfile")}
               className="flex items-center justify-center w-9 h-9 rounded-md
                 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
@@ -91,7 +93,7 @@ function ProfileSwitcherPopover({ children, compact }: { children: React.ReactNo
               text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           >
             <UserPlus className="h-4 w-4" />
-            New profile
+            {t("profiles.newProfile")}
           </button>
         </div>
       </PopoverContent>

@@ -64,8 +64,8 @@ function Sidebar(): React.ReactElement {
         </div>
         {!collapsed && (
           <>
-            <span className="text-[21px] font-bold tracking-[-0.02em] text-ink">Wavely</span>
-            <span className={cn(WV_BADGE_PRO)}>Pro</span>
+            <span className="text-[21px] font-bold tracking-[-0.02em] text-ink">{t("app.name", "Wavely")}</span>
+            <span className={cn(WV_BADGE_PRO)}>{t("app.pro")}</span>
           </>
         )}
       </div>
@@ -153,7 +153,7 @@ function Sidebar(): React.ReactElement {
             </div>
             <button
               onClick={handleTogglePaused}
-              title={isPaused ? "Resume" : "Pause"}
+              title={isPaused ? t("app.resume") : t("app.pause")}
               className="ml-2 text-ink-4 hover:text-ink-2 transition-colors"
             >
               {isPaused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}

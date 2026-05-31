@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Sparkles, Settings, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfileIcon from "@/components/ProfileIcon";
@@ -151,6 +152,7 @@ function LanguagePopover({
   triggerRef: React.RefObject<HTMLButtonElement>;
   contentRef: React.RefObject<HTMLDivElement>;
 }): React.ReactElement {
+  const { t } = useTranslation();
   const [otherProfiles, setOtherProfiles] = useState<Profile[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -200,7 +202,7 @@ function LanguagePopover({
               <button
                 ref={triggerRef}
                 type="button"
-                aria-label="Change profile"
+                aria-label={t("overlay.changeProfile")}
                 className="size-7 grid place-items-center rounded-full backdrop-blur-md text-ink-2 hover:text-ink transition-colors"
                 style={{
                   background: "color-mix(in srgb, var(--raised) 92%, transparent)",
@@ -211,47 +213,6 @@ function LanguagePopover({
               </button>
             </Popover.Trigger>
           </Tooltip.Trigger>
-          <Popover.Portal>
-            <Popover.Content
-              ref={contentRef}
-              side="top"
-              align="center"
-              sideOffset={12}
-              collisionPadding={8}
-              avoidCollisions
-              className="z-[9999] animate-in fade-in zoom-in-95 duration-150"
-              style={{ pointerEvents: "auto" }}
-            >
-              <div
-                className="flex flex-col items-center gap-1 px-2 py-2 rounded-full backdrop-blur-xl shadow-2xl"
-                style={{
-                  background: "color-mix(in srgb, var(--raised) 95%, transparent)",
-                  border: "1px solid var(--line)",
-                }}
-              >
-                {otherProfiles.map((profile) => (
-                  <button
-                    key={profile.id}
-                    onClick={() => handleSelect(profile)}
-                    className="size-7 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
-                  >
-                    <ProfileIcon icon={profile.icon} className="text-[13px]" />
-                  </button>
-                ))}
-                {showMore && (
-                  <>
-                    {otherProfiles.length > 0 && <div className="h-px w-4 bg-white/10 my-0.5" />}
-                    <button
-                      onClick={handleMore}
-                      className="size-7 grid place-items-center rounded-full hover:bg-white/10 transition-colors text-white/50 hover:text-white/80"
-                    >
-                      <span className="text-[11px] leading-none">⋯</span>
-                    </button>
-                  </>
-                )}
-              </div>
-            </Popover.Content>
-          </Popover.Portal>
           <Tooltip.Portal>
             <Tooltip.Content
               side="top"
@@ -259,7 +220,7 @@ function LanguagePopover({
               collisionPadding={16}
               className="z-[9999] px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 shadow-lg animate-in fade-in zoom-in-95 duration-150"
             >
-              Change profile
+              {t("overlay.changeProfile")}
               <Tooltip.Arrow className="fill-black/90" />
             </Tooltip.Content>
           </Tooltip.Portal>
@@ -314,6 +275,7 @@ function SideButton({
 }
 
 function OverlayApp(): React.ReactElement {
+  const { t } = useTranslation();
   useOverlayTheme();
 
   const [status, setStatus] = useState<PopupStatus>("idle");
@@ -658,7 +620,7 @@ function OverlayApp(): React.ReactElement {
                 <Waveform rms={audioLevels.rms} />
                 {pillAnimationComplete && (
                   <span className={`text-[13px] font-medium whitespace-nowrap ${meta?.textColor}`}>
-                    Recording {elapsed.toFixed(1)}s
+                    {t("overlay.recording")} {elapsed.toFixed(1)}s
                   </span>
                 )}
               </>
@@ -667,7 +629,7 @@ function OverlayApp(): React.ReactElement {
               <>
                 <Spinner />
                 <span className={`text-[13px] font-medium ${meta?.textColor}`}>
-                  Transcribing
+                  {t("overlay.transcribing")}
                 </span>
               </>
             )}
@@ -699,19 +661,13 @@ function OverlayApp(): React.ReactElement {
                 <SideButton
                   tooltip={
                     hasText ? (
-                      <>
-                        Click or press{" "}
-                        <span className="bg-gradient-to-r from-fuchsia-300 to-pink-300 bg-clip-text text-transparent font-semibold">
-                          Win Alt 1
-                        </span>{" "}
-                        to polish
-                      </>
+                      t("overlay.polishTooltip")
                     ) : (
-                      "Open settings"
+                      t("overlay.openSettings")
                     )
                   }
                   onClick={hasText ? undefined : handleOpenSettings}
-                  ariaLabel={hasText ? "Polish text" : "Open settings"}
+                  ariaLabel={hasText ? t("overlay.polishText") : t("overlay.openSettings")}
                 >
                   {hasText ? (
                     <Sparkles

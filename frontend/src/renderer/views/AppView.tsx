@@ -110,7 +110,7 @@ function AppView(): React.ReactElement {
       })
       .catch((err) => {
         setUpdateStatus("error");
-        setUpdateError(err instanceof Error ? err.message : "Unknown error");
+        setUpdateError(err instanceof Error ? err.message : t("settings.unknownError"));
       });
   }, []);
 
@@ -121,7 +121,7 @@ function AppView(): React.ReactElement {
       .downloadAndInstallUpdate()
       .catch((err) => {
         setUpdateStatus("error");
-        setUpdateError(err instanceof Error ? err.message : "Download failed");
+        setUpdateError(err instanceof Error ? err.message : t("appView.downloadFailed"));
       });
   }, []);
 
@@ -199,7 +199,7 @@ function AppView(): React.ReactElement {
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={() => signOut()}>
-                Sign out
+                {t("appView.signOut")}
               </Button>
             </div>
           </CardContent>
@@ -209,21 +209,21 @@ function AppView(): React.ReactElement {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-[11px] font-medium uppercase tracking-[0.04em] text-foreground/40">
-              Updates
+              {t("appView.updates")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-[13px] text-foreground/70">Wavely v{appVersion}</p>
+            <p className="text-[13px] text-foreground/70">{t("settings.version", { version: appVersion })}</p>
             {updateStatus === "no-update" && (
-              <p className="text-[13px] text-emerald-500/90">You're up to date.</p>
+              <p className="text-[13px] text-emerald-500/90">{t("appView.upToDate")}</p>
             )}
             {updateStatus === "error" && (
               <p className="text-[13px] text-red-400/90">
-                {updateError || "Failed to check for updates."}
+                {updateError || t("appView.checkFailed")}
               </p>
             )}
             {updateStatus === "downloading" && (
-              <p className="text-[13px] text-foreground/60">Downloading update, the app will restart shortly...</p>
+              <p className="text-[13px] text-foreground/60">{t("appView.downloading")}</p>
             )}
             <Button
               variant="outline"
@@ -231,11 +231,10 @@ function AppView(): React.ReactElement {
               onClick={handleCheckForUpdates}
               disabled={updateStatus === "checking" || updateStatus === "downloading"}
             >
-              {updateStatus === "checking" ? "Checking..." : "Check for Updates"}
+              {updateStatus === "checking" ? t("appView.checking") : t("appView.checkForUpdates")}
             </Button>
           </CardContent>
         </Card>
-
       </div>
 
       {/* Reset at very bottom */}
@@ -257,18 +256,17 @@ function AppView(): React.ReactElement {
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Update Available</DialogTitle>
+            <DialogTitle>{t("appView.updateAvailable")}</DialogTitle>
             <DialogDescription>
-              Version {updateVersion} is available. You are currently on v{appVersion}.
-              Would you like to update now? The app will restart to apply the update.
+              {t("appView.updateAvailableHint", { updateVersion, currentVersion: appVersion })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={handleCancelUpdate}>
-              Cancel
+              {t("appView.cancel")}
             </Button>
             <Button onClick={handleConfirmUpdate}>
-              Update
+              {t("appView.update")}
             </Button>
           </DialogFooter>
         </DialogContent>

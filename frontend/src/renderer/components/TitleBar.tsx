@@ -1,7 +1,9 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Minus, X } from "lucide-react";
 
 function TitleBar(): React.ReactElement {
+  const { t } = useTranslation();
   const isMac = window.wavely.platform === "darwin";
 
   return (
@@ -16,7 +18,7 @@ function TitleBar(): React.ReactElement {
             className="flex items-center justify-center w-10 h-full
               text-ink-4 hover:text-ink hover:bg-hover
               transition-colors duration-150"
-            aria-label="Minimize"
+            aria-label={t("titlebar.minimize")}
           >
             <Minus className="h-3.5 w-3.5" />
           </button>
@@ -25,7 +27,7 @@ function TitleBar(): React.ReactElement {
             className="flex items-center justify-center w-10 h-full
               text-ink-4 hover:text-ink hover:bg-hover
               transition-colors duration-150"
-            aria-label="Close"
+            aria-label={t("titlebar.close")}
           >
             <X className="h-3.5 w-3.5" />
           </button>

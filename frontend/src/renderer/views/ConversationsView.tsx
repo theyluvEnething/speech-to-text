@@ -9,6 +9,7 @@ import {
   WV_CARD, WV_INPUT, WV_SECTION_LABEL, WV_STAT_NUMBER, WV_BUTTON_SOFT,
 } from "@/styles/theme";
 import HotkeyChip from "@/components/HotkeyChip";
+import { useTranslation } from "react-i18next";
 
 interface Group { label: string; conversations: Conversation[]; }
 
@@ -17,16 +18,16 @@ const formatDuration = (sec: number) =>
   sec < 60 ? `${Math.round(sec)}s` : `${Math.floor(sec / 60)}:${Math.round(sec % 60).toString().padStart(2, "0")}`;
 const wordCount = (s: string) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 
-function groupConversations(list: Conversation[]): Group[] {
+function groupConversations(list: Conversation[], labels: { today: string; yesterday: string; thisWeek: string; earlier: string }): Group[] {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 86400000);
   const weekAgo = new Date(today.getTime() - 7 * 86400000);
   const groups: Group[] = [
-    { label: "Today", conversations: [] },
-    { label: "Yesterday", conversations: [] },
-    { label: "This week", conversations: [] },
-    { label: "Earlier", conversations: [] },
+    { label: labels.today, conversations: [] },
+    { label: labels.yesterday, conversations: [] },
+    { label: labels.thisWeek, conversations: [] },
+    { label: labels.earlier, conversations: [] },
   ];
   for (const c of list) {
     const d = new Date(c.createdAt);
@@ -39,10 +40,10 @@ function groupConversations(list: Conversation[]): Group[] {
 }
 
 function ConversationRow({
-  c, color, icon, name, onDelete,
-}: { c: Conversation; color: string; icon: string; name: string; onDelete: () => void }) {
+  c, color, icon, name, onDelete, t,
+}: { c: Conversation; color: string; icon: string; name: string; onDelete: () => void; t: (key: string) => string }) {
   const [expanded, setExpanded] = useState(false);
-  const copy = () => navigator.clipboard.writeText(c.text).then(() => toast("Copied to clipboard"));
+  const copy = () => navigator.clipboard.writeText(c.text).then(() => toast(t("conversations.copied")));
   return (
     <div className="group border-b border-line-soft last:border-b-0">
       <button onClick={() => setExpanded(!expanded)} className="flex gap-3.5 w-full px-4 py-3.5 text-left hover:bg-hover transition-colors">
@@ -70,6 +71,7 @@ function RailCard({ children }: { children: React.ReactNode }) {
 }
 
 function ConversationsView(): React.ReactElement {
+  const { t } = useTranslation();
   const conversations = useStore((s) => s.conversations);
   const profiles = useStore((s) => s.profiles);
   const setConversations = useStore((s) => s.setConversations);
@@ -82,7 +84,12 @@ function ConversationsView(): React.ReactElement {
     return conversations.filter((c) => c.text.toLowerCase().includes(q));
   }, [conversations, search]);
 
-  const groups = useMemo(() => groupConversations(filtered), [filtered]);
+  const groups = useMemo(() => groupConversations(filtered, {
+    today: t("conversations.today"),
+    yesterday: t("conversations.yesterday"),
+    thisWeek: t("conversations.thisWeek"),
+    earlier: t("conversations.earlier"),
+  }), [filtered, t]);
   const profileMap = useMemo(() => new Map(profiles.map((p) => [p.id, p])), [profiles]);
 
   const totalWords = useMemo(() => conversations.reduce((n, c) => n + wordCount(c.text), 0), [conversations]);
@@ -98,7 +105,7 @@ function ConversationsView(): React.ReactElement {
   const handleDelete = (id: string) =>
     window.wavely.conversations.delete(id).then((r) => {
       setConversations(r as Conversation[]);
-      toast("Conversation deleted");
+      toast(t("conversations.deleted"));
     });
 
   const firstName = user?.firstName ?? "there";
@@ -109,8 +116,8 @@ function ConversationsView(): React.ReactElement {
         <div className="w-12 h-12 rounded-full bg-input grid place-items-center mb-4">
           <MessageSquare className="h-6 w-6 text-ink-4" />
         </div>
-        <h3 className="text-[14px] font-medium text-ink mb-1">No conversations yet</h3>
-        <p className="text-[13px] text-ink-3 max-w-xs">Hold your push-to-talk key to start your first transcription.</p>
+        <h3 className="text-[14px] font-medium text-ink mb-1">{t("conversations.noConversations")}</h3>
+        <p className="text-[13px] text-ink-3 max-w-xs">{t("conversations.noConversationsHint")}</p>
       </div>
     );
   }
@@ -118,7 +125,7 @@ function ConversationsView(): React.ReactElement {
   return (
     <div>
       <div className="flex items-center gap-2 flex-wrap mb-[22px] text-[22px] font-semibold text-ink">
-        <span>Hey {firstName}, start recording with</span>
+        <span>{t("conversations.greeting", { name: firstName })}</span>
         <HotkeyChip />
       </div>
 
@@ -126,8 +133,8 @@ function ConversationsView(): React.ReactElement {
       <div className="relative rounded-card overflow-hidden h-[200px] mb-7"
         style={{ background: "radial-gradient(110% 80% at 80% 30%, color-mix(in srgb, var(--acc) 35%, transparent), transparent 55%), linear-gradient(130deg, var(--raised) 0%, var(--background) 65%)" }}>
         <div className="relative z-10 p-8 max-w-[58%]">
-          <h3 className="font-display text-[28px] font-medium text-ink mb-1.5">Try Wavely anywhere you type</h3>
-          <p className="text-[13.5px] text-ink-3 mb-[18px]">Hold your push-to-talk key, speak, release — done.</p>
+          <h3 className="font-display text-[28px] font-medium text-ink mb-1.5">{t("conversations.heroTitle")}</h3>
+          <p className="text-[13.5px] text-ink-3 mb-[18px]">{t("conversations.heroHint")}</p>
           <button
             onClick={() => {
               window.wavely.hideWindow();
@@ -135,7 +142,7 @@ function ConversationsView(): React.ReactElement {
             }}
             className="inline-flex items-center justify-center gap-2 rounded-[11px] bg-amber-accent-500 text-amber-accent-100 font-semibold text-[12.5px] px-4 py-2.5 transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            Get started
+            {t("conversations.getStarted")}
           </button>
         </div>
       </div>
@@ -144,11 +151,11 @@ function ConversationsView(): React.ReactElement {
         <div>
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-4" />
-            <input className={cn(WV_INPUT, "pl-9")} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search transcripts…" />
+            <input className={cn(WV_INPUT, "pl-9")} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("conversations.search")} />
           </div>
 
           {filtered.length === 0 ? (
-            <p className="text-center text-[13px] text-ink-3 py-12">No transcripts match your search.</p>
+            <p className="text-center text-[13px] text-ink-3 py-12">{t("conversations.noResults")}</p>
           ) : (
             groups.map((g) => (
               <div key={g.label} className="mb-6">
@@ -157,7 +164,7 @@ function ConversationsView(): React.ReactElement {
                   {g.conversations.map((c) => {
                     const p = profileMap.get(c.profileId);
                     return (
-                      <ConversationRow key={c.id} c={c} color={p?.color ?? "var(--acc)"} icon={p?.icon ?? "🎙️"} name={p?.name ?? "Default"} onDelete={() => handleDelete(c.id)} />
+                      <ConversationRow key={c.id} c={c} color={p?.color ?? "var(--acc)"} icon={p?.icon ?? "🎙️"} name={p?.name ?? t("conversations.default")} onDelete={() => handleDelete(c.id)} t={t} />
                     );
                   })}
                 </div>
@@ -169,19 +176,19 @@ function ConversationsView(): React.ReactElement {
         {/* right rail */}
         <div className="flex flex-col gap-3.5">
           <RailCard>
-            <div className="flex items-baseline"><span className={WV_STAT_NUMBER}>{totalWords}</span><span className="text-[12px] text-ink-3 ml-2">total words</span></div>
-            <div className="flex items-baseline mt-1"><span className={WV_STAT_NUMBER}>{avgWpm}</span><span className="text-[12px] text-ink-3 ml-2">avg wpm</span></div>
-            <div className="flex items-baseline mt-1"><span className={WV_STAT_NUMBER}>{todayCount}</span><span className="text-[12px] text-ink-3 ml-2">today</span></div>
+            <div className="flex items-baseline"><span className={WV_STAT_NUMBER}>{totalWords}</span><span className="text-[12px] text-ink-3 ml-2">{t("conversations.totalWords")}</span></div>
+            <div className="flex items-baseline mt-1"><span className={WV_STAT_NUMBER}>{avgWpm}</span><span className="text-[12px] text-ink-3 ml-2">{t("conversations.avgWpm")}</span></div>
+            <div className="flex items-baseline mt-1"><span className={WV_STAT_NUMBER}>{todayCount}</span><span className="text-[12px] text-ink-3 ml-2">{t("conversations.todayStat")}</span></div>
           </RailCard>
           <RailCard>
-            <div className="text-[13px] font-semibold text-ink mb-0.5">Your Voice Profile</div>
-            <p className="text-[11.5px] text-ink-2 leading-[1.5] mb-2.5">Discover how you use your voice.</p>
+            <div className="text-[13px] font-semibold text-ink mb-0.5">{t("conversations.voiceProfile")}</div>
+            <p className="text-[11.5px] text-ink-2 leading-[1.5] mb-2.5">{t("conversations.voiceProfileHint")}</p>
             <div className="h-1.5 rounded-full bg-chart-track overflow-hidden"><div className="h-full rounded-full bg-acc" style={{ width: `${Math.min(100, (totalWords / 2000) * 100)}%` }} /></div>
-            <div className="flex justify-end text-[11px] text-ink-4 mt-1.5">{Math.max(0, 2000 - totalWords)} words to unlock</div>
+            <div className="flex justify-end text-[11px] text-ink-4 mt-1.5">{Math.max(0, 2000 - totalWords)} {t("conversations.wordsToUnlock")}</div>
           </RailCard>
           <RailCard>
-            <div className="text-[13px] font-semibold text-ink mb-0.5">100 Words a Day</div>
-            <p className="text-[11.5px] text-ink-2 leading-[1.5] mb-2.5">Earn an extra day of Pro.</p>
+            <div className="text-[13px] font-semibold text-ink mb-0.5">{t("conversations.hundredWordsDay")}</div>
+            <p className="text-[11.5px] text-ink-2 leading-[1.5] mb-2.5">{t("conversations.hundredWordsDayHint")}</p>
             <div className="h-1.5 rounded-full bg-chart-track overflow-hidden"><div className="h-full rounded-full bg-data-mid" style={{ width: `${Math.min(100, todayCount * 10)}%` }} /></div>
           </RailCard>
         </div>
