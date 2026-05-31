@@ -105,17 +105,19 @@ function Sidebar(): React.ReactElement {
 
       {/* Show pop-up again — visible when pill is hidden */}
       {hidePill && (
-        <div className="px-2 pb-1">
+        <div className={cn("pb-1", collapsed ? "px-1.5" : "px-2")}>
           <button
             onClick={() => window.wavely.setSettings({ hidePill: false })}
             title={t("overlay.showPill")}
             className={cn(
-              "flex items-center w-full h-7 rounded-[10px] text-ink-4 hover:text-ink-2 hover:bg-hover transition-colors",
-              collapsed ? "justify-center px-0" : "gap-2 px-2",
+              "inline-flex items-center bg-keycap text-keycap-ink font-bold shadow-[0_1.5px_0_rgba(0,0,0,.25)] ring-2 ring-orange-400/60 cursor-pointer hover:brightness-110 active:scale-[0.97] transition-all",
+              collapsed
+                ? "justify-center h-[26px] w-[26px] rounded-[6px] p-0"
+                : "gap-1.5 h-[26px] px-[9px] rounded-[6px] text-[13px] w-full",
             )}
           >
             <Eye className="h-3.5 w-3.5 shrink-0" />
-            {!collapsed && <span className="text-[12px]">{t("overlay.showPill")}</span>}
+            {!collapsed && <span>{t("overlay.showPill")}</span>}
           </button>
         </div>
       )}
