@@ -12,7 +12,11 @@ i18n.use(initReactI18next).init({
   resources,
   lng: "en",
   fallbackLng: "en",
-  interpolation: { escapeValue: false },
+  interpolation: {
+    escapeValue: false,
+    prefix: "{",
+    suffix: "}"
+  },
 });
 
 export default i18n;

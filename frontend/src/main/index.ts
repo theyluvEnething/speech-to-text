@@ -293,16 +293,17 @@ app.whenReady().then(() => {
     const { response } = await dialog.showMessageBox({
       type: "info",
       title: "Update Available",
-      message: `A new version of Wavely (v${info.version}) is available. Would you like to download and install it now?`,
+      message: `A new version of Wavely (v${info.version}) is available. Would you like to download and install it now?\n\n(The download will happen in the background and the app will restart when ready.)`,
       buttons: ["Yes, Update Now", "Later"],
     });
     if (response === 0) {
-      autoUpdater.downloadUpdate();
+      try {
+        await autoUpdater.downloadUpdate();
+        autoUpdater.quitAndInstall(false, true);
+      } catch (err) {
+        console.error("[AutoUpdater] Update download failed:", err);
+      }
     }
-  });
-
-  autoUpdater.on("update-downloaded", () => {
-    autoUpdater.quitAndInstall(true, true);
   });
 
 
@@ -343,7 +344,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle("app:downloadAndInstallUpdate", async () => {
     await autoUpdater.downloadUpdate();
-    autoUpdater.quitAndInstall(true, true);
+    autoUpdater.quitAndInstall(false, true);
   });
 
   app.on("activate", () => {
