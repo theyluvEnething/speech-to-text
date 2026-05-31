@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore, type Tab } from "@/store";
-import { WV_NAV_ITEM, WV_BADGE, WV_BADGE_PRO } from "@/styles/theme";
+import { WV_NAV_ITEM, WV_BADGE, WV_BADGE_PRO, WV_KEYCAP } from "@/styles/theme";
 import ProfileSwitcherPopover from "@/components/ProfileSwitcherPopover";
 import ProfileIcon from "@/components/ProfileIcon";
 import NotificationCard from "@/components/NotificationCard";
@@ -110,10 +110,11 @@ function Sidebar(): React.ReactElement {
             onClick={() => window.wavely.setSettings({ hidePill: false })}
             title={t("overlay.showPill")}
             className={cn(
-              "inline-flex items-center bg-keycap text-keycap-ink font-bold shadow-[0_1.5px_0_rgba(0,0,0,.25)] ring-2 ring-orange-400/60 cursor-pointer hover:brightness-110 active:scale-[0.97] transition-all",
+              WV_KEYCAP,
+              "cursor-pointer hover:brightness-110 active:scale-[0.97] transition-all",
               collapsed
-                ? "justify-center h-[26px] w-[26px] rounded-[6px] p-0"
-                : "gap-1.5 h-[26px] px-[9px] rounded-[6px] text-[13px] w-full",
+                ? "justify-center h-[28px] w-[28px] p-0"
+                : "gap-1.5 h-[28px] w-full",
             )}
           >
             <Eye className="h-3.5 w-3.5 shrink-0" />
