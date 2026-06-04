@@ -17,6 +17,13 @@ export class DeepgramProvider implements TranscriptionProvider {
       `key cached: ${this.cachedKey ? "yes" : "no"}`,
     );
 
+    // Eagerly fetch key if missing — avoids the catch/retry path on first call.
+    // The GroqProvider uses the same pattern for its SDK client.
+    if (!this.cachedKey) {
+      console.log("[Deepgram] No cached key — fetching from backend before transcribing...");
+      await this.fetchTemporaryKey();
+    }
+
     try {
       const result = await this.transcribeOnce(audio, options);
       console.log(`[Deepgram] Transcription result: "${result}" (${result.length} chars)`);

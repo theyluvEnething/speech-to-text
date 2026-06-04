@@ -31,16 +31,13 @@ function SettingsView(): React.ReactElement {
   ];
 
   const PROVIDERS = [
-    { value: "backend", label: t("providers.backend") },
     { value: "deepgram", label: t("providers.deepgram") },
     { value: "groq", label: t("providers.groq") },
     { value: "openai", label: t("providers.openai") },
+    { value: "xai", label: t("providers.xai") },
   ];
 
   const MODELS_BY_PROVIDER: Record<string, readonly { value: string; label: string }[]> = {
-    backend: [
-      { value: "whisper-large-v3", label: t("models.whisper-large-v3") },
-    ],
     deepgram: [
       { value: "nova-2", label: t("models.nova-2") },
       { value: "nova-2-general", label: t("models.nova-2-general") },
@@ -50,6 +47,9 @@ function SettingsView(): React.ReactElement {
       { value: "whisper-large-v3", label: t("models.whisper-large-v3") },
     ],
     openai: [],
+    xai: [
+      { value: "grok-voice-latest", label: t("models.grok-voice-latest") },
+    ],
   };
 
   const activeProfile = useStore((s) => s.activeProfile);

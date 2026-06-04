@@ -47,13 +47,14 @@
     "groq": "Groq",
     "deepgram": "Deepgram",
     "openai": "OpenAI",
-    "backend": "Backend"
+    "xai": "xAI (Grok)"
   },
   "models": {
     "whisper-large-v3-turbo": "Whisper Large V3 Turbo",
     "whisper-large-v3": "Whisper Large V3",
     "nova-2": "Nova-2",
-    "nova-2-general": "Nova-2 General"
+    "nova-2-general": "Nova-2 General",
+    "grok-voice-latest": "Grok Voice Latest"
   },
   "conversations": {
     "title": "Conversaciones",

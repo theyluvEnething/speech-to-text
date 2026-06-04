@@ -145,9 +145,31 @@ function handleLevels(data: { rms: number; peak: number; elapsed: number; sample
 
 function resolveTranscribeOptions(): { language: string; model: string; provider: ProviderName; profileId: string } {
   const profile = getActiveProfile();
-  const globalProvider = store.get("provider") as ProviderName;
+  const storedProvider = store.get("provider");
   const globalModel = store.get("model");
   const globalLanguage = store.get("language");
+
+  // Migration: "backend" provider was removed in favor of "xai".
+  // Users who still have "backend" stored get migrated to "groq".
+  let globalProvider: ProviderName;
+  if (storedProvider === "backend") {
+    console.log("[Wavely] Migrating provider from 'backend' to 'groq'.");
+    store.set("provider", "groq");
+    globalProvider = "groq";
+  } else if (
+    storedProvider === "groq" ||
+    storedProvider === "deepgram" ||
+    storedProvider === "openai" ||
+    storedProvider === "xai"
+  ) {
+    globalProvider = storedProvider;
+  } else {
+    console.warn(
+      `[Wavely] Unknown provider "${storedProvider}" — falling back to "groq".`,
+    );
+    store.set("provider", "groq");
+    globalProvider = "groq";
+  }
 
   return {
     language: profile.language || globalLanguage,

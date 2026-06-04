@@ -78,7 +78,7 @@ function SettingsModal(): React.ReactElement {
     { value: "groq", label: t("providers.groq") },
     { value: "deepgram", label: t("providers.deepgram") },
     { value: "openai", label: t("providers.openai") },
-    { value: "backend", label: t("providers.backend") },
+    { value: "xai", label: t("providers.xai") },
   ];
   const MODELS_BY_PROVIDER: Record<string, { value: string; label: string }[]> = {
     groq: [
@@ -89,8 +89,10 @@ function SettingsModal(): React.ReactElement {
       { value: "nova-2", label: t("models.nova-2") },
       { value: "nova-2-general", label: t("models.nova-2-general") },
     ],
-    backend: [{ value: "whisper-large-v3", label: t("models.whisper-large-v3") }],
     openai: [],
+    xai: [
+      { value: "grok-voice-latest", label: t("models.grok-voice-latest") },
+    ],
   };
 
   const NAV: { pane: SettingsPane; icon: typeof GeneralIcon; label: string; group: string }[] = [
