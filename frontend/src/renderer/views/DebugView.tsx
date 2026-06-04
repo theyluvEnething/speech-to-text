@@ -3,9 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
-import { WV_PANEL } from "@/styles/theme";
 import {
   Dialog,
   DialogContent,
@@ -14,26 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-function Row({ label, desc, children }: { label: React.ReactNode; desc?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-5 py-[17px] border-b border-line-soft last:border-b-0">
-      <div className="min-w-0">
-        <div className="text-[13.5px] font-semibold text-ink">{label}</div>
-        {desc && <div className="text-[12px] text-ink-3 leading-[1.5] mt-1 max-w-[430px]">{desc}</div>}
-      </div>
-      <div className="shrink-0">{children}</div>
-    </div>
-  );
-}
-
-function GroupLabel({ children }: { children: React.ReactNode }) {
-  return <div className="text-[12.5px] font-semibold text-ink-3 mt-6 first:mt-0 mb-2">{children}</div>;
-}
-
-function PaneTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="font-display text-[26px] font-medium tracking-[-0.01em] text-ink mb-5">{children}</h2>;
-}
 
 export function DebugView(): React.ReactElement {
   const { t } = useTranslation();
@@ -53,10 +31,13 @@ export function DebugView(): React.ReactElement {
     window.wavely.setSettings({ hidePill: v }).catch((e) => console.error("[Wavely] save failed:", e));
   }, [setHidePill]);
 
-  const handleDebugProximityToggle = useCallback(() => {
+  const handleDebugProximityToggle = useCallback((v: boolean) => {
+    setDebugProximity(v);
     window.wavely.toggleDebugProximity().then((enabled: boolean) => {
       setDebugProximity(enabled);
-    }).catch(() => {});
+    }).catch(() => {
+      setDebugProximity(!v);
+    });
   }, []);
 
   const handleBackgroundOpaqueToggle = useCallback((v: boolean) => {
@@ -99,43 +80,89 @@ export function DebugView(): React.ReactElement {
   }, [t]);
 
   return (
-    <div className="flex flex-col h-full">
-      <PaneTitle>{t("debug.title")}</PaneTitle>
+    <div className="p-6 space-y-6">
+      <h2 className="text-lg font-semibold">{t("debug.title")}</h2>
 
-      <GroupLabel>{t("settings.general", "Overlay")}</GroupLabel>
-      <div className={cn(WV_PANEL, "px-[18px]")}>
-        <Row label={t("debug.hidePopup")} desc={t("debug.hidePopupHint")}>
-          <Switch checked={hidePill} onCheckedChange={handleHidePillToggle} />
-        </Row>
-
-        <Row label={t("debug.showOverlayNotification")} desc={t("debug.showOverlayNotificationHint")}>
-          <Button variant="outline" size="sm" onClick={handleShowOverlayNotification}>
-            {t("debug.testNotification")}
-          </Button>
-        </Row>
-
-        <Row label={t("debug.showInAppNotification")} desc={t("debug.showInAppNotificationHint")}>
-          <Button variant="outline" size="sm" onClick={handleShowInAppNotification}>
-            {t("debug.testNotification")}
-          </Button>
-        </Row>
-
-        <Row label={t("debug.proximityOverlay")} desc={t("debug.proximityOverlayHint")}>
-          <Switch checked={debugProximity} onCheckedChange={handleDebugProximityToggle} />
-        </Row>
-
-        <Row label={t("debug.backgroundTransparency")} desc={t("debug.backgroundTransparencyHint")}>
-          <Switch checked={backgroundOpaque} onCheckedChange={handleBackgroundOpaqueToggle} />
-        </Row>
+      {/* Hide bottom pop-up */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
+            {t("debug.hidePopup")}
+          </p>
+          <p className="text-[12px] text-foreground/45 mt-0.5">
+            {t("debug.hidePopupHint")}
+          </p>
+        </div>
+        <Switch checked={hidePill} onCheckedChange={handleHidePillToggle} className="border-foreground/30" />
       </div>
 
-      <GroupLabel>{t("settings.dangerZone")}</GroupLabel>
-      <div className={cn(WV_PANEL, "px-[18px]")}>
-        <Row label={t("debug.fullReset")} desc={t("debug.fullResetHint")}>
-          <Button variant="destructive" size="sm" onClick={() => setResetConfirmOpen(true)}>
-            {t("debug.fullResetButton")}
-          </Button>
-        </Row>
+      {/* Show overlay notification */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
+            {t("debug.showOverlayNotification")}
+          </p>
+          <p className="text-[12px] text-foreground/45 mt-0.5">
+            {t("debug.showOverlayNotificationHint")}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleShowOverlayNotification}>
+          {t("debug.testNotification")}
+        </Button>
+      </div>
+
+      {/* Show in-app notification */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
+            {t("debug.showInAppNotification")}
+          </p>
+          <p className="text-[12px] text-foreground/45 mt-0.5">
+            {t("debug.showInAppNotificationHint")}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleShowInAppNotification}>
+          {t("debug.testNotification")}
+        </Button>
+      </div>
+
+      {/* Show bounds of bottom pop-up */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
+            {t("debug.proximityOverlay")}
+          </p>
+          <p className="text-[12px] text-foreground/45 mt-0.5">
+            {t("debug.proximityOverlayHint")}
+          </p>
+        </div>
+        <Switch checked={debugProximity} onCheckedChange={handleDebugProximityToggle} className="border-foreground/30" />
+      </div>
+
+      {/* Screen popup background transparency */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">
+            {t("debug.backgroundTransparency")}
+          </p>
+          <p className="text-[12px] text-foreground/45 mt-0.5">
+            {t("debug.backgroundTransparencyHint")}
+          </p>
+        </div>
+        <Switch checked={backgroundOpaque} onCheckedChange={handleBackgroundOpaqueToggle} className="border-foreground/30" />
+      </div>
+
+      {/* Full Reset */}
+      <div className="pt-4 border-t border-border">
+        <p className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em] mb-1">
+          {t("debug.fullReset")}
+        </p>
+        <p className="text-[12px] text-foreground/45 mb-3">
+          {t("debug.fullResetHint")}
+        </p>
+        <Button variant="destructive" onClick={() => setResetConfirmOpen(true)}>
+          {t("debug.fullResetButton")}
+        </Button>
       </div>
 
       <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
