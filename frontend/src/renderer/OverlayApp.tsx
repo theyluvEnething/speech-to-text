@@ -334,6 +334,7 @@ function OverlayApp(): React.ReactElement {
   const [activeProfileId, setActiveProfileId] = useState("default");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [notification, setNotification] = useState<OverlayNotificationData | null>(null);
+  const [isOverNotification, setIsOverNotification] = useState(false);
 
   const [menuOverrideActive, setMenuOverrideActive] = useState(false);
   const cachedMenuZones = useRef<{
@@ -344,6 +345,7 @@ function OverlayApp(): React.ReactElement {
 
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const popoverContentRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   const [hidePill, setHidePill] = useState(false);
   const [debugProximity, setDebugProximity] = useState(false);
@@ -356,7 +358,7 @@ function OverlayApp(): React.ReactElement {
 
   const isActive = status !== "idle";
   const [proximityDims, setProximityDims] = useState({ width: 90, height: 30 });
-  const isNear = useProximity(barRef, proximityDims.width, proximityDims.height, menuOverrideActive);
+  const isNear = useProximity(barRef, proximityDims.width, proximityDims.height, menuOverrideActive || isOverNotification);
   const expanded = isActive || (status === "idle" && isNear);
 
   // Expand/shrink the cursor proximity zone based on whether the pill is open
@@ -506,6 +508,31 @@ function OverlayApp(): React.ReactElement {
     }
   }, [notification]);
 
+  // Track whether the cursor is over the notification card, so the close
+  // button stays clickable even when the cursor leaves the pill proximity zone.
+  useEffect(() => {
+    if (!notification) {
+      setIsOverNotification(false);
+      return;
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const el = notificationRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setIsOverNotification(
+        e.clientX >= rect.left && e.clientX <= rect.right
+        && e.clientY >= rect.top && e.clientY <= rect.bottom,
+      );
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      setIsOverNotification(false);
+    };
+  }, [notification]);
+
   // Close profile menu when cursor leaves the cached menu zones
   useEffect(() => {
     if (!menuOverrideActive) return;
@@ -595,6 +622,17 @@ function OverlayApp(): React.ReactElement {
     window.overlay.showSettings();
   };
 
+  const handleDismiss = useCallback(() => {
+    setNotification(null);
+    window.overlay.setClickThrough(true);
+  }, []);
+
+  const handleAction = useCallback((type: string) => {
+    if (type === "open-settings") window.overlay.showSettings();
+    setNotification(null);
+    window.overlay.setClickThrough(true);
+  }, []);
+
   return (
     <div className="relative w-full h-full overflow-visible">
       {/* Fixed bottom anchor — notification + pill stacked together, bottom-snapped */}
@@ -609,19 +647,14 @@ function OverlayApp(): React.ReactElement {
         {/* Notification card — sits directly above the pill */}
         <AnimatePresence>
           {notification && (
-            <OverlayNotification
-              key={notification.id}
-              data={notification}
-              onDismiss={() => {
-                setNotification(null);
-                window.overlay.setClickThrough(true);
-              }}
-              onAction={(type) => {
-                if (type === "open-settings") window.overlay.showSettings();
-                setNotification(null);
-                window.overlay.setClickThrough(true);
-              }}
-            />
+            <div ref={notificationRef}>
+              <OverlayNotification
+                key={notification.id}
+                data={notification}
+                onDismiss={handleDismiss}
+                onAction={handleAction}
+              />
+            </div>
           )}
         </AnimatePresence>
 
@@ -785,6 +818,7 @@ function OverlayApp(): React.ReactElement {
           barRef={barRef}
           profileButtonRef={profileButtonRef}
           popoverContentRef={popoverContentRef}
+          notificationRef={notificationRef}
           isProfileMenuOpen={isProfileMenuOpen}
           menuOverrideActive={menuOverrideActive}
           expanded={expanded}

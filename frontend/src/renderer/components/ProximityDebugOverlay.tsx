@@ -11,6 +11,7 @@ interface Props {
   barRef: React.RefObject<HTMLDivElement | null>;
   profileButtonRef: React.RefObject<HTMLButtonElement | null>;
   popoverContentRef: React.RefObject<HTMLDivElement | null>;
+  notificationRef: React.RefObject<HTMLDivElement | null>;
   isProfileMenuOpen: boolean;
   menuOverrideActive?: boolean;
   expanded?: boolean;
@@ -25,6 +26,7 @@ export function ProximityDebugOverlay({
   barRef,
   profileButtonRef,
   popoverContentRef,
+  notificationRef,
   isProfileMenuOpen,
   menuOverrideActive,
   expanded = false,
@@ -35,11 +37,13 @@ export function ProximityDebugOverlay({
     button: Rect | null;
     popover: Rect | null;
     safeZone: Rect | null;
+    notification: Rect | null;
   }>({
     pill: null,
     button: null,
     popover: null,
     safeZone: null,
+    notification: null,
   });
 
   const pillW = expanded ? 260 : 90;
@@ -93,13 +97,25 @@ export function ProximityDebugOverlay({
       }
     }
 
+    // 4. Notification card bounds (live DOM)
+    const notifEl = notificationRef.current;
+    const notifRect: Rect | null = notifEl
+      ? {
+          x: notifEl.getBoundingClientRect().x,
+          y: notifEl.getBoundingClientRect().y,
+          width: notifEl.getBoundingClientRect().width,
+          height: notifEl.getBoundingClientRect().height,
+        }
+      : null;
+
     setRects({
       pill: pillRect,
       button: btnRect,
       popover: popRect,
       safeZone,
+      notification: notifRect,
     });
-  }, [barRef, profileButtonRef, popoverContentRef, isProfileMenuOpen, menuOverrideActive, expanded, pillW, pillH, cachedMenuZones]);
+  }, [barRef, profileButtonRef, popoverContentRef, notificationRef, isProfileMenuOpen, menuOverrideActive, expanded, pillW, pillH, cachedMenuZones]);
 
   useEffect(() => {
     updateRects();
@@ -158,6 +174,11 @@ export function ProximityDebugOverlay({
       {rects.safeZone && (
         <div style={{ ...rectStyle(rects.safeZone, "#ec4899", "rgba(236, 72, 153, 0.15)") }}>
           <span style={{ ...labelStyle, color: "#ec4899" }}>Safe zone (btn→popover)</span>
+        </div>
+      )}
+      {rects.notification && (
+        <div style={{ ...rectStyle(rects.notification, "#8b5cf6", "rgba(139, 92, 246, 0.12)") }}>
+          <span style={{ ...labelStyle, color: "#8b5cf6" }}>Notification</span>
         </div>
       )}
     </>
