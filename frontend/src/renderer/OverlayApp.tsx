@@ -224,6 +224,49 @@ function LanguagePopover({
               <Tooltip.Arrow className="fill-black/90" />
             </Tooltip.Content>
           </Tooltip.Portal>
+          <Popover.Portal>
+            <Popover.Content
+              ref={contentRef}
+              side="top"
+              align="center"
+              sideOffset={8}
+              collisionPadding={16}
+              avoidCollisions
+              className="z-[9999] animate-in fade-in zoom-in-95 duration-150"
+              style={{ pointerEvents: "auto" }}
+            >
+              <div
+                className="flex flex-col items-center gap-1 px-2 py-2 rounded-full backdrop-blur-xl shadow-2xl"
+                style={{
+                  background: "color-mix(in srgb, var(--raised) 95%, transparent)",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                {otherProfiles.map((profile) => (
+                  <button
+                    key={profile.id}
+                    onClick={() => handleSelect(profile)}
+                    title={profile.name}
+                    className="size-7 grid place-items-center rounded-full hover:bg-white/10 transition-colors"
+                  >
+                    <ProfileIcon icon={profile.icon} className="text-[13px]" />
+                  </button>
+                ))}
+                {showMore && (
+                  <>
+                    {otherProfiles.length > 0 && <div className="h-px w-4 bg-white/10 my-0.5" />}
+                    <button
+                      onClick={handleMore}
+                      title={t("profiles.newProfile")}
+                      className="size-7 grid place-items-center rounded-full hover:bg-white/10 transition-colors text-white/50 hover:text-white/80"
+                    >
+                      <span className="text-[11px] leading-none">⋯</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </Popover.Content>
+          </Popover.Portal>
         </Popover.Root>
       </Tooltip.Root>
     </Tooltip.Provider>
@@ -546,35 +589,35 @@ function OverlayApp(): React.ReactElement {
 
   return (
     <div className="relative w-full h-full overflow-visible">
-      {/* Notification card — sits above the pill */}
+      {/* Fixed bottom anchor — notification + pill stacked together, bottom-snapped */}
       <div
-        className="absolute left-0 right-0 flex justify-center pointer-events-none"
-        style={{ bottom: `${PILL_BOTTOM_MARGIN + 70}px` }}
-      >
-        <AnimatePresence>
-          {notification && (
-            <OverlayNotification
-              key={notification.id}
-              data={notification}
-              onDismiss={() => setNotification(null)}
-              onAction={(type) => {
-                if (type === "open-settings") window.overlay.showSettings();
-                setNotification(null);
-              }}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Fixed bottom anchor - never moves */}
-      <div
-        className="absolute left-0 right-0 flex justify-center transition-opacity duration-300"
+        className="absolute left-0 right-0 flex flex-col items-center gap-2 transition-opacity duration-300"
         style={{
           bottom: `${PILL_BOTTOM_MARGIN}px`,
           opacity: hidePill && status === "idle" ? 0 : undefined,
           pointerEvents: hidePill && status === "idle" ? "none" : undefined,
         }}
       >
+        {/* Notification card — sits directly above the pill */}
+        <AnimatePresence>
+          {notification && (
+            <OverlayNotification
+              key={notification.id}
+              data={notification}
+              onDismiss={() => {
+                setNotification(null);
+                window.overlay.setClickThrough(true);
+              }}
+              onAction={(type) => {
+                if (type === "open-settings") window.overlay.showSettings();
+                setNotification(null);
+                window.overlay.setClickThrough(true);
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Pill row — profile button + pill + side buttons */}
         <div
           ref={barRef}
           className="flex items-center gap-2 overflow-visible"
