@@ -42,8 +42,8 @@ export function ProximityDebugOverlay({
     safeZone: null,
   });
 
-  const pillW = expanded ? 260 : 86;
-  const pillH = expanded ? 42 : 24;
+  const pillW = expanded ? 260 : 90;
+  const pillH = expanded ? 52 : 30;
 
   const updateRects = useCallback(() => {
     // 1. Always calculate the dynamic Pill Rect

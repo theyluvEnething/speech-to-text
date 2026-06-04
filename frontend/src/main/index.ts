@@ -14,6 +14,8 @@ type AppState = "idle" | "recording" | "processing" | "showing-result";
 let state: AppState = "idle";
 let audioActive = false;
 let lastDurationSec = 0;
+let lastRmsDb = -60;
+let lastPeakDb = -60;
 
 autoUpdater.logger = console;
 autoUpdater.autoDownload = false;
@@ -129,6 +131,8 @@ function stopRecording(): void {
 function handleLevels(data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }): void {
   if (data.final) {
     lastDurationSec = data.elapsed;
+    lastRmsDb = data.rms;
+    lastPeakDb = data.peak;
     console.log(`[Wavely] Audio levels — duration: ${data.elapsed.toFixed(1)}s, peak: ${data.peak.toFixed(1)} dB, RMS: ${data.rms.toFixed(1)} dB`);
   }
   const overlay = getOverlayWindow();
@@ -159,9 +163,27 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
     return;
   }
 
-  const { language, model, provider: providerName, profileId } = resolveTranscribeOptions();
   const durationSec = lastDurationSec;
+  const rmsDb = lastRmsDb;
   lastDurationSec = 0;
+  lastRmsDb = -60;
+  lastPeakDb = -60;
+
+  // Skip transcription for accidental presses: too short or silent audio
+  if (durationSec < 0.75) {
+    console.log(`[Wavely] Skipping — audio too short (${durationSec.toFixed(2)}s < 0.75s).`);
+    state = "idle";
+    sendOverlayState("idle");
+    return;
+  }
+  if (rmsDb < -45) {
+    console.log(`[Wavely] Skipping — audio is silent (RMS ${rmsDb.toFixed(1)} dB < -45 dB).`);
+    state = "idle";
+    sendOverlayState("idle");
+    return;
+  }
+
+  const { language, model, provider: providerName, profileId } = resolveTranscribeOptions();
   const langLabel = language || "auto";
 
   const durationS = durationSec.toFixed(1);

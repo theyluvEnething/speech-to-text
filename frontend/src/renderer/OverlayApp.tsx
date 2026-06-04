@@ -355,14 +355,14 @@ function OverlayApp(): React.ReactElement {
   const barRef = useRef<HTMLDivElement>(null);
 
   const isActive = status !== "idle";
-  const [proximityDims, setProximityDims] = useState({ width: 86, height: 24 });
+  const [proximityDims, setProximityDims] = useState({ width: 90, height: 30 });
   const isNear = useProximity(barRef, proximityDims.width, proximityDims.height, menuOverrideActive);
   const expanded = isActive || (status === "idle" && isNear);
 
   // Expand/shrink the cursor proximity zone based on whether the pill is open
   useEffect(() => {
     setProximityDims(
-      expanded ? { width: 260, height: 42 } : { width: 86, height: 24 },
+      expanded ? { width: 260, height: 52 } : { width: 90, height: 30 },
     );
   }, [expanded]);
 
