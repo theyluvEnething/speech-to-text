@@ -355,8 +355,16 @@ function OverlayApp(): React.ReactElement {
   const barRef = useRef<HTMLDivElement>(null);
 
   const isActive = status !== "idle";
-  const isNear = useProximity(barRef, 280, 80, menuOverrideActive);
+  const [proximityDims, setProximityDims] = useState({ width: 86, height: 24 });
+  const isNear = useProximity(barRef, proximityDims.width, proximityDims.height, menuOverrideActive);
   const expanded = isActive || (status === "idle" && isNear);
+
+  // Expand/shrink the cursor proximity zone based on whether the pill is open
+  useEffect(() => {
+    setProximityDims(
+      expanded ? { width: 260, height: 42 } : { width: 86, height: 24 },
+    );
+  }, [expanded]);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -779,6 +787,7 @@ function OverlayApp(): React.ReactElement {
           popoverContentRef={popoverContentRef}
           isProfileMenuOpen={isProfileMenuOpen}
           menuOverrideActive={menuOverrideActive}
+          expanded={expanded}
           cachedMenuZones={cachedMenuZones}
         />
       )}

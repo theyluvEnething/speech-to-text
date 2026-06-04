@@ -13,6 +13,7 @@ interface Props {
   popoverContentRef: React.RefObject<HTMLDivElement | null>;
   isProfileMenuOpen: boolean;
   menuOverrideActive?: boolean;
+  expanded?: boolean;
   cachedMenuZones?: React.MutableRefObject<{
     btn: Rect | null;
     pop: Rect | null;
@@ -26,6 +27,7 @@ export function ProximityDebugOverlay({
   popoverContentRef,
   isProfileMenuOpen,
   menuOverrideActive,
+  expanded = false,
   cachedMenuZones,
 }: Props) {
   const [rects, setRects] = useState<{
@@ -40,6 +42,9 @@ export function ProximityDebugOverlay({
     safeZone: null,
   });
 
+  const pillW = expanded ? 260 : 86;
+  const pillH = expanded ? 42 : 24;
+
   const updateRects = useCallback(() => {
     // 1. Always calculate the dynamic Pill Rect
     const pillEl = barRef.current;
@@ -49,10 +54,10 @@ export function ProximityDebugOverlay({
       const centerX = br.left + br.width / 2;
       const centerY = br.top + br.height / 2;
       pillRect = {
-        x: centerX - 140,
-        y: centerY - 40,
-        width: 280,
-        height: 80,
+        x: centerX - pillW / 2,
+        y: centerY - pillH / 2,
+        width: pillW,
+        height: pillH,
       };
     }
 
@@ -94,7 +99,7 @@ export function ProximityDebugOverlay({
       popover: popRect,
       safeZone,
     });
-  }, [barRef, profileButtonRef, popoverContentRef, isProfileMenuOpen, menuOverrideActive, cachedMenuZones]);
+  }, [barRef, profileButtonRef, popoverContentRef, isProfileMenuOpen, menuOverrideActive, expanded, pillW, pillH, cachedMenuZones]);
 
   useEffect(() => {
     updateRects();
@@ -137,7 +142,7 @@ export function ProximityDebugOverlay({
     <>
       {rects.pill && (
         <div style={rectStyle(rects.pill, "#3b82f6", "rgba(59, 130, 246, 0.15)")}>
-          <span style={{ ...labelStyle, color: "#3b82f6" }}>Pill (280x80)</span>
+          <span style={{ ...labelStyle, color: "#3b82f6" }}>Pill ({pillW}x{pillH})</span>
         </div>
       )}
       {rects.button && (
