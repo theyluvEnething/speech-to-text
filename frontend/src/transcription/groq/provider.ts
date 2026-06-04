@@ -17,6 +17,7 @@ export class GroqProvider implements TranscriptionProvider {
   private cachedKey: string | null = null;
 
   async transcribe(audio: ArrayBuffer, options: TranscribeOptions): Promise<string> {
+    console.log(`[Groq] Recording triggered — key cached: ${this.cachedKey ? "yes" : "NO — fetching from backend..."}`);
     if (!this.client) {
       await this.fetchApiKey();
       this.client = new Groq({ apiKey: this.cachedKey! });

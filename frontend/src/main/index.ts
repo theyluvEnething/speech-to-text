@@ -16,6 +16,8 @@ let audioActive = false;
 let lastDurationSec = 0;
 let lastRmsDb = -60;
 let lastPeakDb = -60;
+let peakRmsDb = -60;
+let peakPeakDb = -60;
 
 autoUpdater.logger = console;
 autoUpdater.autoDownload = false;
@@ -129,6 +131,8 @@ function stopRecording(): void {
 }
 
 function handleLevels(data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }): void {
+  if (data.rms > peakRmsDb) peakRmsDb = data.rms;
+  if (data.peak > peakPeakDb) peakPeakDb = data.peak;
   if (data.final) {
     lastDurationSec = data.elapsed;
     lastRmsDb = data.rms;
@@ -164,10 +168,13 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
   }
 
   const durationSec = lastDurationSec;
-  const rmsDb = lastRmsDb;
+  const rmsDb = peakRmsDb;
+  const peakDb = peakPeakDb;
   lastDurationSec = 0;
   lastRmsDb = -60;
   lastPeakDb = -60;
+  peakRmsDb = -60;
+  peakPeakDb = -60;
 
   // Skip transcription for accidental presses: too short or silent audio
   if (durationSec < 0.75) {
@@ -176,8 +183,11 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
     sendOverlayState("idle");
     return;
   }
-  if (rmsDb < -45) {
-    console.log(`[Wavely] Skipping — audio is silent (RMS ${rmsDb.toFixed(1)} dB < -45 dB).`);
+
+  // Use max peak observed during the ENTIRE recording (not just the final moment
+  // which captures trailing silence after the 310ms post-release delay)
+  if (peakDb < -45) {
+    console.log(`[Wavely] Skipping — audio is silent (peak ${peakDb.toFixed(1)} dB < -45 dB).`);
     state = "idle";
     sendOverlayState("idle");
     return;
