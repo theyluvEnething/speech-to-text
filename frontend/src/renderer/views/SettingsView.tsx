@@ -46,7 +46,11 @@ function SettingsView(): React.ReactElement {
       { value: "whisper-large-v3-turbo", label: t("models.whisper-large-v3-turbo") },
       { value: "whisper-large-v3", label: t("models.whisper-large-v3") },
     ],
-    openai: [],
+    openai: [
+      { value: "gpt-4o-transcribe", label: t("models.gpt-4o-transcribe") },
+      { value: "gpt-4o-mini-transcribe", label: t("models.gpt-4o-mini-transcribe") },
+      { value: "whisper-1", label: t("models.whisper-1") },
+    ],
     xai: [
       { value: "grok-voice-latest", label: t("models.grok-voice-latest") },
     ],
@@ -242,33 +246,27 @@ function SettingsView(): React.ReactElement {
               </p>
             </div>
 
-            {provider !== "openai" ? (
-              <div className="space-y-2">
-                <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">{t("settings.model")}</label>
-                <Select
-                  value={model}
-                  onValueChange={(v) => {
-                    setModel(v);
-                    if (!initialLoad.current) save({ model: v });
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(MODELS_BY_PROVIDER[provider] ?? []).map((m) => (
-                      <SelectItem key={m.value} value={m.value}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : (
-              <p className="text-[12px] text-foreground/45">
-                {t("settings.openaiUnavailable")}
-              </p>
-            )}
+            <div className="space-y-2">
+              <label className="text-[14px] font-medium text-foreground/92 tracking-[-0.01em]">{t("settings.model")}</label>
+              <Select
+                value={model}
+                onValueChange={(v) => {
+                  setModel(v);
+                  if (!initialLoad.current) save({ model: v });
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(MODELS_BY_PROVIDER[provider] ?? []).map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
       </div>

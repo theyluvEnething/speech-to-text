@@ -89,7 +89,11 @@ function SettingsModal(): React.ReactElement {
       { value: "nova-2", label: t("models.nova-2") },
       { value: "nova-2-general", label: t("models.nova-2-general") },
     ],
-    openai: [],
+    openai: [
+      { value: "gpt-4o-transcribe", label: t("models.gpt-4o-transcribe") },
+      { value: "gpt-4o-mini-transcribe", label: t("models.gpt-4o-mini-transcribe") },
+      { value: "whisper-1", label: t("models.whisper-1") },
+    ],
     xai: [
       { value: "grok-voice-latest", label: t("models.grok-voice-latest") },
     ],
@@ -334,18 +338,12 @@ function SettingsModal(): React.ReactElement {
                       <SelectContent>{PROVIDERS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
                     </Select>
                   </Row>
-                  {provider !== "openai" ? (
-                    <Row label={t("settings.model")} desc={t("settings.modelHint")}>
-                      <Select value={model} onValueChange={(v) => { setModel(v); save({ model: v }); }}>
-                        <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>{models.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </Row>
-                  ) : (
-                    <Row label={t("settings.model")} desc={t("settings.openaiUnavailable")}>
-                      <span className="text-[12.5px] text-ink-4">{t("settings.unavailable")}</span>
-                    </Row>
-                  )}
+                  <Row label={t("settings.model")} desc={t("settings.modelHint")}>
+                    <Select value={model} onValueChange={(v) => { setModel(v); save({ model: v }); }}>
+                      <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>{models.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </Row>
                   <Row label={t("settings.copyToClipboard")} desc={t("settings.copyToClipboardHint")}>
                     <Switch checked={copyToClipboard} onCheckedChange={(v) => { setCopyToClipboard(v); save({ copyToClipboard: v }); }} />
                   </Row>

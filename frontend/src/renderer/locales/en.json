@@ -54,7 +54,10 @@
     "whisper-large-v3": "Whisper Large V3",
     "nova-2": "Nova-2",
     "nova-2-general": "Nova-2 General",
-    "grok-voice-latest": "Grok Voice Latest"
+    "grok-voice-latest": "Grok Voice Latest",
+    "gpt-4o-transcribe": "GPT-4o Transcribe",
+    "gpt-4o-mini-transcribe": "GPT-4o Mini Transcribe",
+    "whisper-1": "Whisper-1"
   },
   "conversations": {
     "title": "Dashboard",

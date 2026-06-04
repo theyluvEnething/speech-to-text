@@ -65,12 +65,38 @@ export async function getXaiEphemeralToken(): Promise<EphemeralToken> {
 
   console.log("[xAI] Backend response data:", JSON.stringify(data));
 
+  // Check for upstream error from the xAI API (passed through by backend)
+  if (
+    typeof data === "object" &&
+    data !== null &&
+    "upstream_error" in data
+  ) {
+    const errData = data as {
+      error: string;
+      upstream_status: number;
+      upstream_error: unknown;
+    };
+    const upstreamMsg =
+      typeof errData.upstream_error === "string"
+        ? errData.upstream_error
+        : JSON.stringify(errData.upstream_error);
+    console.error(
+      `[xAI] Upstream xAI API error (HTTP ${errData.upstream_status}): ${upstreamMsg}`,
+    );
+    throw new Error(
+      `xAI API error (${errData.upstream_status}): ${upstreamMsg}`,
+    );
+  }
+
   if (
     typeof data !== "object" ||
     data === null ||
     !("client_secret" in data)
   ) {
-    console.error("[xAI] Backend response missing 'client_secret':", JSON.stringify(data));
+    console.error(
+      "[xAI] Backend response missing 'client_secret':",
+      JSON.stringify(data),
+    );
     throw new Error(
       "Backend response for xAI ephemeral token missing 'client_secret' field",
     );
