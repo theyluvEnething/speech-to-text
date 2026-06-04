@@ -226,7 +226,7 @@ app.post("/api/openai-client-secret", requireApiSecret, async (_req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 //
 // The master XAI_API_KEY never leaves the server. We call xAI's realtime
-// client_secrets endpoint to mint a short-lived (900 s) scoped token and
+// client_secrets endpoint to mint a short-lived (300 s) scoped token and
 // hand only that to the client. The client can then connect directly to
 // xAI's WebSocket API at wss://api.x.ai/v1/realtime?model=grok-voice-latest
 // using the ephemeral token.
@@ -250,7 +250,7 @@ app.post("/api/xai-client-secret", requireApiSecret, async (_req, res) => {
         },
         body: JSON.stringify({
           expires_after: {
-            seconds: 900, // 15 minutes
+            seconds: 300, // 5 minutes — matches xAI docs example
           },
         }),
       },
@@ -261,8 +261,17 @@ app.post("/api/xai-client-secret", requireApiSecret, async (_req, res) => {
       console.error(
         `[Wavely Backend] xAI client_secrets error (${response.status}): ${text}`,
       );
-      return res.status(500).json({
-        error: "Failed to generate xAI ephemeral token.",
+      // Pass through the upstream error so the client can show useful info.
+      // Common causes: invalid API key (401), missing permissions (403),
+      // or the xAI endpoint not available in your region (404).
+      let upstreamError = text;
+      try {
+        upstreamError = JSON.parse(text);
+      } catch { /* not JSON, use raw text */ }
+      return res.status(response.status).json({
+        error: "xAI ephemeral token request failed.",
+        upstream_status: response.status,
+        upstream_error: upstreamError,
       });
     }
 
