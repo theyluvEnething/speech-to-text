@@ -35,6 +35,7 @@ interface StoreSchema {
   isPaused: boolean;
   hidePill: boolean;
   debugProximity: boolean;
+  debugMode: boolean;
   profiles: Profile[];
   activeProfileId: string;
   recentProfileIds: string[];
@@ -53,6 +54,7 @@ export const store = new Store<StoreSchema>({
     isPaused: false,
     hidePill: false,
     debugProximity: false,
+    debugMode: false,
     profiles: [
       {
         id: "default",
@@ -320,6 +322,19 @@ export function registerIpcHandlers(
     return next;
   });
 
+  ipcMain.handle("app:isPackaged", () => {
+    return app.isPackaged;
+  });
+
+  ipcMain.handle("debug:getMode", () => {
+    return store.get("debugMode");
+  });
+
+  ipcMain.handle("debug:setMode", (_event, enabled: boolean) => {
+    store.set("debugMode", enabled);
+    return enabled;
+  });
+
   ipcMain.handle("app:getPaused", () => {
     return store.get("isPaused");
   });
@@ -341,6 +356,7 @@ export function registerIpcHandlers(
       isPaused: false,
       hidePill: false,
       debugProximity: false,
+      debugMode: false,
       profiles: [
         {
           id: "default",

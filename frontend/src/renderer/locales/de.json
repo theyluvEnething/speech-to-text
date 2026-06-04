@@ -169,6 +169,8 @@
     "resetFailed": "Reset fehlgeschlagen",
     "unknownError": "Unbekannter Fehler",
     "allConversationsCleared": "Alle Aufzeichnungen gelöscht",
+    "debugMode": "Debug-Modus",
+    "debugModeHint": "Wenn aktiviert, erscheint der Debug-Tab in der Seitenleiste für den Zugriff auf Entwicklerwerkzeuge.",
     "version": "Wavely v{version}"
   },
   "auth": {

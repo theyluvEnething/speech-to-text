@@ -33,6 +33,14 @@ function Sidebar(): React.ReactElement {
   const setIsPaused = useStore((s) => s.setIsPaused);
   const hidePill = useStore((s) => s.hidePill);
   const activeProfile = useStore((s) => s.activeProfile);
+  const debugMode = useStore((s) => s.debugMode);
+  const setDebugMode = useStore((s) => s.setDebugMode);
+
+  useEffect(() => {
+    window.wavely.getDebugMode().then(setDebugMode).catch(() => {});
+  }, [setDebugMode]);
+
+  const showDebugTab = debugMode;
 
   const NAV: { tab: Tab; icon: typeof MessageSquare; label: string }[] = [
     { tab: "conversations", icon: MessageSquare, label: t("nav.conversations", "Dashboard") },
@@ -124,21 +132,23 @@ function Sidebar(): React.ReactElement {
         </div>
       )}
 
-      {/* Debug tab — bottom-aligned below all other nav items */}
-      <div className={cn("pb-1", collapsed ? "px-1.5" : "px-2")}>
-        <button
-          onClick={() => setActiveTab("debug")}
-          title={collapsed ? t("nav.debug", "Debug") : undefined}
-          className={cn(
-            WV_NAV_ITEM,
-            collapsed && "justify-center px-0",
-            activeTab === "debug" && "wv-nav-spike",
-          )}
-        >
-          <Bug className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>{t("nav.debug", "Debug")}</span>}
-        </button>
-      </div>
+      {/* Debug tab — bottom-aligned below all other nav items, only visible in dev or when explicitly enabled */}
+      {showDebugTab && (
+        <div className={cn("pb-1", collapsed ? "px-1.5" : "px-2")}>
+          <button
+            onClick={() => setActiveTab("debug")}
+            title={collapsed ? t("nav.debug", "Debug") : undefined}
+            className={cn(
+              WV_NAV_ITEM,
+              collapsed && "justify-center px-0",
+              activeTab === "debug" && "wv-nav-spike",
+            )}
+          >
+            <Bug className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>{t("nav.debug", "Debug")}</span>}
+          </button>
+        </div>
+      )}
 
       {/* Collapse toggle */}
       <div className="px-2 pb-1">

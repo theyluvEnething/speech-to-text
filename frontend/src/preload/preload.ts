@@ -3,6 +3,9 @@ import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("wavely", {
   platform: process.platform,
 
+  isPackaged: (): Promise<boolean> =>
+    ipcRenderer.invoke("app:isPackaged"),
+
   getSettings: (): Promise<{ hotkey: string; language: string; model: string; provider: string; copyToClipboard: boolean; appLanguage: string }> =>
     ipcRenderer.invoke("settings:get"),
 
@@ -20,6 +23,12 @@ contextBridge.exposeInMainWorld("wavely", {
 
   toggleDebugProximity: (): Promise<boolean> =>
     ipcRenderer.invoke("debug:toggleProximity"),
+
+  getDebugMode: (): Promise<boolean> =>
+    ipcRenderer.invoke("debug:getMode"),
+
+  setDebugMode: (enabled: boolean): Promise<boolean> =>
+    ipcRenderer.invoke("debug:setMode", enabled),
 
   stopRecording: (): void => {
     ipcRenderer.send("recording:stop");

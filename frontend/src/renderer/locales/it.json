@@ -169,6 +169,8 @@
     "resetFailed": "Reset fallito",
     "unknownError": "Errore sconosciuto",
     "allConversationsCleared": "Tutte le conversazioni cancellate",
+    "debugMode": "Modalità debug",
+    "debugModeHint": "Se attivata, la scheda Debug appare nella barra laterale per accedere agli strumenti di sviluppo.",
     "version": "Wavely v{version}"
   },
   "auth": {

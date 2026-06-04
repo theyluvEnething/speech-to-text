@@ -124,6 +124,8 @@ function SettingsModal(): React.ReactElement {
   const [copyToClipboard, setCopyToClipboard] = useState(false);
   const [hidePill, setHidePill] = useState(false);
   const [appVersion, setAppVersion] = useState("");
+  const debugMode = useStore((s) => s.debugMode);
+  const setDebugModeState = useStore((s) => s.setDebugMode);
   const initial = useRef(true);
 
   useEffect(() => {
@@ -150,6 +152,7 @@ function SettingsModal(): React.ReactElement {
         requestAnimationFrame(() => (initial.current = false));
       })
       .catch(() => (initial.current = false));
+    window.wavely.getDebugMode().then(setDebugModeState).catch(() => {});
   }, [open]);
 
   const save = useCallback((patch: Record<string, string | boolean>) => {
@@ -265,7 +268,7 @@ function SettingsModal(): React.ReactElement {
             )}
 
             {pane === "system" && (
-              <>
+              <div className="flex flex-col h-full">
                 <PaneTitle>{t("settings.system")}</PaneTitle>
                 <GroupLabel>{t("settings.appearance")}</GroupLabel>
                 <div className={cn(WV_PANEL, "px-[18px]")}>
@@ -297,7 +300,13 @@ function SettingsModal(): React.ReactElement {
                     </Select>
                   </Row>
                 </div>
-              </>
+                <div className="flex-1" />
+                <div className={cn(WV_PANEL, "px-[18px]")}>
+                  <Row label={t("settings.debugMode")} desc={t("settings.debugModeHint")}>
+                    <Switch checked={debugMode} onCheckedChange={(v) => { setDebugModeState(v); window.wavely.setDebugMode(v).catch(() => {}); }} className="border-foreground/30" />
+                  </Row>
+                </div>
+              </div>
             )}
 
             {pane === "transcription" && (

@@ -5,14 +5,31 @@ export function useProximity(
   width: number,
   height: number,
   override: boolean = false,
+  disabled: boolean = false,
 ): boolean {
   const [isNear, setIsNear] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const rafIdRef = useRef<number | null>(null);
 
-  // Immediately apply override if the menu opens
+  // When disabled, force cleanup: reset state and ensure click-through is on
   useEffect(() => {
-    if (override) {
+    if (disabled) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = undefined;
+      }
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      setIsNear(false);
+      window.overlay.setClickThrough(true);
+    }
+  }, [disabled]);
+
+  // Immediately apply override if the menu opens (unless disabled)
+  useEffect(() => {
+    if (override && !disabled) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = undefined;
@@ -20,11 +37,11 @@ export function useProximity(
       setIsNear(true);
       window.overlay.setClickThrough(false);
     }
-  }, [override]);
+  }, [override, disabled]);
 
   useEffect(() => {
     const element = ref.current;
-    if (!element) return;
+    if (!element || disabled) return;
 
     const halfW = width / 2;
     const halfH = height / 2;
@@ -86,7 +103,8 @@ export function useProximity(
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [ref, width, height, isNear, override]);
+  }, [ref, width, height, isNear, override, disabled]);
 
-  return isNear || override;
+  // When disabled, always report false so the pill stays collapsed
+  return disabled ? false : isNear || override;
 }

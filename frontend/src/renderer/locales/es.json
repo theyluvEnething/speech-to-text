@@ -169,6 +169,8 @@
     "resetFailed": "Error al restablecer",
     "unknownError": "Error desconocido",
     "allConversationsCleared": "Todas las conversaciones borradas",
+    "debugMode": "Modo depuración",
+    "debugModeHint": "Cuando está activado, la pestaña Debug aparece en la barra lateral para acceder a las herramientas de desarrollo.",
     "version": "Wavely v{version}"
   },
   "auth": {

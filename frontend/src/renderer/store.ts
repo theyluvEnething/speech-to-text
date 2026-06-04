@@ -42,6 +42,8 @@ interface AppStore {
   setIsPaused: (v: boolean) => void;
   hidePill: boolean;
   setHidePill: (v: boolean) => void;
+  debugMode: boolean;
+  setDebugMode: (v: boolean) => void;
 
   // auth
   clerkLoaded: boolean;
@@ -79,6 +81,8 @@ export const useStore = create<AppStore>((set) => ({
   setIsPaused: (v) => set({ isPaused: v }),
   hidePill: false,
   setHidePill: (v) => set({ hidePill: v }),
+  debugMode: false,
+  setDebugMode: (v) => set({ debugMode: v }),
 
   clerkLoaded: false,
   isAuthenticated: false,

@@ -358,7 +358,7 @@ function OverlayApp(): React.ReactElement {
 
   const isActive = status !== "idle";
   const [proximityDims, setProximityDims] = useState({ width: 90, height: 30 });
-  const isNear = useProximity(barRef, proximityDims.width, proximityDims.height, menuOverrideActive || isOverNotification);
+  const isNear = useProximity(barRef, proximityDims.width, proximityDims.height, menuOverrideActive || isOverNotification, hidePill && status === "idle");
   const expanded = isActive || (status === "idle" && isNear);
 
   // Expand/shrink the cursor proximity zone based on whether the pill is open

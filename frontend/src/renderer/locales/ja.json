@@ -169,6 +169,8 @@
     "resetFailed": "リセットに失敗しました",
     "unknownError": "不明なエラー",
     "allConversationsCleared": "すべての会話を削除しました",
+    "debugMode": "デバッグモード",
+    "debugModeHint": "有効にすると、サイドバーに開発者ツール用のデバッグタブが表示されます。",
     "version": "Wavely v{version}"
   },
   "auth": {

@@ -171,6 +171,8 @@
     "resetFailed": "Reset failed",
     "unknownError": "Unknown error",
     "allConversationsCleared": "All conversations cleared",
+    "debugMode": "Debug mode",
+    "debugModeHint": "When enabled, the Debug tab appears in the sidebar for accessing developer tools.",
     "version": "Wavely v{version}"
   },
   "auth": {

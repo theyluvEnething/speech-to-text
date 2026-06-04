@@ -38,12 +38,15 @@ declare global {
 
   interface WavelyApi {
     platform: string;
+    isPackaged(): Promise<boolean>;
     getSettings(): Promise<{ hotkey: string; language: string; model: string; provider: string; copyToClipboard: boolean; appLanguage: string; theme: string; hidePill: boolean }>;
     setSettings(settings: Record<string, string | boolean>): Promise<{ success: boolean }>;
     getPaused(): Promise<boolean>;
     togglePaused(): Promise<boolean>;
     getDebugProximity(): Promise<boolean>;
     toggleDebugProximity(): Promise<boolean>;
+    getDebugMode(): Promise<boolean>;
+    setDebugMode(enabled: boolean): Promise<boolean>;
     startRecording(): void;
     stopRecording(): void;
     hideWindow(): void;
