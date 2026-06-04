@@ -303,6 +303,13 @@ export function registerIpcHandlers(
     return store.get("debugProximity");
   });
 
+  ipcMain.handle("debug:send-overlay-notification", (_event, data: { id: string; variant?: string; badge?: string; title: string; description?: string; durationMs?: number }) => {
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.webContents.send("overlay:notification", data);
+    }
+  });
+
   ipcMain.handle("debug:toggleProximity", () => {
     const next = !store.get("debugProximity");
     store.set("debugProximity", next);

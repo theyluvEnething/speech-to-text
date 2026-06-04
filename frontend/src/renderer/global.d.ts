@@ -52,6 +52,7 @@ declare global {
     checkForUpdates(): Promise<{ available: boolean; version: string | null; error: string | null }>;
     downloadAndInstallUpdate(): Promise<void>;
     toggleOverlayTransparency(transparent: boolean): Promise<void>;
+    sendOverlayNotification(data: { id: string; variant?: string; badge?: string; title: string; description?: string; durationMs?: number }): Promise<void>;
     fullReset(): Promise<{ success: boolean }>;
     getVersion(): Promise<string>;
 

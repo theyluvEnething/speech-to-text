@@ -68,6 +68,9 @@ contextBridge.exposeInMainWorld("wavely", {
   toggleOverlayTransparency: (transparent: boolean): Promise<void> =>
     ipcRenderer.invoke("overlay:toggleTransparency", transparent),
 
+  sendOverlayNotification: (data: { id: string; variant?: string; badge?: string; title: string; description?: string; durationMs?: number }): Promise<void> =>
+    ipcRenderer.invoke("debug:send-overlay-notification", data),
+
   checkForUpdates: (): Promise<{ available: boolean; version: string | null; error: string | null }> =>
     ipcRenderer.invoke("app:checkForUpdates"),
 

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { ThemeMode } from "@/styles/theme";
 
-export type Tab = "conversations" | "insights" | "profiles";
+export type Tab = "conversations" | "insights" | "profiles" | "debug";
 export type SettingsPane =
   | "general"
   | "system"

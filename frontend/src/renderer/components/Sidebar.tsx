@@ -12,6 +12,7 @@ import {
   Pause,
   ChevronDown,
   Eye,
+  Bug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore, type Tab } from "@/store";
@@ -122,6 +123,22 @@ function Sidebar(): React.ReactElement {
           </button>
         </div>
       )}
+
+      {/* Debug tab — bottom-aligned below all other nav items */}
+      <div className={cn("pb-1", collapsed ? "px-1.5" : "px-2")}>
+        <button
+          onClick={() => setActiveTab("debug")}
+          title={collapsed ? t("nav.debug", "Debug") : undefined}
+          className={cn(
+            WV_NAV_ITEM,
+            collapsed && "justify-center px-0",
+            activeTab === "debug" && "wv-nav-spike",
+          )}
+        >
+          <Bug className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>{t("nav.debug", "Debug")}</span>}
+        </button>
+      </div>
 
       {/* Collapse toggle */}
       <div className="px-2 pb-1">

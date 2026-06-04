@@ -8,6 +8,7 @@ import SettingsModal from "@/components/SettingsModal";
 import ConversationsView from "@/views/ConversationsView";
 import InsightsView from "@/views/InsightsView";
 import ProfilesView from "@/views/ProfilesView";
+import { DebugView } from "@/views/DebugView";
 
 export function MainApp(): React.ReactElement {
   const { i18n } = useTranslation();
@@ -82,7 +83,9 @@ export function MainApp(): React.ReactElement {
     // anything else is treated as a top-level tab.
     window.wavely.onSwitchTab((target: string) => {
       const panes: SettingsPane[] = ["general", "system", "transcription", "account", "privacy"];
-      if (target === "settings" || target === "app" || target === "debug") {
+      if (target === "debug") {
+        setActiveTab("debug");
+      } else if (target === "settings" || target === "app") {
         openSettings("general");
       } else if (panes.includes(target as SettingsPane)) {
         openSettings(target as SettingsPane);
@@ -100,6 +103,7 @@ export function MainApp(): React.ReactElement {
           {activeTab === "conversations" && <ConversationsView />}
           {activeTab === "insights" && <InsightsView />}
           {activeTab === "profiles" && <ProfilesView />}
+          {activeTab === "debug" && <DebugView />}
         </div>
       </main>
 
