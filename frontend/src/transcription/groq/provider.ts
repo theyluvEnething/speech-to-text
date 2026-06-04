@@ -7,20 +7,19 @@ import { randomUUID } from "crypto";
 import Groq from "groq-sdk";
 import ffmpegPath from "ffmpeg-static";
 import type { TranscriptionProvider, TranscribeOptions, ProviderName } from "../types";
+import { BACKEND_BASE_URL } from "../config";
 
 const execFileAsync = promisify(execFile);
 
 export class GroqProvider implements TranscriptionProvider {
   readonly name: ProviderName = "groq";
   private client: Groq | null = null;
+  private cachedKey: string | null = null;
 
   async transcribe(audio: ArrayBuffer, options: TranscribeOptions): Promise<string> {
     if (!this.client) {
-      const apiKey = process.env["GROQ_API_KEY"];
-      if (!apiKey) {
-        throw new Error("GROQ_API_KEY environment variable is not set");
-      }
-      this.client = new Groq({ apiKey });
+      await this.fetchApiKey();
+      this.client = new Groq({ apiKey: this.cachedKey! });
     }
 
     if (!ffmpegPath) {
@@ -55,5 +54,40 @@ export class GroqProvider implements TranscriptionProvider {
       try { unlinkSync(webmPath); } catch { /* ignore */ }
       try { unlinkSync(flacPath); } catch { /* ignore */ }
     }
+  }
+
+  private async fetchApiKey(): Promise<void> {
+    console.log("[Groq] Fetching API key from backend...");
+    const response = await fetch(`${BACKEND_BASE_URL}/api/get-groq-key`);
+
+    if (!response.ok) {
+      let body: string;
+      try {
+        body = await response.text();
+      } catch {
+        body = "(unable to read response body)";
+      }
+      throw new Error(
+        `Failed to fetch Groq API key from backend (${response.status}): ${body}`,
+      );
+    }
+
+    let data: unknown;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error("Backend returned invalid JSON when fetching Groq API key");
+    }
+
+    if (typeof data !== "object" || data === null || !("api_key" in data)) {
+      throw new Error("Backend response for Groq API key missing 'api_key' field");
+    }
+
+    this.cachedKey = String((data as { api_key: unknown }).api_key);
+    if (!this.cachedKey) {
+      throw new Error("Backend returned empty Groq API key");
+    }
+
+    console.log("[Groq] API key received.");
   }
 }

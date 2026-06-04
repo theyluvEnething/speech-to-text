@@ -1,5 +1,6 @@
 import { DeepgramClient } from "@deepgram/sdk";
 import type { TranscriptionProvider, TranscribeOptions, ProviderName } from "../types";
+import { BACKEND_BASE_URL } from "../config";
 
 export class DeepgramProvider implements TranscriptionProvider {
   readonly name: ProviderName = "deepgram";
@@ -30,7 +31,7 @@ export class DeepgramProvider implements TranscriptionProvider {
 
   private async fetchTemporaryKey(): Promise<string> {
     console.log("[Deepgram] Fetching temporary key from backend...");
-    const BACKEND_URL = "http://157.173.115.116:3000/api/get-deepgram-key";
+    const BACKEND_URL = `${BACKEND_BASE_URL}/api/get-deepgram-key`;
     const response = await fetch(BACKEND_URL);
     if (!response.ok) {
       const body = await response.text();

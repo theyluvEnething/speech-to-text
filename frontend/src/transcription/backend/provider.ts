@@ -1,6 +1,7 @@
 import type { TranscriptionProvider, TranscribeOptions, ProviderName } from "../types";
+import { BACKEND_BASE_URL } from "../config";
 
-const BACKEND_URL = "http://157.173.115.116:3000/api/transcribe";
+const BACKEND_URL = `${BACKEND_BASE_URL}/api/transcribe`;
 
 export class BackendProvider implements TranscriptionProvider {
   readonly name: ProviderName = "backend";

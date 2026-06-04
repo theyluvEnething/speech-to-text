@@ -67,6 +67,18 @@ app.get("/api/get-deepgram-key", async (_req, res) => {
   }
 });
 
+app.get("/api/get-groq-key", (_req, res) => {
+  const apiKey = process.env["GROQ_API_KEY"];
+
+  if (!apiKey || apiKey === "your_key_here") {
+    console.error("[Wavely Backend] GROQ_API_KEY not configured.");
+    return res.status(500).json({ error: "Groq API key not configured." });
+  }
+
+  console.log("[Wavely Backend] Groq API key retrieved successfully.");
+  res.json({ api_key: apiKey });
+});
+
 app.post(
   "/api/transcribe",
   express.raw({ type: "audio/*", limit: "25mb" }),
