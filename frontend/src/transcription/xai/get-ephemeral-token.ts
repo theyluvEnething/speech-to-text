@@ -1,4 +1,5 @@
 import { BACKEND_BASE_URL } from "../config";
+import { getBackendSecret } from "../env";
 
 export interface EphemeralToken {
   client_secret: string;
@@ -13,18 +14,31 @@ export interface EphemeralToken {
  * 15 minutes. The master key never reaches the client.
  *
  * @returns {client_secret, expires_at} — pass client_secret to the
- *   browser WebSocket as a sub-protocol parameter.
+ *   WebSocket as a sub-protocol parameter.
  */
 export async function getXaiEphemeralToken(): Promise<EphemeralToken> {
-  const secret = await window.audio.getBackendSecret();
+  const secret = getBackendSecret();
+  const url = `${BACKEND_BASE_URL}/api/xai-client-secret`;
 
-  const response = await fetch(`${BACKEND_BASE_URL}/api/xai-client-secret`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": secret,
-    },
-  });
+  console.log(`[xAI] getXaiEphemeralToken() — calling backend: POST ${url}`);
+  console.log(`[xAI] Using backend secret: ${secret === "0xDEADBEEF" ? "⚠ PLACEHOLDER (0xDEADBEEF)" : "✓ custom"}`);
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": secret,
+      },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[xAI] Backend fetch failed: ${msg}`);
+    throw new Error(`Cannot reach Wavely backend at ${url}: ${msg}`);
+  }
+
+  console.log(`[xAI] Backend response: HTTP ${response.status} ${response.statusText}`);
 
   if (!response.ok) {
     let body: string;
@@ -33,6 +47,7 @@ export async function getXaiEphemeralToken(): Promise<EphemeralToken> {
     } catch {
       body = "(unable to read response body)";
     }
+    console.error(`[xAI] Backend returned error: ${body}`);
     throw new Error(
       `Failed to fetch xAI ephemeral token (${response.status}): ${body}`,
     );
@@ -42,16 +57,20 @@ export async function getXaiEphemeralToken(): Promise<EphemeralToken> {
   try {
     data = await response.json();
   } catch {
+    console.error("[xAI] Backend response was not valid JSON.");
     throw new Error(
       "Backend returned invalid JSON when fetching xAI ephemeral token",
     );
   }
+
+  console.log("[xAI] Backend response data:", JSON.stringify(data));
 
   if (
     typeof data !== "object" ||
     data === null ||
     !("client_secret" in data)
   ) {
+    console.error("[xAI] Backend response missing 'client_secret':", JSON.stringify(data));
     throw new Error(
       "Backend response for xAI ephemeral token missing 'client_secret' field",
     );
@@ -64,9 +83,17 @@ export async function getXaiEphemeralToken(): Promise<EphemeralToken> {
     throw new Error("Backend returned empty xAI client_secret");
   }
 
+  const expiresAt =
+    typeof typed.expires_at === "number" ? typed.expires_at : null;
+
+  console.log(
+    `[xAI] Ephemeral token received — ` +
+    `secret: ${clientSecret.slice(0, 20)}... (${clientSecret.length} chars), ` +
+    `expires_at: ${expiresAt ?? "unknown"}`,
+  );
+
   return {
     client_secret: clientSecret,
-    expires_at:
-      typeof typed.expires_at === "number" ? typed.expires_at : null,
+    expires_at: expiresAt,
   };
 }

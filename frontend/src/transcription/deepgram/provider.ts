@@ -1,6 +1,7 @@
 import { DeepgramClient } from "@deepgram/sdk";
 import type { TranscriptionProvider, TranscribeOptions, ProviderName } from "../types";
 import { BACKEND_BASE_URL } from "../config";
+import { getBackendSecret } from "../env";
 
 export class DeepgramProvider implements TranscriptionProvider {
   readonly name: ProviderName = "deepgram";
@@ -8,8 +9,18 @@ export class DeepgramProvider implements TranscriptionProvider {
   private client: DeepgramClient | null = null;
 
   async transcribe(audio: ArrayBuffer, options: TranscribeOptions): Promise<string> {
+    console.log(
+      `[Deepgram] transcribe() called — ` +
+      `audio: ${audio.byteLength} bytes, ` +
+      `language: ${options.language}, ` +
+      `model: ${options.model}, ` +
+      `key cached: ${this.cachedKey ? "yes" : "no"}`,
+    );
+
     try {
-      return await this.transcribeOnce(audio, options);
+      const result = await this.transcribeOnce(audio, options);
+      console.log(`[Deepgram] Transcription result: "${result}" (${result.length} chars)`);
+      return result;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       const status = (err as { status?: number }).status;
@@ -20,33 +31,54 @@ export class DeepgramProvider implements TranscriptionProvider {
         msg.toLowerCase().includes("expired");
 
       if (isAuthError) {
-        console.log("[Deepgram] Auth error — fetching fresh key and retrying...");
+        console.log("[Deepgram] Auth error detected — fetching fresh key and retrying...");
         await this.fetchTemporaryKey();
-        return await this.transcribeOnce(audio, options);
+        console.log("[Deepgram] Retrying transcription with fresh key...");
+        const result = await this.transcribeOnce(audio, options);
+        console.log(`[Deepgram] Retry result: "${result}" (${result.length} chars)`);
+        return result;
       }
 
+      console.error(`[Deepgram] Transcription failed: ${msg}`);
       throw err;
     }
   }
 
   private async fetchTemporaryKey(): Promise<string> {
-    console.log("[Deepgram] Fetching temporary key from backend...");
-    const BACKEND_URL = `${BACKEND_BASE_URL}/api/get-deepgram-key`;
-    const secret = await window.audio.getBackendSecret();
-    const response = await fetch(BACKEND_URL, {
-      headers: { "x-api-key": secret },
-    });
+    const secret = getBackendSecret();
+    const url = `${BACKEND_BASE_URL}/api/get-deepgram-key`;
+
+    console.log(`[Deepgram] fetchTemporaryKey() — calling backend: GET ${url}`);
+    console.log(`[Deepgram] Using backend secret: ${secret === "0xDEADBEEF" ? "⚠ PLACEHOLDER (0xDEADBEEF)" : "✓ custom"}`);
+
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        headers: { "x-api-key": secret },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[Deepgram] Backend fetch failed: ${msg}`);
+      throw new Error(`Cannot reach Wavely backend at ${url}: ${msg}`);
+    }
+
+    console.log(`[Deepgram] Backend response: HTTP ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
       const body = await response.text();
+      console.error(`[Deepgram] Backend returned error: ${body}`);
       throw new Error(`Backend returned ${response.status}: ${body}`);
     }
+
     const data = await response.json();
     if (!data.api_key) {
+      console.error("[Deepgram] Backend response missing 'api_key':", JSON.stringify(data));
       throw new Error("Backend response missing api_key");
     }
+
     this.cachedKey = String(data.api_key);
-    this.client = null;
-    console.log("[Deepgram] Temporary key received.");
+    this.client = null; // Force client recreation with new key
+    console.log(`[Deepgram] Temporary key received (${this.cachedKey.length} chars, starts with: ${this.cachedKey.slice(0, 12)}...)`);
     return this.cachedKey;
   }
 
@@ -55,6 +87,7 @@ export class DeepgramProvider implements TranscriptionProvider {
       if (!this.cachedKey) {
         throw new Error("No Deepgram API key available. Ensure the backend is running.");
       }
+      console.log(`[Deepgram] Creating DeepgramClient with cached key.`);
       this.client = new DeepgramClient({ apiKey: this.cachedKey });
     }
     return this.client;
@@ -65,6 +98,8 @@ export class DeepgramProvider implements TranscriptionProvider {
     options: TranscribeOptions,
   ): Promise<string> {
     const client = this.getClient();
+
+    console.log(`[Deepgram] Sending ${audio.byteLength} bytes to Deepgram — model: ${options.model}, language: ${options.language}`);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response: any = await client.listen.v1.media.transcribeFile(
@@ -82,6 +117,8 @@ export class DeepgramProvider implements TranscriptionProvider {
     const transcript =
       response.results?.channels?.[0]?.alternatives?.[0]?.transcript;
 
-    return (transcript as string)?.trim() ?? "";
+    const text = (transcript as string)?.trim() ?? "";
+    console.log(`[Deepgram] Raw response transcript: "${text}"`);
+    return text;
   }
 }
