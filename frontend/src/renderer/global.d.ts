@@ -79,6 +79,8 @@ declare global {
     sendBuffer(buffer: ArrayBuffer): void;
     sendLevels(data: LevelData): void;
     getApiKey(): Promise<string>;
+    /** @deprecated Replace with Clerk session token — see backend/index.js */
+    getBackendSecret(): Promise<string>;
   }
 
   interface OverlayApi {

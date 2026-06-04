@@ -11,7 +11,7 @@ export interface ServerEvent {
   error?: { message: string; code: string };
 }
 
-export type ProviderName = "deepgram" | "groq" | "openai" | "backend";
+export type ProviderName = "deepgram" | "groq" | "openai" | "xai" | "backend";
 
 export interface TranscribeOptions {
   model: string;

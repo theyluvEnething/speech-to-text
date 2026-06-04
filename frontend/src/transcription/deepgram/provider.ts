@@ -32,7 +32,10 @@ export class DeepgramProvider implements TranscriptionProvider {
   private async fetchTemporaryKey(): Promise<string> {
     console.log("[Deepgram] Fetching temporary key from backend...");
     const BACKEND_URL = `${BACKEND_BASE_URL}/api/get-deepgram-key`;
-    const response = await fetch(BACKEND_URL);
+    const secret = await window.audio.getBackendSecret();
+    const response = await fetch(BACKEND_URL, {
+      headers: { "x-api-key": secret },
+    });
     if (!response.ok) {
       const body = await response.text();
       throw new Error(`Backend returned ${response.status}: ${body}`);

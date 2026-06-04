@@ -383,6 +383,18 @@ export function registerIpcHandlers(
 
     return { success: true };
   });
+
+  // ── Backend API secret ──────────────────────────────────────
+  //
+  // FIXME(auth): This returns the shared secret used to call the
+  // Wavely backend. Currently hardcoded to match the backend's
+  // default BACKEND_API_SECRET ("0xDEADBEEF"). Replace this with
+  // a Clerk session token from the renderer once proper auth is
+  // implemented. See backend/index.js for the full migration plan.
+
+  ipcMain.handle("backend:getApiSecret", () => {
+    return process.env["BACKEND_API_SECRET"] || "0xDEADBEEF";
+  });
 }
 
 export { uuid };

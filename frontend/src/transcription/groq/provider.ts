@@ -59,7 +59,10 @@ export class GroqProvider implements TranscriptionProvider {
 
   private async fetchApiKey(): Promise<void> {
     console.log("[Groq] Fetching API key from backend...");
-    const response = await fetch(`${BACKEND_BASE_URL}/api/get-groq-key`);
+    const secret = await window.audio.getBackendSecret();
+    const response = await fetch(`${BACKEND_BASE_URL}/api/get-groq-key`, {
+      headers: { "x-api-key": secret },
+    });
 
     if (!response.ok) {
       let body: string;

@@ -2,6 +2,7 @@ import { BackendProvider } from "./backend/provider";
 import { DeepgramProvider } from "./deepgram/provider";
 import { GroqProvider } from "./groq/provider";
 import { OpenAIProvider } from "./openai/provider";
+import { XaiProvider } from "./xai/provider";
 import type { TranscriptionProvider, ProviderName } from "./types";
 
 const instances = new Map<ProviderName, TranscriptionProvider>();
@@ -21,6 +22,9 @@ export function getProvider(name: ProviderName): TranscriptionProvider {
       case "openai":
         instances.set(name, new OpenAIProvider());
         break;
+      case "xai":
+        instances.set(name, new XaiProvider());
+        break;
       default:
         throw new Error(`Unknown provider: ${name satisfies never}`);
     }
@@ -30,4 +34,11 @@ export function getProvider(name: ProviderName): TranscriptionProvider {
 
 export { RealtimeTranscriber, getApiKey } from "./groq/index";
 export type { TranscriptionCallback } from "./groq/index";
-export type { TranscriptionProvider, ProviderName, TranscribeOptions, ServerEvent } from "./types";
+export { getXaiEphemeralToken } from "./xai/index";
+export type { EphemeralToken } from "./xai/index";
+export type {
+  TranscriptionProvider,
+  ProviderName,
+  TranscribeOptions,
+  ServerEvent,
+} from "./types";

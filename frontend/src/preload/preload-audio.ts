@@ -28,4 +28,10 @@ contextBridge.exposeInMainWorld("audio", {
   getApiKey: (): Promise<string> => {
     return ipcRenderer.invoke("audio:getApiKey");
   },
+
+  // FIXME(auth): Returns the backend shared secret for x-api-key
+  // header. Replace with Clerk token when proper auth is added.
+  getBackendSecret: (): Promise<string> => {
+    return ipcRenderer.invoke("backend:getApiSecret");
+  },
 });
