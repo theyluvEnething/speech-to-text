@@ -1,6 +1,6 @@
 {
   "name": "wavely",
-  "version": "1.1.7",
+  "version": "1.2.0",
   "description": "Cross-platform push-to-talk speech-to-text using Deepgram — Wavely",
   "main": "dist/main/index.js",
   "scripts": {
