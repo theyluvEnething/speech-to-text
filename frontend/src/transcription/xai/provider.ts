@@ -4,6 +4,7 @@ import type {
   ProviderName,
 } from "../types";
 import { getXaiEphemeralToken } from "./get-ephemeral-token";
+import { getTokenCache } from "../token-cache";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // WebSocket abstraction
@@ -319,6 +320,12 @@ export class XaiProvider implements TranscriptionProvider {
             `[xAI] Server returned HTTP ${statusCode} — ` +
             `ephemeral token may be invalid or expired.`,
           );
+
+          // 401 / 403 → token rejected, invalidate cache for next attempt
+          if (statusCode === 401 || statusCode === 403) {
+            getTokenCache().invalidate("xai");
+          }
+
           clearTimeout(timeout);
           fail(
             new Error(

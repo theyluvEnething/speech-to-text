@@ -120,8 +120,12 @@ app.get("/api/get-deepgram-key", requireApiSecret, async (_req, res) => {
       return res.status(500).json({ error: "No API key in response." });
     }
 
-    console.log("[Wavely Backend] Deepgram temporary key generated successfully.");
-    res.json({ api_key: tempKey });
+    const expiresAt = Math.floor(Date.now() / 1000) + 21600; // 6 hours
+
+    console.log(
+      `[Wavely Backend] Deepgram temporary key generated — expires in 6h (${new Date(expiresAt * 1000).toISOString()})`,
+    );
+    res.json({ api_key: tempKey, expires_at: expiresAt });
   } catch (err) {
     console.error("[Wavely Backend] Error contacting Deepgram:", err.message);
     res.status(500).json({ error: "Internal server error." });
@@ -146,8 +150,15 @@ app.get("/api/get-groq-key", requireApiSecret, (_req, res) => {
     return res.status(500).json({ error: "Groq API key not configured." });
   }
 
-  console.log("[Wavely Backend] Groq API key retrieved successfully.");
-  res.json({ api_key: apiKey });
+  // Groq has no ephemeral-token endpoint — the key is long-lived.
+  // Synthesize a 30-day expiry so the frontend token cache can treat
+  // all providers uniformly. On day 29 the cache will auto-refresh.
+  const expiresAt = Math.floor(Date.now() / 1000) + 2_592_000; // 30 days
+
+  console.log(
+    `[Wavely Backend] Groq API key retrieved — synthetic expiry in 30d (${new Date(expiresAt * 1000).toISOString()})`,
+  );
+  res.json({ api_key: apiKey, expires_at: expiresAt });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -210,10 +221,14 @@ app.post("/api/openai-client-secret", requireApiSecret, async (_req, res) => {
       });
     }
 
-    console.log("[Wavely Backend] OpenAI ephemeral token generated successfully.");
+    const expiresAt = data.expires_at ?? Math.floor(Date.now() / 1000) + 900;
+
+    console.log(
+      `[Wavely Backend] OpenAI ephemeral token generated — expires at ${new Date(expiresAt * 1000).toISOString()}`,
+    );
     res.json({
-      client_secret: clientSecret,
-      expires_at: data.expires_at ?? null,
+      api_key: clientSecret,
+      expires_at: expiresAt,
     });
   } catch (err) {
     console.error("[Wavely Backend] Error contacting OpenAI:", err.message);
@@ -288,10 +303,14 @@ app.post("/api/xai-client-secret", requireApiSecret, async (_req, res) => {
       });
     }
 
-    console.log("[Wavely Backend] xAI ephemeral token generated successfully.");
+    const expiresAt = data.expires_at ?? Math.floor(Date.now() / 1000) + 300;
+
+    console.log(
+      `[Wavely Backend] xAI ephemeral token generated — expires at ${new Date(expiresAt * 1000).toISOString()}`,
+    );
     res.json({
-      client_secret: clientSecret,
-      expires_at: data.expires_at ?? null,
+      api_key: clientSecret,
+      expires_at: expiresAt,
     });
   } catch (err) {
     console.error("[Wavely Backend] Error contacting xAI:", err.message);
