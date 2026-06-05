@@ -81,8 +81,11 @@ class TokenCache {
     // Fast path — token is still fresh
     if (cached && Date.now() < cached.expiresAtMs - REFRESH_BUFFER_MS) {
       const remaining = Math.round((cached.expiresAtMs - Date.now()) / 1000);
+      const minutes = Math.floor(remaining / 60);
+      const seconds = remaining % 60;
       console.log(
-        `[TokenCache] ${provider}: cache hit — ${remaining}s until expiry`,
+        `[TokenCache] ♻️  ${provider.toUpperCase()} — REUSING cached key ` +
+        `(valid for ${minutes}m ${seconds}s more)`,
       );
       return cached.token;
     }
@@ -91,10 +94,12 @@ class TokenCache {
     if (cached) {
       const overdue = Math.round((Date.now() - cached.expiresAtMs) / 1000);
       console.log(
-        `[TokenCache] ${provider}: ${overdue > 0 ? `expired ${overdue}s ago` : "within refresh window"} — fetching fresh token...`,
+        `[TokenCache] ⏰ ${provider.toUpperCase()} — key ${overdue > 0 ? `EXPIRED ${overdue}s ago` : "about to expire"}, fetching new one...`,
       );
     } else {
-      console.log(`[TokenCache] ${provider}: no cached token — fetching...`);
+      console.log(
+        `[TokenCache] 🆕 ${provider.toUpperCase()} — no key in cache, fetching from backend...`,
+      );
     }
 
     const fresh = await this.fetch(provider);
@@ -104,9 +109,13 @@ class TokenCache {
     });
 
     const lifetime = Math.round((fresh.expires_at * 1000 - Date.now()) / 1000);
+    const minutes = Math.floor(lifetime / 60);
+    const seconds = lifetime % 60;
     console.log(
-      `[TokenCache] ${provider}: token cached — ${lifetime}s lifetime, ` +
-      `expires ${new Date(fresh.expires_at * 1000).toISOString()}`,
+      `[TokenCache] ✅ ${provider.toUpperCase()} — KEY STORED ` +
+      `(prefix: ${fresh.api_key.slice(0, 12)}..., ` +
+      `TTL: ${minutes}m ${seconds}s, ` +
+      `expires: ${new Date(fresh.expires_at * 1000).toLocaleTimeString()})`,
     );
 
     return fresh.api_key;
@@ -120,9 +129,16 @@ class TokenCache {
    */
   invalidate(provider: ProviderName): void {
     const existed = this.store.delete(provider);
-    console.log(
-      `[TokenCache] ${provider}: ${existed ? "invalidated (401 response)" : "no cache entry to invalidate"}`,
-    );
+    if (existed) {
+      console.log(
+        `[TokenCache] 🗑️  ${provider.toUpperCase()} — KEY INVALIDATED (401/unauthorized), ` +
+        `will fetch fresh token on next request`,
+      );
+    } else {
+      console.log(
+        `[TokenCache] ⚠️  ${provider.toUpperCase()} — invalidate() called but no key was cached`,
+      );
+    }
   }
 
   /** Drop ALL cached tokens and pending fetches. Useful for testing. */
@@ -147,7 +163,9 @@ class TokenCache {
     // Deduplicate in-flight requests
     const existing = this.pending.get(provider);
     if (existing) {
-      console.log(`[TokenCache] ${provider}: joining in-flight fetch...`);
+      console.log(
+        `[TokenCache] 🔗 ${provider.toUpperCase()} — another caller already fetching, waiting...`,
+      );
       return existing;
     }
 
@@ -155,7 +173,10 @@ class TokenCache {
     const method = METHOD[provider];
     const secret = getBackendSecret();
 
-    console.log(`[TokenCache] ${provider}: calling backend — ${method} ${url}`);
+    console.log(
+      `[TokenCache] 📡 ${provider.toUpperCase()} — REQUESTING key from backend ` +
+      `(${method} ${url})`,
+    );
 
     const promise = (async (): Promise<TokenResponse> => {
       let response: Response;
@@ -169,13 +190,17 @@ class TokenCache {
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
+        console.error(
+          `[TokenCache] ❌ ${provider.toUpperCase()} — BACKEND UNREACHABLE: ${msg}`,
+        );
         throw new Error(
           `Cannot reach Wavely backend at ${url}: ${msg}`,
         );
       }
 
       console.log(
-        `[TokenCache] ${provider}: backend responded HTTP ${response.status}`,
+        `[TokenCache] 📥 ${provider.toUpperCase()} — backend responded HTTP ${response.status} ` +
+        `(${response.ok ? "OK" : "ERROR"})`,
       );
 
       if (!response.ok) {
