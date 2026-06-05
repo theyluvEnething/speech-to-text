@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Sparkles, Settings, Check, XCircle, ChevronDown } from "lucide-react";
+import { Settings, Check, XCircle, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfileIcon from "@/components/ProfileIcon";
 import * as Popover from "@radix-ui/react-popover";
@@ -620,7 +620,6 @@ function OverlayApp(): React.ReactElement {
   const meta = activeStatus ? statusColor[activeStatus] : null;
   const showSideButtons =
     expanded && status !== "recording" && status !== "transcribing";
-  const hasText = text.length > 0;
 
   const displayText = getDisplayText(text, 4, 40);
   const lineCount = displayText.split("\n").length;
@@ -786,24 +785,11 @@ function OverlayApp(): React.ReactElement {
                 transition={{ ...springPresets.button, delay: 0.05 }}
               >
                 <SideButton
-                  tooltip={
-                    hasText ? (
-                      t("overlay.polishTooltip")
-                    ) : (
-                      t("overlay.openSettings")
-                    )
-                  }
-                  onClick={hasText ? undefined : handleOpenSettings}
-                  ariaLabel={hasText ? t("overlay.polishText") : t("overlay.openSettings")}
+                  tooltip={t("overlay.openSettings")}
+                  onClick={handleOpenSettings}
+                  ariaLabel={t("overlay.openSettings")}
                 >
-                  {hasText ? (
-                    <Sparkles
-                      className="size-[14px] text-pink-300"
-                      strokeWidth={2.25}
-                    />
-                  ) : (
-                    <Settings className="size-[14px]" strokeWidth={2.25} />
-                  )}
+                  <Settings className="size-[14px]" strokeWidth={2.25} />
                 </SideButton>
                 <Tooltip.Provider delayDuration={200}>
                   <Tooltip.Root>

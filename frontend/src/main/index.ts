@@ -37,7 +37,7 @@ const overlayLabels: Record<string, Record<string, string>> = {
  * using the key `errors.<code>`. This keeps translations in a single
  * source of truth instead of duplicating them in the main process.
  */
-type ErrorCode = "backendUnreachable" | "providerNoKey" | "audioEmpty" | "audioTooShort" | "unableToTranscribe";
+type ErrorCode = "backendUnreachable" | "providerNoKey" | "audioEmpty" | "audioTooShort" | "rateLimited" | "unableToTranscribe";
 
 interface ErrorPayload {
   code: ErrorCode;
@@ -175,6 +175,8 @@ function startRecording(): void {
         showTranscriptionError("backendUnreachable");
       } else if (msg.includes("not configured") || msg.includes("no api key") || msg.includes("empty")) {
         showTranscriptionError("providerNoKey");
+      } else if (msg.includes("credits") || msg.includes("exhausted") || msg.includes("spending limit") || msg.includes("429") || msg.includes("rate")) {
+        showTranscriptionError("rateLimited");
       } else {
         showTranscriptionError("unableToTranscribe", err.message);
       }
@@ -244,6 +246,13 @@ function resolveTranscribeOptions(): { language: string; model: string; provider
 
 function handleAudioBuffer(buffer: ArrayBuffer): void {
   const overlay = getOverlayWindow();
+
+  // Guard: if an error was already shown (e.g. pre-fetch failure stopped
+  // recording mid-way), don't process the truncated audio buffer.
+  if (state === "idle") {
+    console.log("[Wavely] Skipping audio buffer — error already shown.");
+    return;
+  }
 
   if (buffer.byteLength === 0) {
     console.log("[Wavely] No audio captured.");

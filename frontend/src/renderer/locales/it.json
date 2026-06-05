@@ -282,6 +282,7 @@
     "providerNoKey": "Nessuna chiave API configurata per questo provider. Controlla il file .env del backend.",
     "audioEmpty": "Nessun audio rilevato. Parla più forte o controlla il microfono.",
     "audioTooShort": "Registrazione troppo breve. Tieni premuto il tasto di scelta rapida più a lungo mentre parli.",
-    "unableToTranscribe": "Impossibile completare la trascrizione"
+    "unableToTranscribe": "Impossibile completare la trascrizione",
+    "rateLimited": "Limite API raggiunto. Controlla i crediti o il limite di spesa."
   }
 }

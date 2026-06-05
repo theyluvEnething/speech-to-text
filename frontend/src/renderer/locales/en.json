@@ -286,6 +286,7 @@
     "providerNoKey": "No API key configured for this provider. Check your backend .env file.",
     "audioEmpty": "No audio detected. Try speaking louder or check your microphone.",
     "audioTooShort": "Recording too short. Hold the hotkey longer while speaking.",
-    "unableToTranscribe": "Could not complete transcription"
+    "unableToTranscribe": "Could not complete transcription",
+    "rateLimited": "API rate limit reached. Check your credits or spending limit."
   }
 }

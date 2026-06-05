@@ -282,6 +282,7 @@
     "providerNoKey": "Kein API-Key für diesen Anbieter konfiguriert. Überprüfe die .env-Datei des Backends.",
     "audioEmpty": "Kein Audio erkannt. Sprich lauter oder überprüfe dein Mikrofon.",
     "audioTooShort": "Aufnahme zu kurz. Halte die Hotkey-Taste länger gedrückt während du sprichst.",
-    "unableToTranscribe": "Transkription konnte nicht abgeschlossen werden"
+    "unableToTranscribe": "Transkription konnte nicht abgeschlossen werden",
+    "rateLimited": "API-Limit erreicht. Überprüfe dein Guthaben oder Ausgabenlimit."
   }
 }
