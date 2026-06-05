@@ -280,5 +280,12 @@
     "cancel": "Cancel",
     "update": "Update",
     "downloadFailed": "Download failed"
+  },
+  "errors": {
+    "backendUnreachable": "Cannot reach backend. Check your connection and try again.",
+    "providerNoKey": "No API key configured for this provider. Check your backend .env file.",
+    "audioEmpty": "No audio detected. Try speaking louder or check your microphone.",
+    "audioTooShort": "Recording too short. Hold the hotkey longer while speaking.",
+    "unableToTranscribe": "Could not complete transcription"
   }
 }

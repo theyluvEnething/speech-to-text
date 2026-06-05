@@ -276,5 +276,12 @@
     "cancel": "Cancelar",
     "update": "Actualizar",
     "downloadFailed": "Error en la descarga"
+  },
+  "errors": {
+    "backendUnreachable": "No se puede conectar con el backend. Revisa tu conexión e inténtalo de nuevo.",
+    "providerNoKey": "No hay clave API configurada para este proveedor. Revisa el archivo .env del backend.",
+    "audioEmpty": "No se detectó audio. Habla más fuerte o revisa tu micrófono.",
+    "audioTooShort": "Grabación demasiado corta. Mantén presionada la tecla de acceso rápido más tiempo mientras hablas.",
+    "unableToTranscribe": "No se pudo completar la transcripción"
   }
 }

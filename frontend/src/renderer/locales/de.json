@@ -276,5 +276,12 @@
     "cancel": "Abbrechen",
     "update": "Aktualisieren",
     "downloadFailed": "Download fehlgeschlagen"
+  },
+  "errors": {
+    "backendUnreachable": "Backend nicht erreichbar. Überprüfe deine Verbindung und versuche es erneut.",
+    "providerNoKey": "Kein API-Key für diesen Anbieter konfiguriert. Überprüfe die .env-Datei des Backends.",
+    "audioEmpty": "Kein Audio erkannt. Sprich lauter oder überprüfe dein Mikrofon.",
+    "audioTooShort": "Aufnahme zu kurz. Halte die Hotkey-Taste länger gedrückt während du sprichst.",
+    "unableToTranscribe": "Transkription konnte nicht abgeschlossen werden"
   }
 }
