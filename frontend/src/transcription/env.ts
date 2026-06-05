@@ -1,67 +1,32 @@
 /**
- * Environment-aware helpers for the transcription module.
+ * Backend API shared secret.
  *
- * This module runs in TWO different contexts within Electron:
+ * Hardcoded to match the backend's default BACKEND_API_SECRET ("0xDEADBEEF").
+ * Both sides must agree on this value for the x-api-key header check to pass.
  *
- *   MAIN PROCESS (Node.js)
- *     - Has `process.env` for environment variables
- *     - Has `fetch` (Node 22 native)
- *     - Does NOT have `window`, `WebSocket`, `RTCPeerConnection`
- *     - Used by: GroqProvider, DeepgramProvider, XaiProvider, etc.
- *
- *   RENDERER PROCESS (BrowserWindow)
- *     - Has all browser APIs (`window`, `WebSocket`, `RTCPeerConnection`)
- *     - Does NOT have direct `process.env` access
- *     - Gets secrets via `window.audio.getBackendSecret()` IPC bridge
- *     - Used by: RealtimeTranscriber, UI components
- *
- * This helper provides a unified way to get the backend API secret
- * regardless of which context the code runs in.
+ * FIXME(auth): Replace this entire mechanism with Clerk session tokens.
+ * The current shared-secret approach means anyone with the app binary can
+ * call the backend — it prevents casual snooping but is not real security.
+ * See backend/index.js for the full Clerk migration plan.
  */
+const BACKEND_API_SECRET = "0xDEADBEEF";
 
 /**
  * Returns the backend API shared secret for x-api-key header auth.
  *
- * In the main process this reads from process.env directly.
- * In the renderer it uses the preload IPC bridge.
- *
- * FIXME(auth): Replace this entire mechanism with Clerk session tokens.
- * The default "0xDEADBEEF" placeholder is intentionally obvious.
+ * Always returns the hardcoded placeholder. No environment variable lookup
+ * so the packaged app works identically on any machine.
  */
 export function getBackendSecret(): string {
-  // Main process path — synchronous, always available
-  if (typeof process !== "undefined" && process.env) {
-    const secret = process.env["BACKEND_API_SECRET"] || "0xDEADBEEF";
-    return secret;
-  }
-
-  // Fallback for any context where process.env isn't available
-  return "0xDEADBEEF";
+  return BACKEND_API_SECRET;
 }
 
 /**
- * Returns the backend API shared secret asynchronously.
+ * Async variant — same value, returned as a Promise.
  *
  * Use this in renderer-side code that has access to window.audio.
- * Falls back to the sync getBackendSecret() if the IPC bridge
- * is unavailable.
+ * The IPC bridge is not used here; the secret is bundled in the app.
  */
 export async function getBackendSecretAsync(): Promise<string> {
-  // Renderer path — uses IPC bridge
-  if (
-    typeof window !== "undefined" &&
-    window.audio &&
-    typeof window.audio.getBackendSecret === "function"
-  ) {
-    try {
-      return await window.audio.getBackendSecret();
-    } catch {
-      console.warn(
-        "[env] window.audio.getBackendSecret() failed, falling back to sync",
-      );
-    }
-  }
-
-  // Fallback
-  return getBackendSecret();
+  return BACKEND_API_SECRET;
 }
