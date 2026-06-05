@@ -213,7 +213,9 @@
     "openSettings": "Einstellungen öffnen",
     "recording": "Aufnahme",
     "transcribing": "Transkribieren",
-    "polishTooltip": "Klicken oder Win Alt 1 drücken zum Polieren"
+    "polishTooltip": "Klicken oder Win Alt 1 drücken zum Polieren",
+    "hidePill": "Pop-up ausblenden",
+    "showPill": "Pop-up wieder einblenden"
   },
   "insights": {
     "title": "Einblicke",

@@ -213,7 +213,9 @@
     "openSettings": "設定を開く",
     "recording": "録音中",
     "transcribing": "文字起こし中",
-    "polishTooltip": "クリックまたはWin Alt 1でテキストを整形"
+    "polishTooltip": "クリックまたはWin Alt 1でテキストを整形",
+    "hidePill": "ポップアップを非表示",
+    "showPill": "ポップアップを再表示"
   },
   "insights": {
     "title": "インサイト",

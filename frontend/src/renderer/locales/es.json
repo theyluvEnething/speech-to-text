@@ -213,7 +213,9 @@
     "openSettings": "Abrir configuración",
     "recording": "Grabando",
     "transcribing": "Transcribiendo",
-    "polishTooltip": "Haz clic o presiona Win Alt 1 para pulir"
+    "polishTooltip": "Haz clic o presiona Win Alt 1 para pulir",
+    "hidePill": "Ocultar pop-up",
+    "showPill": "Mostrar pop-up de nuevo"
   },
   "insights": {
     "title": "Estadísticas",

@@ -657,16 +657,12 @@ function OverlayApp(): React.ReactElement {
 
   return (
     <div className="relative w-full h-full overflow-visible">
-      {/* Fixed bottom anchor — notification + pill stacked together, bottom-snapped */}
+      {/* Fixed bottom anchor — notification always visible, pill row can be hidden */}
       <div
-        className="absolute left-0 right-0 flex flex-col items-center gap-2 transition-opacity duration-300"
-        style={{
-          bottom: `${PILL_BOTTOM_MARGIN}px`,
-          opacity: hidePill && status === "idle" ? 0 : undefined,
-          pointerEvents: hidePill && status === "idle" ? "none" : undefined,
-        }}
+        className="absolute left-0 right-0 flex flex-col items-center gap-2"
+        style={{ bottom: `${PILL_BOTTOM_MARGIN}px` }}
       >
-        {/* Notification card — sits directly above the pill */}
+        {/* Notification card — always visible regardless of pill state */}
         <AnimatePresence>
           {notification && (
             <div ref={notificationRef}>
@@ -680,10 +676,14 @@ function OverlayApp(): React.ReactElement {
           )}
         </AnimatePresence>
 
-        {/* Pill row — side buttons are absolutely positioned so the pill stays perfectly centered */}
+        {/* Pill row — hidden when collapsed and idle, always visible during active status */}
         <div
           ref={barRef}
-          className="relative flex items-center justify-center overflow-visible"
+          className="relative flex items-center justify-center overflow-visible transition-opacity duration-300"
+          style={{
+            opacity: hidePill && status === "idle" ? 0 : undefined,
+            pointerEvents: hidePill && status === "idle" ? "none" : undefined,
+          }}
         >
           {/* Left: profile quick-swap button — absolutely positioned */}
           <AnimatePresence>
@@ -807,10 +807,15 @@ function OverlayApp(): React.ReactElement {
                     <Tooltip.Trigger asChild>
                       <button
                         type="button"
-                        aria-label={t("overlay.hidePill")}
+                        aria-label={hidePill ? t("overlay.showPill") : t("overlay.hidePill")}
                         onClick={() => {
-                          setHidePill(true);
-                          window.overlay.setSettings({ hidePill: true });
+                          const next = !hidePill;
+                          setHidePill(next);
+                          window.overlay.setSettings({ hidePill: next });
+                          // If collapsing while text is showing, dismiss it immediately
+                          if (next && status === "inserting") {
+                            goIdle();
+                          }
                         }}
                         className="size-[18px] grid place-items-center rounded-full backdrop-blur-md text-ink-2 hover:text-ink transition-colors"
                         style={{
@@ -818,7 +823,11 @@ function OverlayApp(): React.ReactElement {
                           border: "1px solid var(--line)",
                         }}
                       >
-                        <ChevronDown className="size-[8px]" strokeWidth={2.5} />
+                        {hidePill ? (
+                          <ChevronUp className="size-[8px]" strokeWidth={2.5} />
+                        ) : (
+                          <ChevronDown className="size-[8px]" strokeWidth={2.5} />
+                        )}
                       </button>
                     </Tooltip.Trigger>
                     <Tooltip.Portal>
@@ -828,7 +837,7 @@ function OverlayApp(): React.ReactElement {
                         collisionPadding={16}
                         className="z-[9999] px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md text-[11px] font-medium text-white border border-white/5 shadow-lg animate-in fade-in zoom-in-95 duration-150"
                       >
-                        {t("overlay.hidePill")}
+                        {hidePill ? t("overlay.showPill") : t("overlay.hidePill")}
                         <Tooltip.Arrow className="fill-black/90" />
                       </Tooltip.Content>
                     </Tooltip.Portal>
@@ -839,29 +848,6 @@ function OverlayApp(): React.ReactElement {
           </AnimatePresence>
         </div>
       </div>
-
-      {/* Persistent unhide button — only visible when pill is collapsed */}
-      {hidePill && status === "idle" && (
-        <div
-          className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center"
-          style={{ bottom: `${PILL_BOTTOM_MARGIN + 4}px` }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              setHidePill(false);
-              window.overlay.setSettings({ hidePill: false });
-            }}
-            className="size-[20px] grid place-items-center rounded-full backdrop-blur-md text-ink-2 hover:text-ink transition-colors"
-            style={{
-              background: "color-mix(in srgb, var(--raised) 92%, transparent)",
-              border: "1px solid var(--line)",
-            }}
-          >
-            <ChevronUp className="size-[9px]" strokeWidth={2.5} />
-          </button>
-        </div>
-      )}
 
       {debugProximity && (
         <ProximityDebugOverlay

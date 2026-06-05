@@ -213,7 +213,9 @@
     "openSettings": "Apri impostazioni",
     "recording": "Registrazione",
     "transcribing": "Trascrizione",
-    "polishTooltip": "Clicca o premi Win Alt 1 per raffinare"
+    "polishTooltip": "Clicca o premi Win Alt 1 per raffinare",
+    "hidePill": "Nascondi pop-up",
+    "showPill": "Mostra di nuovo pop-up"
   },
   "insights": {
     "title": "Analisi",
