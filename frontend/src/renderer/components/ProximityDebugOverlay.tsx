@@ -12,6 +12,7 @@ interface Props {
   profileButtonRef: React.RefObject<HTMLButtonElement | null>;
   popoverContentRef: React.RefObject<HTMLDivElement | null>;
   notificationRef: React.RefObject<HTMLDivElement | null>;
+  rightButtonsRef: React.RefObject<HTMLDivElement | null>;
   isProfileMenuOpen: boolean;
   menuOverrideActive?: boolean;
   expanded?: boolean;
@@ -27,6 +28,7 @@ export function ProximityDebugOverlay({
   profileButtonRef,
   popoverContentRef,
   notificationRef,
+  rightButtonsRef,
   isProfileMenuOpen,
   menuOverrideActive,
   expanded = false,
@@ -38,12 +40,14 @@ export function ProximityDebugOverlay({
     popover: Rect | null;
     safeZone: Rect | null;
     notification: Rect | null;
+    rightButtons: Rect | null;
   }>({
     pill: null,
     button: null,
     popover: null,
     safeZone: null,
     notification: null,
+    rightButtons: null,
   });
 
   const pillW = expanded ? 260 : 90;
@@ -97,7 +101,18 @@ export function ProximityDebugOverlay({
       }
     }
 
-    // 4. Notification card bounds (live DOM)
+    // 4. Right buttons bounds (live DOM)
+    const rightEl = rightButtonsRef.current;
+    const rightRect: Rect | null = rightEl
+      ? {
+          x: rightEl.getBoundingClientRect().x,
+          y: rightEl.getBoundingClientRect().y,
+          width: rightEl.getBoundingClientRect().width,
+          height: rightEl.getBoundingClientRect().height,
+        }
+      : null;
+
+    // 5. Notification card bounds (live DOM)
     const notifEl = notificationRef.current;
     const notifRect: Rect | null = notifEl
       ? {
@@ -114,8 +129,9 @@ export function ProximityDebugOverlay({
       popover: popRect,
       safeZone,
       notification: notifRect,
+      rightButtons: rightRect,
     });
-  }, [barRef, profileButtonRef, popoverContentRef, notificationRef, isProfileMenuOpen, menuOverrideActive, expanded, pillW, pillH, cachedMenuZones]);
+  }, [barRef, profileButtonRef, popoverContentRef, notificationRef, rightButtonsRef, isProfileMenuOpen, menuOverrideActive, expanded, pillW, pillH, cachedMenuZones]);
 
   useEffect(() => {
     updateRects();
@@ -179,6 +195,11 @@ export function ProximityDebugOverlay({
       {rects.notification && (
         <div style={{ ...rectStyle(rects.notification, "#8b5cf6", "rgba(139, 92, 246, 0.12)") }}>
           <span style={{ ...labelStyle, color: "#8b5cf6" }}>Notification</span>
+        </div>
+      )}
+      {rects.rightButtons && (
+        <div style={{ ...rectStyle(rects.rightButtons, "#06b6d4", "rgba(6, 182, 212, 0.12)") }}>
+          <span style={{ ...labelStyle, color: "#06b6d4" }}>Right buttons</span>
         </div>
       )}
     </>

@@ -347,6 +347,7 @@ function OverlayApp(): React.ReactElement {
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const popoverContentRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const rightButtonsRef = useRef<HTMLDivElement>(null);
 
   const [hidePill, setHidePill] = useState(false);
   const [debugProximity, setDebugProximity] = useState(false);
@@ -713,7 +714,7 @@ function OverlayApp(): React.ReactElement {
           {/* Center: main pill — always centered */}
           <motion.div
             onClick={handleBarClick}
-            className="flex items-center justify-center gap-2 backdrop-blur-md cursor-pointer"
+            className="flex items-center justify-center gap-2 backdrop-blur-md cursor-pointer max-w-[280px]"
             style={{
               background: "color-mix(in srgb, var(--raised) 92%, transparent)",
               border: "1px solid var(--line)",
@@ -787,6 +788,7 @@ function OverlayApp(): React.ReactElement {
           <AnimatePresence>
             {showSideButtons && (
               <motion.div
+                ref={rightButtonsRef}
                 className="absolute left-full ml-2 flex items-center gap-2"
                 initial={{ opacity: 0, scale: 0.7, x: 15 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
@@ -844,6 +846,7 @@ function OverlayApp(): React.ReactElement {
           profileButtonRef={profileButtonRef}
           popoverContentRef={popoverContentRef}
           notificationRef={notificationRef}
+          rightButtonsRef={rightButtonsRef}
           isProfileMenuOpen={isProfileMenuOpen}
           menuOverrideActive={menuOverrideActive}
           expanded={expanded}
