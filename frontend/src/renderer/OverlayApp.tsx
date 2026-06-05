@@ -437,7 +437,7 @@ function OverlayApp(): React.ReactElement {
       }, 3000);
     });
 
-    window.overlay.onError((msg: string) => {
+    window.overlay.onError((payload) => {
       if (timer.current) {
         clearInterval(timer.current);
         timer.current = null;
@@ -445,7 +445,21 @@ function OverlayApp(): React.ReactElement {
       clearResultTimer();
       setIsError(true);
       setStatus("inserting");
-      setText(msg);
+
+      // Resolve the user-visible message:
+      //   New format: { code: "backendUnreachable", details?: "..." }
+      //   Legacy format: raw string (e.g. paste errors)
+      let message: string;
+      if (typeof payload === "string") {
+        message = payload;
+      } else {
+        const resolved = t(`errors.${payload.code}`);
+        message = payload.details
+          ? `${resolved}: ${payload.details}`
+          : resolved;
+      }
+
+      setText(message);
       resultTimeout.current = setTimeout(() => {
         goIdle();
       }, 6000);

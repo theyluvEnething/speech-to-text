@@ -31,61 +31,18 @@ const overlayLabels: Record<string, Record<string, string>> = {
   ja: { recording: "録音中…", processing: "文字起こし中…", idle: "" },
 };
 
-const errorLabels: Record<string, {
-  badge: string;
-  title: string;
-  backendUnreachable: string;
-  providerNoKey: string;
-  audioEmpty: string;
-  audioTooShort: string;
-  unableToTranscribe: string;
-}> = {
-  en: {
-    badge: "Error",
-    title: "Transcription Error",
-    backendUnreachable: "Cannot reach backend. Check your connection and try again.",
-    providerNoKey: "No API key configured for this provider. Check your backend .env file.",
-    audioEmpty: "No audio detected. Try speaking louder or check your microphone.",
-    audioTooShort: "Recording too short. Hold the hotkey longer while speaking.",
-    unableToTranscribe: "Could not complete transcription",
-  },
-  de: {
-    badge: "Fehler",
-    title: "Transkriptionsfehler",
-    backendUnreachable: "Backend nicht erreichbar. Überprüfe deine Verbindung.",
-    providerNoKey: "Kein API-Key für diesen Anbieter konfiguriert.",
-    audioEmpty: "Kein Audio erkannt. Sprich lauter oder überprüfe dein Mikrofon.",
-    audioTooShort: "Aufnahme zu kurz. Halte die Taste länger gedrückt.",
-    unableToTranscribe: "Transkription konnte nicht abgeschlossen werden",
-  },
-  it: {
-    badge: "Errore",
-    title: "Errore di trascrizione",
-    backendUnreachable: "Backend non raggiungibile. Controlla la connessione.",
-    providerNoKey: "Nessuna chiave API configurata per questo provider.",
-    audioEmpty: "Nessun audio rilevato. Parla più forte o controlla il microfono.",
-    audioTooShort: "Registrazione troppo breve. Tieni premuto il tasto più a lungo.",
-    unableToTranscribe: "Impossibile completare la trascrizione",
-  },
-  es: {
-    badge: "Error",
-    title: "Error de transcripción",
-    backendUnreachable: "No se puede conectar con el backend. Revisa tu conexión.",
-    providerNoKey: "No hay clave API configurada para este proveedor.",
-    audioEmpty: "No se detectó audio. Habla más fuerte o revisa tu micrófono.",
-    audioTooShort: "Grabación demasiado corta. Mantén presionada la tecla más tiempo.",
-    unableToTranscribe: "No se pudo completar la transcripción",
-  },
-  ja: {
-    badge: "エラー",
-    title: "文字起こしエラー",
-    backendUnreachable: "バックエンドに接続できません。接続を確認してください。",
-    providerNoKey: "このプロバイダーのAPIキーが設定されていません。",
-    audioEmpty: "音声が検出されませんでした。大きな声で話すか、マイクを確認してください。",
-    audioTooShort: "録音が短すぎます。キーを長押ししながら話してください。",
-    unableToTranscribe: "文字起こしを完了できませんでした",
-  },
-};
+/**
+ * Error codes sent to the overlay via IPC. The renderer resolves the
+ * actual user-visible text from i18next locale files (en.json, etc.)
+ * using the key `errors.<code>`. This keeps translations in a single
+ * source of truth instead of duplicating them in the main process.
+ */
+type ErrorCode = "backendUnreachable" | "providerNoKey" | "audioEmpty" | "audioTooShort" | "unableToTranscribe";
+
+interface ErrorPayload {
+  code: ErrorCode;
+  details?: string;
+}
 
 const notificationLabels: Record<string, { badge: string; title: string; description: string }> = {
   en: {
@@ -140,24 +97,18 @@ function showOverlayNotification(payload: {
 }
 
 /**
- * Sends a transcription error to the overlay — shows red X + message.
- * Also displays a bottom notification popup if `notify` is true.
+ * Sends a transcription error to the overlay. The renderer resolves
+ * the user-visible text from i18next using `errors.<code>`. Optional
+ * `details` are appended for technical context (e.g. the raw error).
  */
-function showTranscriptionError(message: string, notify = false): void {
+function showTranscriptionError(code: ErrorCode, details?: string): void {
   const overlay = getOverlayWindow();
   state = "idle";
-  overlay?.webContents.send("overlay:error", message);
-  if (notify) {
-    const lang = store.get("appLanguage") || "en";
-    const labels = errorLabels[lang] ?? errorLabels["en"]!;
-    showOverlayNotification({
-      variant: "warning",
-      badge: labels.badge,
-      title: labels.title,
-      description: message,
-      durationMs: 6000,
-    });
-  }
+  const payload: ErrorPayload = { code };
+  if (details) payload.details = details;
+  overlay?.webContents.send("overlay:error", payload);
+  // The bottom notification is now handled by the overlay renderer
+  // after it resolves the translated message from the error code.
 }
 
 function startRecording(): void {
@@ -217,21 +168,16 @@ function startRecording(): void {
         audio?.webContents.send("audio:stop");
       }
 
-      // Determine error type from the message
+      // Classify the error and send the appropriate code to the overlay.
+      // The renderer resolves the actual text from i18next locale files.
       const msg = err.message.toLowerCase();
-      const lang = store.get("appLanguage") || "en";
-      const labels = errorLabels[lang] ?? errorLabels["en"]!;
-
-      let errorMessage: string;
       if (msg.includes("cannot reach") || msg.includes("unreachable") || msg.includes("econnrefused")) {
-        errorMessage = labels.backendUnreachable;
+        showTranscriptionError("backendUnreachable");
       } else if (msg.includes("not configured") || msg.includes("no api key") || msg.includes("empty")) {
-        errorMessage = labels.providerNoKey;
+        showTranscriptionError("providerNoKey");
       } else {
-        errorMessage = `${labels.unableToTranscribe}: ${err.message}`;
+        showTranscriptionError("unableToTranscribe", err.message);
       }
-
-      showTranscriptionError(errorMessage, true);
     });
 }
 
@@ -318,9 +264,7 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
   // Accidental press: too short
   if (durationSec < 0.75) {
     console.log(`[Wavely] Skipping — audio too short (${durationSec.toFixed(2)}s < 0.75s).`);
-    const lang = store.get("appLanguage") || "en";
-    const labels = errorLabels[lang] ?? errorLabels["en"]!;
-    showTranscriptionError(labels.audioTooShort, true);
+    showTranscriptionError("audioTooShort");
     return;
   }
 
@@ -330,9 +274,7 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
       ? `[Wavely] Skipping — ${durationSec.toFixed(1)}s of silent audio (peak ${peakDb.toFixed(1)} dB)`
       : `[Wavely] Skipping — audio is silent (peak ${peakDb.toFixed(1)} dB < -45 dB)`;
     console.log(msg);
-    const lang = store.get("appLanguage") || "en";
-    const labels = errorLabels[lang] ?? errorLabels["en"]!;
-    showTranscriptionError(labels.audioEmpty, true);
+    showTranscriptionError("audioEmpty");
     return;
   }
 
@@ -374,17 +316,12 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
         });
       } else {
         console.log("[Wavely] No transcript returned.\n");
-        const lang = store.get("appLanguage") || "en";
-        const labels = errorLabels[lang] ?? errorLabels["en"]!;
-        showTranscriptionError(labels.unableToTranscribe, true);
+        showTranscriptionError("unableToTranscribe");
       }
     })
     .catch((err: Error) => {
       console.error(`[Wavely] Transcription failed: ${err.message}\n`);
-      const lang = store.get("appLanguage") || "en";
-      const labels = errorLabels[lang] ?? errorLabels["en"]!;
-      const message = `${labels.unableToTranscribe}: ${err.message}`;
-      showTranscriptionError(message, true);
+      showTranscriptionError("unableToTranscribe", err.message);
     });
 }
 

@@ -84,7 +84,7 @@ declare global {
   interface OverlayApi {
     onState(callback: (state: string, label: string) => void): void;
     onResult(callback: (text: string) => void): void;
-    onError(callback: (msg: string) => void): void;
+    onError(callback: (payload: { code: string; details?: string } | string) => void): void;
     onLevels(callback: (levels: { rms: number; peak: number }) => void): void;
     sendIdle(): void;
     startRecording(): void;

@@ -9,8 +9,8 @@ contextBridge.exposeInMainWorld("overlay", {
     ipcRenderer.on("overlay:result", (_event, text: string) => callback(text));
   },
 
-  onError: (callback: (msg: string) => void): void => {
-    ipcRenderer.on("overlay:error", (_event, msg: string) => callback(msg));
+  onError: (callback: (payload: { code: string; details?: string } | string) => void): void => {
+    ipcRenderer.on("overlay:error", (_event, payload: { code: string; details?: string } | string) => callback(payload));
   },
 
   onLevels: (callback: (levels: { rms: number; peak: number }) => void): void => {
