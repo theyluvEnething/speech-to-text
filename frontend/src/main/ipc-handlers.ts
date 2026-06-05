@@ -82,7 +82,7 @@ export const store = new Store<StoreSchema>({
       {
         id: "default-it",
         name: "Italiano",
-        color: "#f59e0b",
+        color: "#22c55e",
         icon: "🇮🇹",
         systemPrompt: "",
         language: "it",
