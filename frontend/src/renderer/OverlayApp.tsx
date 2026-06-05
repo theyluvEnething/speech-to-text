@@ -683,7 +683,7 @@ function OverlayApp(): React.ReactElement {
           <AnimatePresence>
             {showSideButtons && (
               <motion.div
-                className="absolute right-full mr-2 top-1/2 -translate-y-1/2"
+                className="absolute right-full mr-2"
                 initial={{ opacity: 0, scale: 0.7, x: -15 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.7, x: -15 }}
@@ -782,7 +782,7 @@ function OverlayApp(): React.ReactElement {
           <AnimatePresence>
             {showSideButtons && (
               <motion.div
-                className="absolute left-full ml-2 top-1/2 -translate-y-1/2 flex items-center gap-2"
+                className="absolute left-full ml-2 flex items-center gap-2"
                 initial={{ opacity: 0, scale: 0.7, x: 15 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.7, x: 15 }}
