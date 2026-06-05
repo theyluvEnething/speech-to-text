@@ -755,7 +755,7 @@ function OverlayApp(): React.ReactElement {
                   strokeWidth={2.5}
                 />
                 <span
-                  className={`text-[13px] font-medium text-white/90 ${isMultiLine ? "whitespace-pre-wrap text-justify" : "truncate"} max-w-[280px]`}
+                  className={`text-[13px] font-semibold text-gray-900 ${isMultiLine ? "whitespace-pre-wrap text-justify" : "truncate"} max-w-[280px]`}
                 >
                   {displayText}
                 </span>
@@ -764,11 +764,11 @@ function OverlayApp(): React.ReactElement {
             {activeStatus === "inserting" && isError && (
               <>
                 <XCircle
-                  className={`size-4 text-red-400 shrink-0 ${isMultiLine ? "self-start mt-1" : ""}`}
+                  className={`size-4 text-red-500 shrink-0 ${isMultiLine ? "self-start mt-1" : ""}`}
                   strokeWidth={2.5}
                 />
                 <span
-                  className={`text-[13px] font-medium text-red-200/90 ${isMultiLine ? "whitespace-pre-wrap text-justify" : "truncate"} max-w-[280px]`}
+                  className={`text-[13px] font-semibold text-gray-900 ${isMultiLine ? "whitespace-pre-wrap text-justify" : "truncate"} max-w-[280px]`}
                 >
                   {displayText}
                 </span>

@@ -46,7 +46,7 @@ export const store = new Store<StoreSchema>({
   defaults: {
     hotkey: "ctrlright",
     language: "auto",
-    model: "whisper-large-v3-turbo",
+    model: "whisper-large-v3",
     provider: "groq",
     copyToClipboard: false,
     appLanguage: "en",
@@ -349,7 +349,7 @@ export function registerIpcHandlers(
     store.set({
       hotkey: "ctrlright",
       language: "auto",
-      model: "whisper-large-v3-turbo",
+      model: "whisper-large-v3",
       provider: "groq",
       copyToClipboard: false,
       appLanguage: "en",

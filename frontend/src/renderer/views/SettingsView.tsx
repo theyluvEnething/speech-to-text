@@ -43,8 +43,8 @@ function SettingsView(): React.ReactElement {
       { value: "nova-2-general", label: t("models.nova-2-general") },
     ],
     groq: [
-      { value: "whisper-large-v3-turbo", label: t("models.whisper-large-v3-turbo") },
       { value: "whisper-large-v3", label: t("models.whisper-large-v3") },
+      { value: "whisper-large-v3", label: t("models.whisper-large-v3-turbo") },
     ],
     openai: [
       { value: "gpt-4o-transcribe", label: t("models.gpt-4o-transcribe") },
@@ -65,7 +65,7 @@ function SettingsView(): React.ReactElement {
   const [hotkey, setHotkey] = useState("alt");
   const [language, setLanguage] = useState("en");
   const [provider, setProvider] = useState("groq");
-  const [model, setModel] = useState("whisper-large-v3-turbo");
+  const [model, setModel] = useState("whisper-large-v3");
   const [copyToClipboard, setCopyToClipboard] = useState(false);
   const [loading, setLoading] = useState(true);
   const initialLoad = useRef(true);
@@ -77,7 +77,7 @@ function SettingsView(): React.ReactElement {
         setHotkey(settings.hotkey || "alt");
         setLanguage(settings.language || "en");
         setProvider(settings.provider || "groq");
-        setModel(settings.model || "whisper-large-v3-turbo");
+        setModel(settings.model || "whisper-large-v3");
         setCopyToClipboard(settings.copyToClipboard === true);
         setLoading(false);
         initialLoad.current = false;

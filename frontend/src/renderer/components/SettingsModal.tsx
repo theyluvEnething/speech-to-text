@@ -82,8 +82,8 @@ function SettingsModal(): React.ReactElement {
   ];
   const MODELS_BY_PROVIDER: Record<string, { value: string; label: string }[]> = {
     groq: [
-      { value: "whisper-large-v3-turbo", label: t("models.whisper-large-v3-turbo") },
       { value: "whisper-large-v3", label: t("models.whisper-large-v3") },
+      { value: "whisper-large-v3", label: t("models.whisper-large-v3-turbo") },
     ],
     deepgram: [
       { value: "nova-2", label: t("models.nova-2") },
@@ -126,7 +126,7 @@ function SettingsModal(): React.ReactElement {
   const [language, setLanguage] = useState("auto");
   const [appLanguage, setAppLanguage] = useState("en");
   const [provider, setProvider] = useState("groq");
-  const [model, setModel] = useState("whisper-large-v3-turbo");
+  const [model, setModel] = useState("whisper-large-v3");
   const [copyToClipboard, setCopyToClipboard] = useState(false);
   const [hidePill, setHidePill] = useState(false);
   const [appVersion, setAppVersion] = useState("");
@@ -152,7 +152,7 @@ function SettingsModal(): React.ReactElement {
         setLanguage(s.language || "auto");
         setAppLanguage(s.appLanguage || "en");
         setProvider(s.provider || "groq");
-        setModel(s.model || "whisper-large-v3-turbo");
+        setModel(s.model || "whisper-large-v3");
         setCopyToClipboard(s.copyToClipboard === true);
         setHidePill(s.hidePill === true);
         requestAnimationFrame(() => (initial.current = false));
