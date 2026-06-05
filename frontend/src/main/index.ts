@@ -6,6 +6,7 @@ import { registerHotkey, unregisterAll } from "./hotkey";
 import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } from "./ipc-handlers";
 import { getProvider } from "../transcription/index";
 import type { ProviderName } from "../transcription/types";
+import { getTokenCache } from "../transcription/token-cache";
 import { pasteText } from "./paste";
 import { getAppWindowFocused } from "./state";
 
@@ -28,6 +29,62 @@ const overlayLabels: Record<string, Record<string, string>> = {
   it: { recording: "Registrazione…", processing: "Trascrizione…", idle: "" },
   es: { recording: "Grabando…", processing: "Transcribiendo…", idle: "" },
   ja: { recording: "録音中…", processing: "文字起こし中…", idle: "" },
+};
+
+const errorLabels: Record<string, {
+  badge: string;
+  title: string;
+  backendUnreachable: string;
+  providerNoKey: string;
+  audioEmpty: string;
+  audioTooShort: string;
+  unableToTranscribe: string;
+}> = {
+  en: {
+    badge: "Error",
+    title: "Transcription Error",
+    backendUnreachable: "Cannot reach backend. Check your connection and try again.",
+    providerNoKey: "No API key configured for this provider. Check your backend .env file.",
+    audioEmpty: "No audio detected. Try speaking louder or check your microphone.",
+    audioTooShort: "Recording too short. Hold the hotkey longer while speaking.",
+    unableToTranscribe: "Could not complete transcription",
+  },
+  de: {
+    badge: "Fehler",
+    title: "Transkriptionsfehler",
+    backendUnreachable: "Backend nicht erreichbar. Überprüfe deine Verbindung.",
+    providerNoKey: "Kein API-Key für diesen Anbieter konfiguriert.",
+    audioEmpty: "Kein Audio erkannt. Sprich lauter oder überprüfe dein Mikrofon.",
+    audioTooShort: "Aufnahme zu kurz. Halte die Taste länger gedrückt.",
+    unableToTranscribe: "Transkription konnte nicht abgeschlossen werden",
+  },
+  it: {
+    badge: "Errore",
+    title: "Errore di trascrizione",
+    backendUnreachable: "Backend non raggiungibile. Controlla la connessione.",
+    providerNoKey: "Nessuna chiave API configurata per questo provider.",
+    audioEmpty: "Nessun audio rilevato. Parla più forte o controlla il microfono.",
+    audioTooShort: "Registrazione troppo breve. Tieni premuto il tasto più a lungo.",
+    unableToTranscribe: "Impossibile completare la trascrizione",
+  },
+  es: {
+    badge: "Error",
+    title: "Error de transcripción",
+    backendUnreachable: "No se puede conectar con el backend. Revisa tu conexión.",
+    providerNoKey: "No hay clave API configurada para este proveedor.",
+    audioEmpty: "No se detectó audio. Habla más fuerte o revisa tu micrófono.",
+    audioTooShort: "Grabación demasiado corta. Mantén presionada la tecla más tiempo.",
+    unableToTranscribe: "No se pudo completar la transcripción",
+  },
+  ja: {
+    badge: "エラー",
+    title: "文字起こしエラー",
+    backendUnreachable: "バックエンドに接続できません。接続を確認してください。",
+    providerNoKey: "このプロバイダーのAPIキーが設定されていません。",
+    audioEmpty: "音声が検出されませんでした。大きな声で話すか、マイクを確認してください。",
+    audioTooShort: "録音が短すぎます。キーを長押ししながら話してください。",
+    unableToTranscribe: "文字起こしを完了できませんでした",
+  },
 };
 
 const notificationLabels: Record<string, { badge: string; title: string; description: string }> = {
@@ -82,6 +139,27 @@ function showOverlayNotification(payload: {
   });
 }
 
+/**
+ * Sends a transcription error to the overlay — shows red X + message.
+ * Also displays a bottom notification popup if `notify` is true.
+ */
+function showTranscriptionError(message: string, notify = false): void {
+  const overlay = getOverlayWindow();
+  state = "idle";
+  overlay?.webContents.send("overlay:error", message);
+  if (notify) {
+    const lang = store.get("appLanguage") || "en";
+    const labels = errorLabels[lang] ?? errorLabels["en"]!;
+    showOverlayNotification({
+      variant: "warning",
+      badge: labels.badge,
+      title: labels.title,
+      description: message,
+      durationMs: 6000,
+    });
+  }
+}
+
 function startRecording(): void {
   if (getAppWindowFocused()) {
     console.log("[Wavely] Recording blocked — Wavely window is focused.");
@@ -116,6 +194,45 @@ function startRecording(): void {
   console.log("[Wavely] Recording started...");
   sendOverlayState("recording");
   audio?.webContents.send("audio:start");
+
+  // ── Pre-fetch API key during recording (fire & forget) ──────────
+  // The round-trip to the backend (100-300ms) completes while the
+  // user is still speaking. By the time they release the hotkey,
+  // the token is already cached — zero wait on the critical path.
+  const { provider: preFetchProvider } = resolveTranscribeOptions();
+  console.log(`[Wavely] Pre-fetching ${preFetchProvider} API key (background)...`);
+  getTokenCache()
+    .get(preFetchProvider)
+    .then(() => {
+      console.log(`[Wavely] Pre-fetch complete — ${preFetchProvider} key ready.`);
+    })
+    .catch((err: Error) => {
+      // Backend unreachable or provider not configured.
+      // Stop recording and show error — the user can't transcribe anyway.
+      console.error(`[Wavely] Pre-fetch FAILED: ${err.message}`);
+
+      // Stop the audio capture
+      if (audioActive) {
+        audioActive = false;
+        audio?.webContents.send("audio:stop");
+      }
+
+      // Determine error type from the message
+      const msg = err.message.toLowerCase();
+      const lang = store.get("appLanguage") || "en";
+      const labels = errorLabels[lang] ?? errorLabels["en"]!;
+
+      let errorMessage: string;
+      if (msg.includes("cannot reach") || msg.includes("unreachable") || msg.includes("econnrefused")) {
+        errorMessage = labels.backendUnreachable;
+      } else if (msg.includes("not configured") || msg.includes("no api key") || msg.includes("empty")) {
+        errorMessage = labels.providerNoKey;
+      } else {
+        errorMessage = `${labels.unableToTranscribe}: ${err.message}`;
+      }
+
+      showTranscriptionError(errorMessage, true);
+    });
 }
 
 function stopRecording(): void {
@@ -198,20 +315,24 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
   peakRmsDb = -60;
   peakPeakDb = -60;
 
-  // Skip transcription for accidental presses: too short or silent audio
+  // Accidental press: too short
   if (durationSec < 0.75) {
     console.log(`[Wavely] Skipping — audio too short (${durationSec.toFixed(2)}s < 0.75s).`);
-    state = "idle";
-    sendOverlayState("idle");
+    const lang = store.get("appLanguage") || "en";
+    const labels = errorLabels[lang] ?? errorLabels["en"]!;
+    showTranscriptionError(labels.audioTooShort, true);
     return;
   }
 
-  // Use max peak observed during the ENTIRE recording (not just the final moment
-  // which captures trailing silence after the 310ms post-release delay)
+  // Audio captured but no meaningful signal — user probably didn't speak
   if (peakDb < -45) {
-    console.log(`[Wavely] Skipping — audio is silent (peak ${peakDb.toFixed(1)} dB < -45 dB).`);
-    state = "idle";
-    sendOverlayState("idle");
+    const msg = durationSec >= 2.0
+      ? `[Wavely] Skipping — ${durationSec.toFixed(1)}s of silent audio (peak ${peakDb.toFixed(1)} dB)`
+      : `[Wavely] Skipping — audio is silent (peak ${peakDb.toFixed(1)} dB < -45 dB)`;
+    console.log(msg);
+    const lang = store.get("appLanguage") || "en";
+    const labels = errorLabels[lang] ?? errorLabels["en"]!;
+    showTranscriptionError(labels.audioEmpty, true);
     return;
   }
 
@@ -253,14 +374,17 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
         });
       } else {
         console.log("[Wavely] No transcript returned.\n");
-        state = "idle";
-        sendOverlayState("idle");
+        const lang = store.get("appLanguage") || "en";
+        const labels = errorLabels[lang] ?? errorLabels["en"]!;
+        showTranscriptionError(labels.unableToTranscribe, true);
       }
     })
     .catch((err: Error) => {
       console.error(`[Wavely] Transcription failed: ${err.message}\n`);
-      state = "idle";
-      overlay?.webContents.send("overlay:error", err.message);
+      const lang = store.get("appLanguage") || "en";
+      const labels = errorLabels[lang] ?? errorLabels["en"]!;
+      const message = `${labels.unableToTranscribe}: ${err.message}`;
+      showTranscriptionError(message, true);
     });
 }
 

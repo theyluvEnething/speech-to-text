@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Sparkles, Settings, Check, ChevronDown } from "lucide-react";
+import { Sparkles, Settings, Check, XCircle, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfileIcon from "@/components/ProfileIcon";
 import * as Popover from "@radix-ui/react-popover";
@@ -323,6 +323,7 @@ function OverlayApp(): React.ReactElement {
 
   const [status, setStatus] = useState<PopupStatus>("idle");
   const [text, setText] = useState("");
+  const [isError, setIsError] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [audioLevels, setAudioLevels] = useState<{ rms: number; peak: number }>(
     { rms: -60, peak: -60 },
@@ -428,6 +429,7 @@ function OverlayApp(): React.ReactElement {
         timer.current = null;
       }
       clearResultTimer();
+      setIsError(false);
       setStatus("inserting");
       setText(resultText);
       resultTimeout.current = setTimeout(() => {
@@ -441,11 +443,12 @@ function OverlayApp(): React.ReactElement {
         timer.current = null;
       }
       clearResultTimer();
+      setIsError(true);
       setStatus("inserting");
       setText(msg);
       resultTimeout.current = setTimeout(() => {
         goIdle();
-      }, 4000);
+      }, 6000);
     });
 
     window.overlay.onLevels((levels) => {
@@ -729,7 +732,7 @@ function OverlayApp(): React.ReactElement {
                 </span>
               </>
             )}
-            {activeStatus === "inserting" && (
+            {activeStatus === "inserting" && !isError && (
               <>
                 <Check
                   className={`size-4 text-emerald-400 shrink-0 ${isMultiLine ? "self-start mt-1" : ""}`}
@@ -737,6 +740,19 @@ function OverlayApp(): React.ReactElement {
                 />
                 <span
                   className={`text-[13px] font-medium text-white/90 ${isMultiLine ? "whitespace-pre-wrap text-justify" : "truncate"} max-w-[280px]`}
+                >
+                  {displayText}
+                </span>
+              </>
+            )}
+            {activeStatus === "inserting" && isError && (
+              <>
+                <XCircle
+                  className={`size-4 text-red-400 shrink-0 ${isMultiLine ? "self-start mt-1" : ""}`}
+                  strokeWidth={2.5}
+                />
+                <span
+                  className={`text-[13px] font-medium text-red-200/90 ${isMultiLine ? "whitespace-pre-wrap text-justify" : "truncate"} max-w-[280px]`}
                 >
                   {displayText}
                 </span>
