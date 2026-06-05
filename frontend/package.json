@@ -78,7 +78,9 @@
       {
         "provider": "github",
         "owner": "theyluvEnething",
-        "repo": "speech-to-text"
+        "repo": "speech-to-text",
+        "releaseType": "release",
+        "publishAutoUpdate": true
       }
     ],
     "files": [
