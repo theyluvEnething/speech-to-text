@@ -674,14 +674,16 @@ function OverlayApp(): React.ReactElement {
           )}
         </AnimatePresence>
 
-        {/* Pill row — profile button + pill + side buttons */}
+        {/* Pill row — side buttons are absolutely positioned so the pill stays perfectly centered */}
         <div
           ref={barRef}
-          className="flex items-center gap-2 overflow-visible"
+          className="relative flex items-center justify-center overflow-visible"
         >
+          {/* Left: profile quick-swap button — absolutely positioned */}
           <AnimatePresence>
             {showSideButtons && (
               <motion.div
+                className="absolute right-full mr-2 top-1/2 -translate-y-1/2"
                 initial={{ opacity: 0, scale: 0.7, x: -15 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.7, x: -15 }}
@@ -703,6 +705,7 @@ function OverlayApp(): React.ReactElement {
             )}
           </AnimatePresence>
 
+          {/* Center: main pill — always centered */}
           <motion.div
             onClick={handleBarClick}
             className="flex items-center justify-center gap-2 backdrop-blur-md cursor-pointer"
@@ -775,10 +778,11 @@ function OverlayApp(): React.ReactElement {
             {status === "idle" && !expanded && null}
           </motion.div>
 
+          {/* Right: settings + collapse buttons — absolutely positioned */}
           <AnimatePresence>
             {showSideButtons && (
               <motion.div
-                className="flex items-center gap-2"
+                className="absolute left-full ml-2 top-1/2 -translate-y-1/2 flex items-center gap-2"
                 initial={{ opacity: 0, scale: 0.7, x: 15 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.7, x: 15 }}
