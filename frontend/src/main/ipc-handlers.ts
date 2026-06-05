@@ -208,6 +208,20 @@ export function registerIpcHandlers(
 
     store.set("profiles", profiles);
     console.log(`[Wavely] Profile saved: ${profile.name}`);
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.webContents.send("profiles:list-changed", profiles);
+      if (store.get("activeProfileId") === profile.id) {
+        overlay.webContents.send("profiles:active-changed", profile);
+      }
+    }
+    const settingsWin = getSettingsWindow();
+    if (settingsWin && !settingsWin.isDestroyed()) {
+      settingsWin.webContents.send("profiles:list-changed", profiles);
+      if (store.get("activeProfileId") === profile.id) {
+        settingsWin.webContents.send("profiles:active-changed", profile);
+      }
+    }
     return profiles;
   });
 
@@ -223,12 +237,28 @@ export function registerIpcHandlers(
     profiles = profiles.filter((p) => p.id !== id);
 
     // If the deleted profile was active, switch to the first remaining
-    if (store.get("activeProfileId") === id) {
+    const wasActive = store.get("activeProfileId") === id;
+    if (wasActive) {
       store.set("activeProfileId", profiles[0]!.id);
     }
 
     store.set("profiles", profiles);
     console.log(`[Wavely] Profile deleted: ${deleted?.name ?? id}`);
+
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.webContents.send("profiles:list-changed", profiles);
+      if (wasActive) {
+        overlay.webContents.send("profiles:active-changed", profiles[0]!);
+      }
+    }
+    const settingsWin = getSettingsWindow();
+    if (settingsWin && !settingsWin.isDestroyed()) {
+      settingsWin.webContents.send("profiles:list-changed", profiles);
+      if (wasActive) {
+        settingsWin.webContents.send("profiles:active-changed", profiles[0]!);
+      }
+    }
     return profiles;
   });
 
@@ -244,6 +274,15 @@ export function registerIpcHandlers(
       const updated = [id, ...recents.filter((r) => r !== id)].slice(0, 3);
       store.set("recentProfileIds", updated);
       console.log(`[Wavely] Active profile set: ${id}`);
+      const active = profiles.find((p) => p.id === id) ?? profiles[0]!;
+      const overlay = getOverlayWindow();
+      if (overlay && !overlay.isDestroyed()) {
+        overlay.webContents.send("profiles:active-changed", active);
+      }
+      const settingsWin = getSettingsWindow();
+      if (settingsWin && !settingsWin.isDestroyed()) {
+        settingsWin.webContents.send("profiles:active-changed", active);
+      }
     }
   });
 

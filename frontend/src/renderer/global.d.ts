@@ -61,6 +61,8 @@ declare global {
 
     onSwitchTab(callback: (tab: string) => void): void;
     onHidePillChanged(callback: (hidePill: boolean) => void): void;
+    onActiveProfileChanged(callback: (profile: Profile) => void): void;
+    onProfilesChanged(callback: (profiles: Profile[]) => void): void;
     profiles: WavelyProfiles;
     conversations: WavelyConversations;
   }
@@ -105,6 +107,8 @@ declare global {
     setSettings(settings: Record<string, string | boolean>): Promise<{ success: boolean }>;
     getHidePill(): Promise<boolean>;
     onHidePillChanged(callback: (hidePill: boolean) => void): void;
+    onActiveProfileChanged(callback: (profile: Profile) => void): void;
+    onProfilesChanged(callback: (profiles: Profile[]) => void): void;
   }
 
   interface OverlayNotificationData {

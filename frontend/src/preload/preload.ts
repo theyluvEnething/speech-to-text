@@ -94,6 +94,14 @@ contextBridge.exposeInMainWorld("wavely", {
     ipcRenderer.on("settings:hide-pill-changed", (_event, hidePill: boolean) => callback(hidePill));
   },
 
+  onActiveProfileChanged: (callback: (profile: unknown) => void): void => {
+    ipcRenderer.on("profiles:active-changed", (_event, profile: unknown) => callback(profile));
+  },
+
+  onProfilesChanged: (callback: (profiles: unknown) => void): void => {
+    ipcRenderer.on("profiles:list-changed", (_event, profiles: unknown) => callback(profiles));
+  },
+
   conversations: {
     list: (): Promise<unknown> =>
       ipcRenderer.invoke("conversations:list"),

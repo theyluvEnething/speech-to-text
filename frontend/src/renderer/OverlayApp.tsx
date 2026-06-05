@@ -492,6 +492,11 @@ function OverlayApp(): React.ReactElement {
       setHidePill(hidden);
     });
 
+    window.overlay.onActiveProfileChanged((profile: Profile) => {
+      setCurrentProfileIcon(profile.icon);
+      setActiveProfileId(profile.id);
+    });
+
     return () => {
       if (timer.current) clearInterval(timer.current);
       clearResultTimer();

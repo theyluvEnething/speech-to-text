@@ -78,6 +78,14 @@ export function MainApp(): React.ReactElement {
       setHidePill(hidden);
     });
 
+    window.wavely.onActiveProfileChanged((profile: Profile) => {
+      setActiveProfile(profile);
+    });
+
+    window.wavely.onProfilesChanged((profiles: Profile[]) => {
+      setProfiles(profiles);
+    });
+
     // The overlay's "showSettings(tab)" IPC now opens the settings MODAL at a
     // pane instead of switching a routed tab. Known panes open the modal;
     // anything else is treated as a top-level tab.

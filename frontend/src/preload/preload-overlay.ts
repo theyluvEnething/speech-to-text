@@ -92,4 +92,12 @@ contextBridge.exposeInMainWorld("overlay", {
   onHidePillChanged: (callback: (hidePill: boolean) => void): void => {
     ipcRenderer.on("overlay:hide-pill-changed", (_event, hidePill: boolean) => callback(hidePill));
   },
+
+  onActiveProfileChanged: (callback: (profile: unknown) => void): void => {
+    ipcRenderer.on("profiles:active-changed", (_event, profile: unknown) => callback(profile));
+  },
+
+  onProfilesChanged: (callback: (profiles: unknown) => void): void => {
+    ipcRenderer.on("profiles:list-changed", (_event, profiles: unknown) => callback(profiles));
+  },
 });
