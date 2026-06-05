@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Settings, Check, XCircle, ChevronDown } from "lucide-react";
+import { Settings, Check, XCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfileIcon from "@/components/ProfileIcon";
 import * as Popover from "@radix-ui/react-popover";
@@ -360,13 +360,13 @@ function OverlayApp(): React.ReactElement {
 
   const isActive = status !== "idle";
   const [proximityDims, setProximityDims] = useState({ width: 90, height: 30 });
-  const isNear = useProximity(barRef, proximityDims.width, proximityDims.height, menuOverrideActive || isOverNotification, hidePill && status === "idle");
+  const isNear = useProximity(barRef, proximityDims.width, proximityDims.height, menuOverrideActive || isOverNotification, false);
   const expanded = isActive || (status === "idle" && isNear);
 
   // Expand/shrink the cursor proximity zone based on whether the pill is open
   useEffect(() => {
     setProximityDims(
-      expanded ? { width: 260, height: 52 } : { width: 90, height: 30 },
+      expanded ? { width: 400, height: 52 } : { width: 90, height: 30 },
     );
   }, [expanded]);
 
@@ -839,6 +839,29 @@ function OverlayApp(): React.ReactElement {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Persistent unhide button — only visible when pill is collapsed */}
+      {hidePill && status === "idle" && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center"
+          style={{ bottom: `${PILL_BOTTOM_MARGIN + 4}px` }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setHidePill(false);
+              window.overlay.setSettings({ hidePill: false });
+            }}
+            className="size-[20px] grid place-items-center rounded-full backdrop-blur-md text-ink-2 hover:text-ink transition-colors"
+            style={{
+              background: "color-mix(in srgb, var(--raised) 92%, transparent)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            <ChevronUp className="size-[9px]" strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
 
       {debugProximity && (
         <ProximityDebugOverlay
