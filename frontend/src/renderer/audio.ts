@@ -129,8 +129,33 @@ async function startRecording(): Promise<void> {
       window.audio.sendLevels({ rms: rmsDb, peak: peakDb, elapsed: duration, samples: sampleCount, final: true });
 
       const blob = new Blob(chunks, { type: mimeType });
-      const buffer = await blob.arrayBuffer();
-      window.audio.sendBuffer(buffer);
+      const webmBuffer = await blob.arrayBuffer();
+
+      // Decode WebM/Opus → raw 16-bit PCM for providers that need
+      // uncompressed audio (xAI realtime/STT APIs expect raw PCM).
+      let pcmBuffer: ArrayBuffer | undefined;
+      if (audioContext) {
+        try {
+          // decodeAudioData accepts the WebM container and produces
+          // an AudioBuffer with Float32 planar PCM at the context's rate.
+          const audioBuffer = await audioContext.decodeAudioData(
+            webmBuffer.slice(0),
+          );
+          const floatSamples = audioBuffer.getChannelData(0);
+          const pcm16 = new Int16Array(floatSamples.length);
+          for (let i = 0; i < floatSamples.length; i++) {
+            const s = Math.max(-1, Math.min(1, floatSamples[i]!));
+            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          }
+          pcmBuffer = pcm16.buffer;
+        } catch {
+          // Decode can fail on very short (<1 frame) clips. Not fatal
+          // for providers that don't need PCM.
+          console.warn("[audio] WebM → PCM decode failed — xAI will not be available for this clip.");
+        }
+      }
+
+      window.audio.sendBuffer(webmBuffer, pcmBuffer);
 
       if (audioContext) {
         await audioContext.close();

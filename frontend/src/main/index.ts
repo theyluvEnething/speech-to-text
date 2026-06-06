@@ -244,7 +244,7 @@ function resolveTranscribeOptions(): { language: string; model: string; provider
   };
 }
 
-function handleAudioBuffer(buffer: ArrayBuffer): void {
+function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): void {
   const overlay = getOverlayWindow();
 
   // Guard: if an error was already shown (e.g. pre-fetch failure stopped
@@ -254,7 +254,7 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
     return;
   }
 
-  if (buffer.byteLength === 0) {
+  if (webmBuffer.byteLength === 0) {
     console.log("[Wavely] No audio captured.");
     state = "idle";
     sendOverlayState("idle");
@@ -297,7 +297,7 @@ function handleAudioBuffer(buffer: ArrayBuffer): void {
   sendOverlayState("processing");
 
   const provider = getProvider(providerName);
-  provider.transcribe(buffer, { model, language })
+  provider.transcribe(webmBuffer, { model, language, pcmBuffer })
     .then((text) => {
       if (text) {
         console.log(`[Wavely] -> "${text}"\n`);

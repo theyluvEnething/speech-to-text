@@ -120,7 +120,7 @@ function uuid(): string {
 }
 
 export function registerIpcHandlers(
-  onAudioBuffer: (buffer: ArrayBuffer) => void,
+  onAudioBuffer: (webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer) => void,
   onLevels: (data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }) => void,
   onOverlayIdle: () => void,
 ): void {
@@ -350,9 +350,12 @@ export function registerIpcHandlers(
   });
 
   // ── Audio ─────────────────────────────────────────────────
-  ipcMain.on("audio:buffer", (_event, buffer: ArrayBuffer) => {
-    console.log(`[Wavely] Audio buffer received: ${buffer.byteLength} bytes`);
-    onAudioBuffer(buffer);
+  ipcMain.on("audio:buffer", (_event, webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer) => {
+    console.log(
+      `[Wavely] Audio buffer received: ${webmBuffer.byteLength} bytes` +
+      (pcmBuffer ? `, PCM: ${pcmBuffer.byteLength} bytes` : ""),
+    );
+    onAudioBuffer(webmBuffer, pcmBuffer);
   });
 
   ipcMain.on("audio:levels", (_event, data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }) => {

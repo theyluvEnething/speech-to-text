@@ -78,7 +78,7 @@ declare global {
   interface AudioApi {
     onStart(callback: () => void): void;
     onStop(callback: () => void): void;
-    sendBuffer(buffer: ArrayBuffer): void;
+    sendBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): void;
     sendLevels(data: LevelData): void;
     getApiKey(): Promise<string>;
   }
