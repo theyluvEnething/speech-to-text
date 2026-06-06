@@ -246,6 +246,9 @@ export class XaiProvider implements TranscriptionProvider {
         settled = true;
         console.error(`[xAI-STT] Failing: ${err.message}`);
         socket.close();
+        // Always invalidate — STT tokens are consumed on use and
+        // will 401 if reused. A fresh token costs one backend round-trip.
+        getTokenCache().invalidate("xai");
         reject(err);
       };
 
@@ -254,6 +257,10 @@ export class XaiProvider implements TranscriptionProvider {
         settled = true;
         console.log(`[xAI-STT] Final transcript: "${text}" (${text.length} chars)`);
         socket.close();
+        // Invalidate so the next transcription gets a fresh token.
+        // xAI's STT WebSocket endpoint consumes ephemeral tokens
+        // (unlike the /v1/realtime API which allows reuse).
+        getTokenCache().invalidate("xai");
         resolve(text);
       };
 
