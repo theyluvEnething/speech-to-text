@@ -41,37 +41,17 @@ const statusColor: Record<
   },
 };
 
-function getDisplayText(text: string, maxLines: number = 4, maxWidthChars: number = 40): string {
-  if (text.length <= maxWidthChars) return text;
-
-  const charsPerLine = maxWidthChars;
-  const lines: string[] = [];
-  let remaining = text;
-
-  for (let i = 0; i < maxLines - 1; i++) {
-    if (remaining.length <= charsPerLine) {
-      lines.push(remaining);
-      remaining = "";
-      break;
-    }
-    let breakPoint = charsPerLine;
-    while (breakPoint > 0 && remaining[breakPoint] !== " ") {
-      breakPoint--;
-    }
-    if (breakPoint === 0) breakPoint = charsPerLine;
-    lines.push(remaining.slice(0, breakPoint));
-    remaining = remaining.slice(breakPoint).trimStart();
-  }
-
-  if (remaining.length > 0) {
-    const lastLine =
-      remaining.length > charsPerLine
-        ? remaining.slice(0, charsPerLine - 3) + "..."
-        : remaining;
-    lines.push(lastLine);
-  }
-
-  return lines.join("\n");
+/**
+ * Sanitize and soft-truncate display text for the pill.
+ *
+ * CSS line-clamp handles visual truncation at render time — this function
+ * only does a coarse JS-level cap to keep giant strings out of the DOM.
+ * Consecutive newlines are collapsed so empty lines don't inflate the
+ * pill height calculation.
+ */
+function getDisplayText(text: string): string {
+  // Collapse 3+ consecutive newlines → at most one blank line
+  return text.replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function Waveform({ rms }: { rms: number }): React.ReactElement {
@@ -627,10 +607,18 @@ function OverlayApp(): React.ReactElement {
   const showSideButtons =
     expanded && status !== "recording" && status !== "transcribing";
 
-  const displayText = getDisplayText(text, 4, 40);
-  const lineCount = displayText.split("\n").length;
+  const displayText = getDisplayText(text);
+  // Count visual lines: explicit newlines + estimate wrapped lines per paragraph.
+  // CSS line-clamp-4 is the ultimate gate — this is just for height animation.
+  const rawLineCount = displayText.split("\n").reduce((count, para) => {
+    // ~35 chars fit in the pill's content width at 13px font
+    const wrappedLines = para.length === 0 ? 1 : Math.ceil(para.length / 35);
+    return count + Math.max(wrappedLines, 1);
+  }, 0);
+  const lineCount = Math.min(rawLineCount, 4);
   const isMultiLine = lineCount > 1;
-  const pillHeight = isMultiLine ? `${24 + (lineCount - 1) * 18}px` : "36px";
+  // 24px per line (13px font × ~1.5 line-height + breathing room) + 16px vertical padding
+  const pillHeight = isMultiLine ? `${lineCount * 24 + 16}px` : "40px";
 
   const handleBarClick = () => {
     if (status === "idle") {
@@ -714,7 +702,7 @@ function OverlayApp(): React.ReactElement {
           {/* Center: main pill — always centered */}
           <motion.div
             onClick={handleBarClick}
-            className="flex items-center justify-center gap-2 backdrop-blur-md cursor-pointer max-w-[280px]"
+            className="flex items-center justify-center gap-2 backdrop-blur-md cursor-pointer max-w-[280px] overflow-hidden"
             style={{
               background: "color-mix(in srgb, var(--raised) 92%, transparent)",
               border: "1px solid var(--line)",
@@ -757,11 +745,13 @@ function OverlayApp(): React.ReactElement {
             {activeStatus === "inserting" && !isError && (
               <>
                 <Check
-                  className={`size-4 text-emerald-400 shrink-0 ${isMultiLine ? "self-start mt-1" : ""}`}
+                  className={`size-4 text-emerald-400 shrink-0 ${isMultiLine ? "self-start mt-[3px]" : ""}`}
                   strokeWidth={2.5}
                 />
                 <span
-                  className={`text-[13px] font-semibold text-gray-900 ${isMultiLine ? "whitespace-pre-wrap text-justify" : "truncate"} max-w-[280px]`}
+                  className={`text-[13px] font-semibold text-gray-900 whitespace-pre-wrap ${
+                    isMultiLine ? "line-clamp-4" : "truncate"
+                  }`}
                 >
                   {displayText}
                 </span>
@@ -770,11 +760,13 @@ function OverlayApp(): React.ReactElement {
             {activeStatus === "inserting" && isError && (
               <>
                 <XCircle
-                  className={`size-4 text-red-500 shrink-0 ${isMultiLine ? "self-start mt-1" : ""}`}
+                  className={`size-4 text-red-500 shrink-0 ${isMultiLine ? "self-start mt-[3px]" : ""}`}
                   strokeWidth={2.5}
                 />
                 <span
-                  className={`text-[13px] font-semibold text-gray-900 ${isMultiLine ? "whitespace-pre-wrap text-justify" : "truncate"} max-w-[280px]`}
+                  className={`text-[13px] font-semibold text-gray-900 whitespace-pre-wrap ${
+                    isMultiLine ? "line-clamp-4" : "truncate"
+                  }`}
                 >
                   {displayText}
                 </span>
