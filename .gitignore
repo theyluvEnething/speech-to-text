@@ -43,3 +43,4 @@ npm-debug.log*
 release/
 /frontend/.playwright-mcp
 /.planning
+/.claude
