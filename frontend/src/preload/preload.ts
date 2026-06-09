@@ -6,7 +6,19 @@ contextBridge.exposeInMainWorld("wavely", {
   isPackaged: (): Promise<boolean> =>
     ipcRenderer.invoke("app:isPackaged"),
 
-  getSettings: (): Promise<{ hotkey: string; language: string; model: string; provider: string; copyToClipboard: boolean; appLanguage: string }> =>
+  getSettings: (): Promise<{
+    hotkey: string;
+    language: string;
+    model: string;
+    provider: string;
+    copyToClipboard: boolean;
+    appLanguage: string;
+    theme: string;
+    hidePill: boolean;
+    mediaPauseEnabled: boolean;
+    discordMuteEnabled: boolean;
+    discordMuteMode: "mic" | "full";
+  }> =>
     ipcRenderer.invoke("settings:get"),
 
   setSettings: (settings: Record<string, string | boolean>): Promise<{ success: boolean }> =>

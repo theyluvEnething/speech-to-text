@@ -11,6 +11,7 @@ import {
   User as AccountIcon,
   ShieldCheck,
   Cloud,
+  Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore, type SettingsPane } from "@/store";
@@ -103,6 +104,7 @@ function SettingsModal(): React.ReactElement {
     { pane: "general", icon: GeneralIcon, label: t("settings.general"), group: "Settings" },
     { pane: "system", icon: Monitor, label: t("settings.system"), group: "Settings" },
     { pane: "transcription", icon: Hash, label: t("settings.transcription"), group: "Settings" },
+    { pane: "integrations", icon: Plug, label: t("settings.integrations"), group: "Settings" },
     { pane: "account", icon: AccountIcon, label: t("settings.account"), group: "Account" },
     { pane: "privacy", icon: ShieldCheck, label: t("settings.privacy"), group: "Account" },
   ];
@@ -129,6 +131,9 @@ function SettingsModal(): React.ReactElement {
   const [model, setModel] = useState("whisper-large-v3");
   const [copyToClipboard, setCopyToClipboard] = useState(false);
   const [hidePill, setHidePill] = useState(false);
+  const [mediaPauseEnabled, setMediaPauseEnabled] = useState(false);
+  const [discordMuteEnabled, setDiscordMuteEnabled] = useState(false);
+  const [discordMuteMode, setDiscordMuteMode] = useState<"mic" | "full">("mic");
   const [appVersion, setAppVersion] = useState("");
   const debugMode = useStore((s) => s.debugMode);
   const setDebugModeState = useStore((s) => s.setDebugMode);
@@ -155,6 +160,9 @@ function SettingsModal(): React.ReactElement {
         setModel(s.model || "whisper-large-v3");
         setCopyToClipboard(s.copyToClipboard === true);
         setHidePill(s.hidePill === true);
+        setMediaPauseEnabled(s.mediaPauseEnabled === true);
+        setDiscordMuteEnabled(s.discordMuteEnabled === true);
+        setDiscordMuteMode(s.discordMuteMode === "full" ? "full" : "mic");
         requestAnimationFrame(() => (initial.current = false));
       })
       .catch(() => (initial.current = false));
@@ -347,6 +355,65 @@ function SettingsModal(): React.ReactElement {
                   <Row label={t("settings.copyToClipboard")} desc={t("settings.copyToClipboardHint")}>
                     <Switch checked={copyToClipboard} onCheckedChange={(v) => { setCopyToClipboard(v); save({ copyToClipboard: v }); }} />
                   </Row>
+                </div>
+              </>
+            )}
+
+            {pane === "integrations" && (
+              <>
+                <PaneTitle>{t("settings.integrations")}</PaneTitle>
+                <GroupLabel>{t("integrations.media")}</GroupLabel>
+                <div className={cn(WV_PANEL, "px-[18px]")}>
+                  <Row
+                    label={t("integrations.pauseMedia")}
+                    desc={t("integrations.pauseMediaHint")}
+                  >
+                    <Switch
+                      checked={mediaPauseEnabled}
+                      onCheckedChange={(v) => {
+                        setMediaPauseEnabled(v);
+                        save({ mediaPauseEnabled: v });
+                      }}
+                    />
+                  </Row>
+                </div>
+                <GroupLabel>{t("integrations.discord")}</GroupLabel>
+                <div className={cn(WV_PANEL, "px-[18px]")}>
+                  <Row
+                    label={t("integrations.muteDiscord")}
+                    desc={t("integrations.muteDiscordHint")}
+                  >
+                    <Switch
+                      checked={discordMuteEnabled}
+                      onCheckedChange={(v) => {
+                        setDiscordMuteEnabled(v);
+                        save({ discordMuteEnabled: v });
+                      }}
+                    />
+                  </Row>
+                  {discordMuteEnabled && (
+                    <Row label={t("integrations.muteMode")} desc={t("integrations.muteModeHint")}>
+                      <div className="flex gap-1.5">
+                        {(["mic", "full"] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            onClick={() => {
+                              setDiscordMuteMode(mode);
+                              save({ discordMuteMode: mode });
+                            }}
+                            className={cn(
+                              "px-4 py-2 rounded-[9px] border text-[12.5px] font-semibold capitalize transition-colors",
+                              discordMuteMode === mode
+                                ? "bg-acc-faint border-acc text-acc-strong"
+                                : "bg-raised border-line text-ink-3 hover:bg-hover hover:text-ink",
+                            )}
+                          >
+                            {mode === "mic" ? t("integrations.micOnly") : t("integrations.fullMute")}
+                          </button>
+                        ))}
+                      </div>
+                    </Row>
+                  )}
                 </div>
               </>
             )}

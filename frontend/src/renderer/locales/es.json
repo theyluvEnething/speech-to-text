@@ -121,6 +121,7 @@
     "transcription": "Transcripción",
     "general": "General",
     "system": "Sistema",
+    "integrations": "Integraciones",
     "account": "Cuenta",
     "privacy": "Datos y Privacidad",
     "pushToTalkKey": "Tecla de pulsar para hablar",
@@ -278,6 +279,18 @@
     "cancel": "Cancelar",
     "update": "Actualizar",
     "downloadFailed": "Error en la descarga"
+  },
+  "integrations": {
+    "media": "Medios",
+    "pauseMedia": "Pausar medios al transcribir",
+    "pauseMediaHint": "Pausa automáticamente YouTube, Spotify y otros medios al comenzar a grabar. Se reanuda al terminar la transcripción.",
+    "discord": "Discord",
+    "muteDiscord": "Silenciar Discord al transcribir",
+    "muteDiscordHint": "Silencia tu micrófono en Discord para que otros no escuchen tu dictado. Se reactiva automáticamente después de la transcripción.",
+    "muteMode": "Modo de silencio",
+    "muteModeHint": "Solo micrófono silencia solo tu micrófono. Completo también silencia la salida de audio de Discord.",
+    "micOnly": "Solo micrófono",
+    "fullMute": "Completo"
   },
   "errors": {
     "backendUnreachable": "No se puede conectar con el backend. Revisa tu conexión e inténtalo de nuevo.",

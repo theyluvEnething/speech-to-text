@@ -6,6 +6,7 @@ export type SettingsPane =
   | "general"
   | "system"
   | "transcription"
+  | "integrations"
   | "account"
   | "privacy";
 

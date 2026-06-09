@@ -36,6 +36,9 @@ interface StoreSchema {
   hidePill: boolean;
   debugProximity: boolean;
   debugMode: boolean;
+  mediaPauseEnabled: boolean;
+  discordMuteEnabled: boolean;
+  discordMuteMode: "mic" | "full";
   profiles: Profile[];
   activeProfileId: string;
   recentProfileIds: string[];
@@ -55,6 +58,9 @@ export const store = new Store<StoreSchema>({
     hidePill: false,
     debugProximity: false,
     debugMode: false,
+    mediaPauseEnabled: false,
+    discordMuteEnabled: false,
+    discordMuteMode: "mic",
     profiles: [
       {
         id: "default",
@@ -135,6 +141,9 @@ export function registerIpcHandlers(
       appLanguage: store.get("appLanguage"),
       theme: store.get("theme"),
       hidePill: store.get("hidePill"),
+      mediaPauseEnabled: store.get("mediaPauseEnabled"),
+      discordMuteEnabled: store.get("discordMuteEnabled"),
+      discordMuteMode: store.get("discordMuteMode"),
     };
   });
 
@@ -181,6 +190,21 @@ export function registerIpcHandlers(
       const settingsWin = getSettingsWindow();
       if (settingsWin && !settingsWin.isDestroyed()) {
         settingsWin.webContents.send("settings:hide-pill-changed", settings['hidePill']);
+      }
+    }
+
+    if (typeof settings['mediaPauseEnabled'] === "boolean") {
+      store.set("mediaPauseEnabled", settings['mediaPauseEnabled']);
+    }
+
+    if (typeof settings['discordMuteEnabled'] === "boolean") {
+      store.set("discordMuteEnabled", settings['discordMuteEnabled']);
+    }
+
+    if (typeof settings['discordMuteMode'] === "string") {
+      const mode = settings['discordMuteMode'];
+      if (mode === "mic" || mode === "full") {
+        store.set("discordMuteMode", mode);
       }
     }
 
@@ -401,6 +425,14 @@ export function registerIpcHandlers(
     return enabled;
   });
 
+  ipcMain.handle("media-controls:get-state", () => {
+    return {
+      mediaPauseEnabled: store.get("mediaPauseEnabled"),
+      discordMuteEnabled: store.get("discordMuteEnabled"),
+      discordMuteMode: store.get("discordMuteMode"),
+    };
+  });
+
   ipcMain.handle("app:getPaused", () => {
     return store.get("isPaused");
   });
@@ -423,6 +455,9 @@ export function registerIpcHandlers(
       hidePill: false,
       debugProximity: false,
       debugMode: false,
+      mediaPauseEnabled: false,
+      discordMuteEnabled: false,
+      discordMuteMode: "mic",
       profiles: [
         {
           id: "default",

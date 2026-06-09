@@ -9,6 +9,12 @@ import type { ProviderName } from "../transcription/types";
 import { getTokenCache } from "../transcription/token-cache";
 import { pasteText } from "./paste";
 import { getAppWindowFocused } from "./state";
+import {
+  applyMediaControls,
+  restoreMediaControls,
+  cleanupMediaControls,
+  type MediaControlsSettings,
+} from "./media-controls";
 
 type AppState = "idle" | "recording" | "processing" | "showing-result";
 
@@ -146,6 +152,14 @@ function startRecording(): void {
   sendOverlayState("recording");
   audio?.webContents.send("audio:start");
 
+  // ── Apply media controls (fire & forget) ────────────────────────
+  // Pause media / mute Discord in the background. The PowerShell
+  // script takes ~50-100ms; it runs concurrently with audio capture.
+  const mcSettings = resolveMediaControlsSettings();
+  applyMediaControls(mcSettings).catch((err) => {
+    console.error(`[Wavely] Media controls apply failed: ${(err as Error).message}`);
+  });
+
   // ── Pre-fetch API key during recording (fire & forget) ──────────
   // The round-trip to the backend (100-300ms) completes while the
   // user is still speaking. By the time they release the hotkey,
@@ -167,6 +181,11 @@ function startRecording(): void {
         audioActive = false;
         audio?.webContents.send("audio:stop");
       }
+
+      // Restore media controls (unmute Discord) on early failure
+      cleanupMediaControls(resolveMediaControlsSettings()).catch((cleanupErr) => {
+        console.error(`[Wavely] Media controls cleanup failed: ${(cleanupErr as Error).message}`);
+      });
 
       // Classify the error and send the appropriate code to the overlay.
       // The renderer resolves the actual text from i18next locale files.
@@ -206,6 +225,14 @@ function handleLevels(data: { rms: number; peak: number; elapsed: number; sample
   }
   const overlay = getOverlayWindow();
   overlay?.webContents.send("overlay:levels", { rms: data.rms, peak: data.peak });
+}
+
+function resolveMediaControlsSettings(): MediaControlsSettings {
+  return {
+    mediaPauseEnabled: store.get("mediaPauseEnabled"),
+    discordMuteEnabled: store.get("discordMuteEnabled"),
+    discordMuteMode: store.get("discordMuteMode"),
+  };
 }
 
 function resolveTranscribeOptions(): { language: string; model: string; provider: ProviderName; profileId: string } {
@@ -258,6 +285,9 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
     console.log("[Wavely] No audio captured.");
     state = "idle";
     sendOverlayState("idle");
+    cleanupMediaControls(resolveMediaControlsSettings()).catch((err) => {
+      console.error(`[Wavely] Media controls cleanup failed: ${(err as Error).message}`);
+    });
     return;
   }
 
@@ -274,6 +304,9 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
   if (durationSec < 0.75) {
     console.log(`[Wavely] Skipping — audio too short (${durationSec.toFixed(2)}s < 0.75s).`);
     showTranscriptionError("audioTooShort");
+    cleanupMediaControls(resolveMediaControlsSettings()).catch((err) => {
+      console.error(`[Wavely] Media controls cleanup failed: ${(err as Error).message}`);
+    });
     return;
   }
 
@@ -284,6 +317,9 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
       : `[Wavely] Skipping — audio is silent (peak ${peakDb.toFixed(1)} dB < -45 dB)`;
     console.log(msg);
     showTranscriptionError("audioEmpty");
+    cleanupMediaControls(resolveMediaControlsSettings()).catch((err) => {
+      console.error(`[Wavely] Media controls cleanup failed: ${(err as Error).message}`);
+    });
     return;
   }
 
@@ -323,14 +359,25 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
           durationSec,
           createdAt: Date.now(),
         });
+
+        // Restore media controls after successful transcription
+        restoreMediaControls(resolveMediaControlsSettings()).catch((err) => {
+          console.error(`[Wavely] Media controls restore failed: ${(err as Error).message}`);
+        });
       } else {
         console.log("[Wavely] No transcript returned.\n");
         showTranscriptionError("unableToTranscribe");
+        cleanupMediaControls(resolveMediaControlsSettings()).catch((err) => {
+          console.error(`[Wavely] Media controls cleanup failed: ${(err as Error).message}`);
+        });
       }
     })
     .catch((err: Error) => {
       console.error(`[Wavely] Transcription failed: ${err.message}\n`);
       showTranscriptionError("unableToTranscribe", err.message);
+      cleanupMediaControls(resolveMediaControlsSettings()).catch((cleanupErr) => {
+        console.error(`[Wavely] Media controls cleanup failed: ${(cleanupErr as Error).message}`);
+      });
     });
 }
 
