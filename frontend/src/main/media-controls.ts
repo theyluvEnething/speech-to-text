@@ -48,17 +48,17 @@ function K(vk: number, sc: number, fl: number): string {
 async function psSend(calls: string[], label: string): Promise<void> {
   const body = calls.map((c) => `[X]::${c};`).join("");
 
+  // Correct INPUT layout matching Windows ABI: union is sized by largest
+  // member (MOUSEINPUT=32 bytes on x64), not KEYBDINPUT (24 bytes).
   const script = `Add-Type -TypeDefinition @"
-using System; using System.Runtime.InteropServices;
-[StructLayout(LayoutKind.Explicit)]
-public struct I {
-[FieldOffset(0)]public uint tp;[FieldOffset(4)]public ushort vk;
-[FieldOffset(6)]public ushort sc;[FieldOffset(8)]public uint fl;
-[FieldOffset(12)]public uint tm;[FieldOffset(16)]public IntPtr ex;
-}
-public class X {
-[DllImport("user32.dll")]public static extern uint SendInput(uint n,I[] ii,int cb);
-public static void S(ushort vk,ushort sc,uint fl){var ii=new I[1];ii[0].tp=1;ii[0].vk=vk;ii[0].sc=sc;ii[0].fl=fl;uint r=SendInput(1,ii,Marshal.SizeOf(typeof(I)));if(r==0){int e=Marshal.GetLastWin32Error();Console.Error.Write("ERR:"+e);}}
+using System;using System.Runtime.InteropServices;
+[StructLayout(LayoutKind.Sequential)]public struct KB{public ushort vk;public ushort sc;public uint fl;public uint tm;public IntPtr ex;}
+[StructLayout(LayoutKind.Sequential)]public struct MI{public int dx;public int dy;public uint md;public uint fl;public uint tm;public IntPtr ex;}
+[StructLayout(LayoutKind.Explicit)]public struct MU{[FieldOffset(0)]public MI mi;[FieldOffset(0)]public KB ki;}
+[StructLayout(LayoutKind.Sequential)]public struct IN{public uint tp;public MU u;}
+public class X{
+[DllImport("user32.dll")]public static extern uint SendInput(uint n,IN[] ii,int cb);
+public static void S(ushort vk,ushort sc,uint fl){var ii=new IN[1];ii[0].tp=1;ii[0].u.ki.vk=vk;ii[0].u.ki.sc=sc;ii[0].u.ki.fl=fl;uint r=SendInput(1,ii,Marshal.SizeOf(typeof(IN)));if(r==0){int e=Marshal.GetLastWin32Error();Console.Error.Write("ERR:"+e+" cb="+Marshal.SizeOf(typeof(IN)));}}
 }
 "@\n${body}`;
 
