@@ -12,6 +12,9 @@ export interface TokenResponse {
   expires_at: number; // Unix seconds
 }
 
+/** All providers that can request tokens — includes post-processing. */
+export type TokenProvider = Exclude<ProviderName, "backend"> | "deepseek";
+
 interface CacheEntry {
   token: string;
   expiresAtMs: number; // Date.now()-compatible milliseconds
@@ -21,19 +24,21 @@ interface CacheEntry {
 const REFRESH_BUFFER_MS = 60_000; // 60 seconds
 
 /** Maps provider → backend endpoint path. */
-const ENDPOINTS: Record<Exclude<ProviderName, "backend">, string> = {
+const ENDPOINTS: Record<TokenProvider, string> = {
   deepgram: "/api/get-deepgram-key",
   groq: "/api/get-groq-key",
   openai: "/api/openai-client-secret",
   xai: "/api/xai-client-secret",
+  deepseek: "/api/get-deepseek-key",
 };
 
-/** Whether the endpoint uses GET (Deepgram, Groq) or POST (OpenAI, xAI). */
-const METHOD: Record<Exclude<ProviderName, "backend">, "GET" | "POST"> = {
+/** Whether the endpoint uses GET or POST. */
+const METHOD: Record<TokenProvider, "GET" | "POST"> = {
   deepgram: "GET",
   groq: "GET",
   openai: "POST",
   xai: "POST",
+  deepseek: "GET",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -61,10 +66,10 @@ const METHOD: Record<Exclude<ProviderName, "backend">, "GET" | "POST"> = {
  *   ```
  */
 class TokenCache {
-  private store = new Map<ProviderName, CacheEntry>();
+  private store = new Map<TokenProvider, CacheEntry>();
 
   /** In-flight fetches keyed by provider — prevents thundering herd. */
-  private pending = new Map<ProviderName, Promise<TokenResponse>>();
+  private pending = new Map<TokenProvider, Promise<TokenResponse>>();
 
   // ── Public API ──────────────────────────────────────────────────────
 
@@ -75,7 +80,7 @@ class TokenCache {
    * returned immediately (synchronous hit). Otherwise a backend fetch is
    * initiated and awaited.
    */
-  async get(provider: Exclude<ProviderName, "backend">): Promise<string> {
+  async get(provider: TokenProvider): Promise<string> {
     const cached = this.store.get(provider);
 
     // Fast path — token is still fresh
@@ -127,7 +132,7 @@ class TokenCache {
    * Call this when the provider returns a 401 — the current token is
    * invalid (e.g. revoked early) and must be replaced.
    */
-  invalidate(provider: ProviderName): void {
+  invalidate(provider: TokenProvider): void {
     const existed = this.store.delete(provider);
     if (existed) {
       console.log(
@@ -158,7 +163,7 @@ class TokenCache {
    * callers get the same result.
    */
   private async fetch(
-    provider: Exclude<ProviderName, "backend">,
+    provider: TokenProvider,
   ): Promise<TokenResponse> {
     // Deduplicate in-flight requests
     const existing = this.pending.get(provider);

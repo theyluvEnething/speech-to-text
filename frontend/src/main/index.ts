@@ -7,6 +7,8 @@ import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } 
 import { getProvider } from "../transcription/index";
 import type { ProviderName } from "../transcription/types";
 import { getTokenCache } from "../transcription/token-cache";
+import { getTranscriptionPrompt } from "../transcription/prompts";
+import { postProcessText } from "../transcription/deepseek";
 import { pasteText } from "./paste";
 import { getAppWindowFocused } from "./state";
 
@@ -146,11 +148,13 @@ function startRecording(): void {
   sendOverlayState("recording");
   audio?.webContents.send("audio:start");
 
-  // ── Pre-fetch API key during recording (fire & forget) ──────────
+  // ── Pre-fetch API keys during recording (fire & forget) ──────────
   // The round-trip to the backend (100-300ms) completes while the
   // user is still speaking. By the time they release the hotkey,
-  // the token is already cached — zero wait on the critical path.
+  // the tokens are already cached — zero wait on the critical path.
   const { provider: preFetchProvider } = resolveTranscribeOptions();
+  const preFetchProfile = getActiveProfile();
+
   console.log(`[Wavely] Pre-fetching ${preFetchProvider} API key (background)...`);
   getTokenCache()
     .get(preFetchProvider)
@@ -158,18 +162,13 @@ function startRecording(): void {
       console.log(`[Wavely] Pre-fetch complete — ${preFetchProvider} key ready.`);
     })
     .catch((err: Error) => {
-      // Backend unreachable or provider not configured.
-      // Stop recording and show error — the user can't transcribe anyway.
       console.error(`[Wavely] Pre-fetch FAILED: ${err.message}`);
 
-      // Stop the audio capture
       if (audioActive) {
         audioActive = false;
         audio?.webContents.send("audio:stop");
       }
 
-      // Classify the error and send the appropriate code to the overlay.
-      // The renderer resolves the actual text from i18next locale files.
       const msg = err.message.toLowerCase();
       if (msg.includes("cannot reach") || msg.includes("unreachable") || msg.includes("econnrefused")) {
         showTranscriptionError("backendUnreachable");
@@ -181,6 +180,24 @@ function startRecording(): void {
         showTranscriptionError("unableToTranscribe", err.message);
       }
     });
+
+  // Pre-fetch DeepSeek key if the active profile has text processing enabled.
+  // This runs in parallel with the transcription key pre-fetch — completely
+  // independent backend call.
+  if (preFetchProfile.textProcessingEnabled && preFetchProfile.systemPrompt) {
+    console.log("[Wavely] Pre-fetching DeepSeek API key (background)...");
+    getTokenCache()
+      .get("deepseek")
+      .then(() => {
+        console.log("[Wavely] Pre-fetch complete — DeepSeek key ready.");
+      })
+      .catch((err: Error) => {
+        // DeepSeek key fetch failed, but this is NOT fatal.
+        // The transcription itself still works — post-processing will
+        // simply fall back to raw text.
+        console.warn(`[Wavely] DeepSeek pre-fetch FAILED (non-fatal): ${err.message}`);
+      });
+  }
 }
 
 function stopRecording(): void {
@@ -290,6 +307,11 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
   const { language, model, provider: providerName, profileId } = resolveTranscribeOptions();
   const langLabel = language || "auto";
 
+  // Resolve the transcription prompt for the target language.
+  // The prompt MUST match the audio language (research confirmed).
+  const prompt = getTranscriptionPrompt(language);
+  console.log(`[Wavely] Transcription prompt: ${prompt.length} chars for language "${langLabel}"`);
+
   const durationS = durationSec.toFixed(1);
   console.log(`[Wavely] Captured ${durationS}s of audio. Transcribing with ${providerName}/${model} in ${langLabel}...`);
 
@@ -297,12 +319,20 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
   sendOverlayState("processing");
 
   const provider = getProvider(providerName);
-  provider.transcribe(webmBuffer, { model, language, pcmBuffer })
-    .then((text) => {
+  provider.transcribe(webmBuffer, { model, language, prompt, pcmBuffer })
+    .then(async (text) => {
       if (text) {
-        console.log(`[Wavely] -> "${text}"\n`);
+        // ── Post-processing via DeepSeek ──────────────────────────
+        const activeProfile = getActiveProfile();
+        let finalText = text;
+        if (activeProfile.textProcessingEnabled && activeProfile.systemPrompt) {
+          console.log("[Wavely] Post-processing text with DeepSeek...");
+          finalText = await postProcessText(text, activeProfile.systemPrompt);
+        }
+
+        console.log(`[Wavely] -> "${finalText}"\n`);
         const prevClipboard = clipboard.readText();
-        pasteText(text)
+        pasteText(finalText)
           .then(() => {
             if (!store.get("copyToClipboard")) {
               clipboard.writeText(prevClipboard);
@@ -313,10 +343,10 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
             overlay?.webContents.send("overlay:error", `Text copied. Paste failed: ${err.message}`);
           });
         state = "showing-result";
-        overlay?.webContents.send("overlay:result", text);
+        overlay?.webContents.send("overlay:result", finalText);
         saveConversation({
           id: uuid(),
-          text,
+          text: finalText,
           language,
           model: `${providerName}/${model}`,
           profileId,

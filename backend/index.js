@@ -237,7 +237,37 @@ app.post("/api/openai-client-secret", requireApiSecret, async (_req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PROVIDER 4: xAI (Grok) — ephemeral token (secure)
+// PROVIDER 4: DeepSeek — static API key (pass-through)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// DeepSeek is used exclusively for post-processing (text correction), not
+// transcription. The key is a long-lived static key — DeepSeek does not
+// currently offer an ephemeral-token endpoint.
+//
+// NOTE: The user explicitly wants to use their own DeepSeek API key, stored
+// server-side in DEEPSEEK_API_KEY. Never hardcode it in the client.
+
+app.get("/api/get-deepseek-key", requireApiSecret, (_req, res) => {
+  const apiKey = process.env["DEEPSEEK_API_KEY"];
+
+  if (!apiKey || apiKey === "your_key_here") {
+    console.error("[Wavely Backend] DEEPSEEK_API_KEY not configured.");
+    return res.status(500).json({ error: "DeepSeek API key not configured." });
+  }
+
+  // DeepSeek has no ephemeral-token endpoint — the key is long-lived.
+  // Synthesize a 30-day expiry so the frontend token cache can treat
+  // all providers uniformly.
+  const expiresAt = Math.floor(Date.now() / 1000) + 2_592_000; // 30 days
+
+  console.log(
+    `[Wavely Backend] DeepSeek API key retrieved — synthetic expiry in 30d (${new Date(expiresAt * 1000).toISOString()})`,
+  );
+  res.json({ api_key: apiKey, expires_at: expiresAt });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROVIDER 5: xAI (Grok) — ephemeral token (secure)
 // ═══════════════════════════════════════════════════════════════════════════
 //
 // The master XAI_API_KEY never leaves the server. We call xAI's realtime

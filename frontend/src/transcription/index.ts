@@ -32,6 +32,9 @@ export { RealtimeTranscriber, getApiKey } from "./groq/index";
 export type { TranscriptionCallback } from "./groq/index";
 export { getXaiEphemeralToken } from "./xai/index";
 export type { EphemeralToken } from "./xai/index";
+export { getTranscriptionPrompt, TRANSCRIPTION_PROMPTS } from "./prompts";
+export { postProcessText } from "./deepseek";
+export type { TokenProvider } from "./token-cache";
 export type {
   TranscriptionProvider,
   ProviderName,

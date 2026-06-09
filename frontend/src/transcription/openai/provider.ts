@@ -56,6 +56,11 @@ export class OpenAIProvider implements TranscriptionProvider {
       console.log("[OpenAI] Language: auto (server-side detection)");
     }
 
+    if (options.prompt) {
+      formData.append("prompt", options.prompt);
+      console.log(`[OpenAI] Prompt: ${options.prompt.length} chars`);
+    }
+
     console.log(`[OpenAI] Sending to OpenAI REST API — model: ${options.model || "whisper-1"}`);
 
     const response = await fetch(

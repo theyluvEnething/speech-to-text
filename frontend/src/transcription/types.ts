@@ -16,6 +16,9 @@ export type ProviderName = "deepgram" | "groq" | "openai" | "xai";
 export interface TranscribeOptions {
   model: string;
   language: string;
+  /** Optional prompt to guide the Whisper model's style and vocabulary.
+   *  Must match the audio language. Only used by Groq and OpenAI. */
+  prompt?: string;
   /** Raw 16-bit PCM audio at 16kHz mono, for providers that need
    *  uncompressed audio (e.g. xAI realtime/STT APIs).
    *  Undefined when the provider should use the WebM/Opus buffer. */

@@ -10,6 +10,7 @@ interface Profile {
   color: string;
   icon: string;
   systemPrompt: string;
+  textProcessingEnabled: boolean;
   language?: string;
   model?: string;
 }
@@ -62,6 +63,7 @@ export const store = new Store<StoreSchema>({
         color: "#10b981",
         icon: "🌎",
         systemPrompt: "",
+        textProcessingEnabled: false,
       },
       {
         id: "default-en",
@@ -69,6 +71,7 @@ export const store = new Store<StoreSchema>({
         color: "#3b82f6",
         icon: "🇬🇧",
         systemPrompt: "",
+        textProcessingEnabled: false,
         language: "en",
       },
       {
@@ -77,6 +80,7 @@ export const store = new Store<StoreSchema>({
         color: "#ef4444",
         icon: "🇩🇪",
         systemPrompt: "",
+        textProcessingEnabled: false,
         language: "de",
       },
       {
@@ -85,6 +89,7 @@ export const store = new Store<StoreSchema>({
         color: "#22c55e",
         icon: "🇮🇹",
         systemPrompt: "",
+        textProcessingEnabled: false,
         language: "it",
       },
     ],
@@ -217,7 +222,7 @@ export function registerIpcHandlers(
   ipcMain.handle("profiles:upsert", (_event, profile: Profile) => {
     if (profile.id === "default") {
       const existing = store.get("profiles").find((p) => p.id === "default");
-      if (existing && (existing.name !== profile.name || existing.icon !== profile.icon || existing.color !== profile.color || existing.systemPrompt !== profile.systemPrompt)) {
+      if (existing && (existing.name !== profile.name || existing.icon !== profile.icon || existing.color !== profile.color || existing.systemPrompt !== profile.systemPrompt || existing.textProcessingEnabled !== profile.textProcessingEnabled)) {
         throw new Error("Default profile cannot be modified.");
       }
     }
@@ -430,6 +435,7 @@ export function registerIpcHandlers(
           color: "#10b981",
           icon: "🌎",
           systemPrompt: "",
+          textProcessingEnabled: false,
         },
         {
           id: "default-en",
@@ -437,6 +443,7 @@ export function registerIpcHandlers(
           color: "#3b82f6",
           icon: "🇬🇧",
           systemPrompt: "",
+          textProcessingEnabled: false,
           language: "en",
         },
         {
@@ -445,6 +452,7 @@ export function registerIpcHandlers(
           color: "#ef4444",
           icon: "🇩🇪",
           systemPrompt: "",
+          textProcessingEnabled: false,
           language: "de",
         },
         {
@@ -453,6 +461,7 @@ export function registerIpcHandlers(
           color: "#f59e0b",
           icon: "🇮🇹",
           systemPrompt: "",
+          textProcessingEnabled: false,
           language: "it",
         },
       ],

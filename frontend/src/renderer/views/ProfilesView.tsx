@@ -38,7 +38,7 @@ function randomId(): string {
   });
 }
 
-const EMPTY: Profile = { id: "", name: "", color: "#83a9af", icon: "🎙️", systemPrompt: "", language: "", model: "" };
+const EMPTY: Profile = { id: "", name: "", color: "#83a9af", icon: "🎙️", systemPrompt: "", textProcessingEnabled: false, language: "", model: "" };
 
 function ProfilesView(): React.ReactElement {
   const profiles = useStore((s) => s.profiles);
@@ -121,6 +121,7 @@ function ProfilesView(): React.ReactElement {
                   </div>
                   {p.language && <p className="text-[12px] text-ink-4 mt-1">Language: {p.language}</p>}
                   {p.model && <p className="text-[12px] text-ink-4">Model: {p.model}</p>}
+                  {p.textProcessingEnabled && p.systemPrompt && <p className="text-[12px] text-ink-4">Text processing: on</p>}
                 </div>
                 {p.id === DEFAULT_PROFILE_ID ? (
                   <span className="text-[10px] font-bold uppercase tracking-[0.06em] text-ink-4 px-2 py-[3px] rounded-md bg-line-soft border border-line shrink-0">
@@ -187,9 +188,26 @@ function ProfilesView(): React.ReactElement {
             </div>
 
             <div className="space-y-2">
-              <Label>System prompt</Label>
-              <Textarea value={editing.systemPrompt} onChange={(e) => setEditing((p) => ({ ...p, systemPrompt: e.target.value }))}
-                placeholder="Optional. Reserved for future post-processing." rows={4} />
+              <div className="flex items-center justify-between">
+                <Label>Text processing prompt</Label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <span className="text-[12px] text-ink-4">Enable</span>
+                  <input
+                    type="checkbox"
+                    checked={editing.textProcessingEnabled}
+                    onChange={(e) => setEditing((p) => ({ ...p, textProcessingEnabled: e.target.checked }))}
+                    className="w-4 h-4 rounded accent-acc cursor-pointer"
+                  />
+                </label>
+              </div>
+              <Textarea
+                value={editing.systemPrompt}
+                onChange={(e) => setEditing((p) => ({ ...p, systemPrompt: e.target.value }))}
+                placeholder="Optional. Correction instructions sent to the LLM after transcription. E.g.: The user is speaking German. Correct any English words that should be German, fix grammar, and improve coherence."
+                rows={4}
+                disabled={!editing.textProcessingEnabled}
+                className={!editing.textProcessingEnabled ? "opacity-50" : ""}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">

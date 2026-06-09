@@ -19,6 +19,7 @@ interface Profile {
   color: string;
   icon: string;
   systemPrompt: string;
+  textProcessingEnabled: boolean;
   language?: string;
   model?: string;
 }

@@ -33,6 +33,7 @@ export class GroqProvider implements TranscriptionProvider {
         model: options.model,
         language: options.language === "auto" ? undefined : options.language,
         response_format: "verbose_json",
+        prompt: options.prompt || undefined,
       });
 
       const text = transcription.text ?? "";
@@ -59,6 +60,7 @@ export class GroqProvider implements TranscriptionProvider {
           model: options.model,
           language: options.language === "auto" ? undefined : options.language,
           response_format: "verbose_json",
+          prompt: options.prompt || undefined,
         });
 
         const retryText = retryResult.text ?? "";
