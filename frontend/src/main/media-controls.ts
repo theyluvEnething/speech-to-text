@@ -98,23 +98,50 @@ function runPs(script: string): Promise<string> {
 }
 
 // ── Core: send a single keyboard event ──────────────────────────────────────
+//
+// Uses PowerShell + SendInput (the official Windows API) as the primary
+// path. This is ~200ms per call but GUARANTEED to work. koffi keybd_event
+// is tried first for speed; falls back silently to PowerShell.
 
-async function sendEv(vk: number, sc: number, fl: number): Promise<void> {
-  // Try 1: koffi keybd_event (fast, sub-ms)
+let koffiOk = false;
+let koffiTried = false;
+
+function getKoffiFn(): ((vk: number, sc: number, fl: number) => void) | null {
+  if (koffiTried) return koffiOk ? getKoffiFn.__fn ?? null : null;
+  koffiTried = true;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const koffi = require("koffi");
-    const user32 = koffi.load("user32.dll");
-    const fn = user32.func("void", "keybd_event", ["uchar", "uchar", "uint", "uintptr_t"]);
-    fn(vk, sc, fl, 0);
-    return; // success
-  } catch {
-    // koffi not available, fall through to PowerShell
+    const ko = require("koffi");
+    const u32 = ko.load("user32.dll");
+    const fn = u32.func("void", "keybd_event", ["uchar", "uchar", "uint", "uintptr_t"]);
+    // smoke test with a harmless key-up for a key that doesn't exist (VK=0)
+    fn(0, 0, KEYEVENTF_KEYUP, 0);
+    koffiOk = true;
+    (getKoffiFn as unknown as Record<string, unknown>).__fn = fn;
+    L("koffi loaded — fast path active");
+    return fn as unknown as (vk: number, sc: number, fl: number) => void;
+  } catch (err) {
+    L(`koffi not available, will use PowerShell: ${(err as Error).message}`);
+    return null;
+  }
+}
+
+async function sendEv(vk: number, sc: number, fl: number): Promise<void> {
+  // Try koffi first (fast, sub-ms)
+  const kfn = getKoffiFn();
+  if (kfn) {
+    kfn(vk, sc, fl);
+    return;
   }
 
-  // Try 2: PowerShell SendInput (reliable, ~200ms)
+  // Fallback: PowerShell + SendInput (reliable, ~200ms)
   const script = wrapCs(SENDINPUT_CS) + `\n[X]::S(${vk}, ${sc}, ${fl})`;
-  await runPs(script);
+  L(`  [ps] sending vk=0x${vk.toString(16)} sc=0x${sc.toString(16)} fl=${fl}`);
+  try {
+    await runPs(script);
+  } catch (err) {
+    L(`  [ps] FAILED: ${(err as Error).message}`);
+  }
 }
 
 async function sendKey(vk: number, sc: number): Promise<void> {
