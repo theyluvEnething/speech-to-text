@@ -288,9 +288,9 @@
     "pauseMediaHint": "Automatically pause YouTube, Spotify, and other media when you start recording. Resumes after transcription completes.",
     "discord": "Discord",
     "muteDiscord": "Mute Discord while transcribing",
-    "muteDiscordHint": "Mute yourself in Discord so others don't hear you dictating. Automatically unmutes after transcription.",
+    "muteDiscordHint": "Mute yourself in Discord so others don't hear you dictating. Requires a keybind in Discord: Settings → Keybinds → Add. Toggle Mute → Ctrl+Shift+M, Toggle Deafen → Ctrl+Shift+D.",
     "muteMode": "Mute mode",
-    "muteModeHint": "Mic only mutes your microphone. Full mute also silences Discord's audio output.",
+    "muteModeHint": "Mic only sends Toggle Mute (Ctrl+Shift+M). Full mute sends Toggle Deafen (Ctrl+Shift+D) which mutes both mic and audio output.",
     "micOnly": "Mic only",
     "fullMute": "Full mute"
   },

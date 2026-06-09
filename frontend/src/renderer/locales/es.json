@@ -286,7 +286,7 @@
     "pauseMediaHint": "Pausa automáticamente YouTube, Spotify y otros medios al comenzar a grabar. Se reanuda al terminar la transcripción.",
     "discord": "Discord",
     "muteDiscord": "Silenciar Discord al transcribir",
-    "muteDiscordHint": "Silencia tu micrófono en Discord para que otros no escuchen tu dictado. Se reactiva automáticamente después de la transcripción.",
+    "muteDiscordHint": "Silencia tu micrófono en Discord para que otros no escuchen tu dictado. Requiere un atajo en Discord: Ajustes → Atajos → Añadir. Silenciar → Ctrl+Shift+M, Ensordecer → Ctrl+Shift+D.",
     "muteMode": "Modo de silencio",
     "muteModeHint": "Solo micrófono silencia solo tu micrófono. Completo también silencia la salida de audio de Discord.",
     "micOnly": "Solo micrófono",

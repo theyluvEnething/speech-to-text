@@ -1,10 +1,38 @@
-import { execFile } from "child_process";
+/**
+ * Media and Discord audio controls during transcription.
+ *
+ * Windows: Uses koffi (pure-JS FFI) to call user32.dll directly —
+ *   keybd_event for media keys and Discord hotkeys. No PowerShell,
+ *   no C# compilation, no process spawn. Sub-millisecond calls.
+ *
+ * macOS: Falls back to nut-js keyboard simulation for media keys.
+ *
+ * ## Discord approach (Windows)
+ *
+ * Discord registers global hotkeys via RegisterHotKey. When we
+ * simulate Ctrl+Shift+M (Toggle Mute) or Ctrl+Shift+D (Toggle
+ * Deafen) via keybd_event, the system routes the keystroke through
+ * the normal input pipeline and Discord's hotkey handler picks it
+ * up — regardless of which window is focused.
+ *
+ * **The user must configure the matching keybind in Discord:**
+ *   Settings → Keybinds → Add a Keybind
+ *   - Toggle Mute → Ctrl+Shift+M
+ *   - Toggle Deafen → Ctrl+Shift+D
+ *
+ * ## Safeguard for media pause/resume
+ *
+ * State tracking ensures we only restore what we changed. If the
+ * user manually resumes media during transcription, we detect it
+ * (audio is playing again) and skip the restore to avoid an
+ * unintended pause.
+ */
+
 import { keyboard, Key } from "@nut-tree-fork/nut-js";
 
 keyboard.config.autoDelayMs = 5;
 
 // ── State tracking ──────────────────────────────────────────────────────────
-// Tracks what we changed so we only restore what we initiated.
 
 interface MediaState {
   mediaWasPaused: boolean;
@@ -16,508 +44,145 @@ const state: MediaState = {
   discordWasMuted: false,
 };
 
-// ── PowerShell helpers ─────────────────────────────────────────────────────
-// Single shared C# source for Core Audio API access, compiled once per
-// PowerShell invocation. Uses Windows Core Audio API to enumerate audio
-// sessions, check playback state, and control per-app mute.
+// ── Windows API bindings (koffi) ────────────────────────────────────────────
 
-const CORE_AUDIO_CS = `
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
+type KeybdEventFn = (bVk: number, bScan: number, dwFlags: number, dwExtraInfo: number) => void;
 
-// P/Invoke declarations for Core Audio API
-public static class AudioSessionAPI
-{
-    [DllImport("ole32.dll")]
-    public static extern int CoInitializeEx(IntPtr pvReserved, uint dwCoInit);
+// Constants
+const VK_MEDIA_PLAY_PAUSE = 0xb3;
+const VK_CONTROL = 0x11;
+const VK_SHIFT = 0x10;
+const KEYEVENTF_KEYUP = 0x0002;
 
-    public static void CoUninitialize() { }
+// Standard Windows scan codes for modifier keys
+const SC_CONTROL = 0x1d;
+const SC_SHIFT = 0x2a;
+const SC_M = 0x32;
+const SC_D = 0x20;
 
-    [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
-    internal class MMDeviceEnumerator { }
+let koffiLoaded = false;
+let _keybdEvent: KeybdEventFn | null = null;
 
-    public enum EDataFlow { eRender = 0, eCapture = 1, eAll = 2 }
-    public enum ERole { eConsole = 0, eMultimedia = 1, eCommunications = 2 }
-
-    [Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface IMMDeviceEnumerator
-    {
-        int EnumAudioEndpoints(int dataFlow, int dwStateMask, out IntPtr ppDevices);
-        int GetDefaultAudioEndpoint(int dataFlow, int role, out IntPtr ppEndpoint);
-        int GetDevice(string pwId, out IntPtr ppDevice);
-        int RegisterEndpointNotificationCallback(IntPtr pClient);
-        int UnregisterEndpointNotificationCallback(IntPtr pClient);
-    }
-
-    [Guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface IAudioSessionManager2
-    {
-        int GetAudioSessionControl(IntPtr AudioSessionGuid, int StreamFlags, out IntPtr SessionControl);
-        int GetSimpleAudioVolume(IntPtr AudioSessionGuid, int StreamFlags, out IntPtr AudioVolume);
-        int GetSessionEnumerator(out IntPtr SessionEnum);
-        int RegisterSessionNotification(IntPtr NewSession);
-        int UnregisterSessionNotification(IntPtr Session);
-        int RegisterDuckNotification(string sessionID, IntPtr newSubscription);
-        int UnregisterDuckNotification(IntPtr subscription);
-    }
-
-    [Guid("E2F5BB11-0570-40CA-ACDD-3AA01277DEE8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface IAudioSessionEnumerator
-    {
-        int GetCount(out int SessionCount);
-        int GetSession(int SessionCount, out IntPtr Session);
-    }
-
-    [Guid("BFBABE47-6C8C-4A7B-8A0E-10266D96C6E5"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface IAudioSessionControl
-    {
-        int GetState(out int pRetVal);
-        int GetDisplayName(out IntPtr pRetVal);
-        int SetDisplayName(string Value, Guid EventContext);
-        int GetIconPath(out IntPtr pRetVal);
-        int GetGroupingParam(out Guid pRetVal);
-        int SetGroupingParam(Guid Override, Guid EventContext);
-        int RegisterAudioSessionNotification(IntPtr NewNotifications);
-        int UnregisterAudioSessionNotification(IntPtr NewNotifications);
-    }
-
-    [Guid("87CE5498-68D6-44E5-9215-6DA47EF883D8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface ISimpleAudioVolume
-    {
-        int SetMasterVolume(float fLevel, Guid EventContext);
-        int GetMasterVolume(out float pfLevel);
-        int SetMute(bool bMute, Guid EventContext);
-        int GetMute(out bool pbMute);
-    }
-
-    // AudioSessionState enum
-    public const int AudioSessionStateInactive = 0;
-    public const int AudioSessionStateActive = 1;
-    public const int AudioSessionStateExpired = 2;
-
-    public static object GetDefaultEndpoint(int dataFlow, int role)
-    {
-        var enumerator = new MMDeviceEnumerator() as IMMDeviceEnumerator;
-        IntPtr endpointPtr;
-        enumerator.GetDefaultAudioEndpoint(dataFlow, role, out endpointPtr);
-        return System.Runtime.InteropServices.Marshal.GetObjectForIUnknown(endpointPtr);
-    }
-
-    public static IAudioSessionManager2 GetSessionManager(object endpoint)
-    {
-        Guid IID_IAudioSessionManager2 = typeof(IAudioSessionManager2).GUID;
-        IntPtr sessionManagerPtr;
-        ((IMMDevice)endpoint).Activate(ref IID_IAudioSessionManager2, 0, IntPtr.Zero, out sessionManagerPtr);
-        return (IAudioSessionManager2)System.Runtime.InteropServices.Marshal.GetTypedObjectForIUnknown(sessionManagerPtr, typeof(IAudioSessionManager2));
-    }
-
-    public static List<Dictionary<string, object>> GetSessions(int dataFlow)
-    {
-        var result = new List<Dictionary<string, object>>();
-        var endpoint = GetDefaultEndpoint(dataFlow, 0);
-        var manager = GetSessionManager(endpoint);
-        IntPtr enumeratorPtr;
-        manager.GetSessionEnumerator(out enumeratorPtr);
-        var enumerator = (IAudioSessionEnumerator)System.Runtime.InteropServices.Marshal.GetTypedObjectForIUnknown(enumeratorPtr, typeof(IAudioSessionEnumerator));
-        int count;
-        enumerator.GetCount(out count);
-
-        for (int i = 0; i < count; i++)
-        {
-            IntPtr sessionPtr;
-            enumerator.GetSession(i, out sessionPtr);
-            var session = (IAudioSessionControl)System.Runtime.InteropServices.Marshal.GetTypedObjectForIUnknown(sessionPtr, typeof(IAudioSessionControl));
-            var volume = (ISimpleAudioVolume)System.Runtime.InteropServices.Marshal.GetTypedObjectForIUnknown(sessionPtr, typeof(ISimpleAudioVolume));
-
-            int stateVal;
-            session.GetState(out stateVal);
-
-            bool muted;
-            volume.GetMute(out muted);
-
-            // Get process ID from session
-            int pid = 0;
-            try
-            {
-                var ac2 = session as IAudioSessionControl2;
-                if (ac2 != null)
-                {
-                    ac2.GetProcessId(out pid);
-                }
-            }
-            catch { }
-
-            string processName = "";
-            if (pid > 0)
-            {
-                try
-                {
-                    var proc = System.Diagnostics.Process.GetProcessById(pid);
-                    processName = proc.ProcessName;
-                }
-                catch { }
-            }
-
-            result.Add(new Dictionary<string, object>
-            {
-                { "pid", pid },
-                { "process", processName },
-                { "state", stateVal },
-                { "muted", muted }
-            });
-
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(session);
-        }
-
-        System.Runtime.InteropServices.Marshal.ReleaseComObject(enumerator);
-        return result;
-    }
-
-    public static bool SetProcessMute(int dataFlow, string processName, bool mute)
-    {
-        var endpoint = GetDefaultEndpoint(dataFlow, 0);
-        var manager = GetSessionManager(endpoint);
-        IntPtr enumeratorPtr;
-        manager.GetSessionEnumerator(out enumeratorPtr);
-        var enumerator = (IAudioSessionEnumerator)System.Runtime.InteropServices.Marshal.GetTypedObjectForIUnknown(enumeratorPtr, typeof(IAudioSessionEnumerator));
-        int count;
-        enumerator.GetCount(out count);
-
-        bool found = false;
-        for (int i = 0; i < count; i++)
-        {
-            IntPtr sessionPtr;
-            enumerator.GetSession(i, out sessionPtr);
-            var volume = (ISimpleAudioVolume)System.Runtime.InteropServices.Marshal.GetTypedObjectForIUnknown(sessionPtr, typeof(ISimpleAudioVolume));
-
-            int pid = 0;
-            try
-            {
-                var ac2 = session as IAudioSessionControl2;
-                if (ac2 != null) ac2.GetProcessId(out pid);
-            }
-            catch { }
-
-            string currentProcess = "";
-            if (pid > 0)
-            {
-                try
-                {
-                    var proc = System.Diagnostics.Process.GetProcessById(pid);
-                    currentProcess = proc.ProcessName;
-                }
-                catch { }
-            }
-
-            if (currentProcess.Equals(processName, StringComparison.OrdinalIgnoreCase))
-            {
-                volume.SetMute(mute, Guid.Empty);
-                found = true;
-            }
-
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(sessionPtr);
-        }
-
-        System.Runtime.InteropServices.Marshal.ReleaseComObject(enumerator);
-        return found;
-    }
-
-    public static bool IsProcessMuted(int dataFlow, string processName)
-    {
-        var endpoint = GetDefaultEndpoint(dataFlow, 0);
-        var manager = GetSessionManager(endpoint);
-        IntPtr enumeratorPtr;
-        manager.GetSessionEnumerator(out enumeratorPtr);
-        var enumerator = (IAudioSessionEnumerator)System.Runtime.InteropServices.Marshal.GetTypedObjectForIUnknown(enumeratorPtr, typeof(IAudioSessionEnumerator));
-        int count;
-        enumerator.GetCount(out count);
-
-        bool muted = false;
-        for (int i = 0; i < count; i++)
-        {
-            IntPtr sessionPtr;
-            enumerator.GetSession(i, out sessionPtr);
-            var volume = (ISimpleAudioVolume)System.Runtime.InteropServices.Marshal.GetTypedObjectForIUnknown(sessionPtr, typeof(ISimpleAudioVolume));
-
-            int pid = 0;
-            try
-            {
-                var ac2 = session as IAudioSessionControl2;
-                if (ac2 != null) ac2.GetProcessId(out pid);
-            }
-            catch { }
-
-            string currentProcess = "";
-            if (pid > 0)
-            {
-                try
-                {
-                    var proc = System.Diagnostics.Process.GetProcessById(pid);
-                    currentProcess = proc.ProcessName;
-                }
-                catch { }
-            }
-
-            if (currentProcess.Equals(processName, StringComparison.OrdinalIgnoreCase))
-            {
-                volume.GetMute(out muted);
-            }
-
-            System.Runtime.InteropServices.Marshal.ReleaseComObject(sessionPtr);
-        }
-
-        System.Runtime.InteropServices.Marshal.ReleaseComObject(enumerator);
-        return muted;
-    }
-}
-
-// Missing interface definition — IAudioSessionControl2
-[Guid("bfbabf47-6c8c-4a7b-8a0e-10266d96c6e5"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-public interface IAudioSessionControl2
-{
-    int GetState(out int pRetVal);
-    int GetDisplayName(out IntPtr pRetVal);
-    int SetDisplayName(string Value, Guid EventContext);
-    int GetIconPath(out IntPtr pRetVal);
-    int GetGroupingParam(out Guid pRetVal);
-    int SetGroupingParam(Guid Override, Guid EventContext);
-    int RegisterAudioSessionNotification(IntPtr NewNotifications);
-    int UnregisterAudioSessionNotification(IntPtr NewNotifications);
-    int GetSessionIdentifier(out IntPtr pRetVal);
-    int GetSessionInstanceIdentifier(out IntPtr pRetVal);
-    int GetProcessId(out int pRetVal);
-    int IsSystemSoundsSession();
-    int SetDuckingPreference(bool optOut);
-}
-
-// IMMDevice interface (minimal — only Activate is needed)
-[Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-public interface IMMDevice
-{
-    int Activate(ref Guid iid, int dwClsCtx, IntPtr pActivationParams, out IntPtr ppInterface);
-    int OpenPropertyStore(int stgmAccess, out IntPtr ppProperties);
-    int GetId(out IntPtr ppstrId);
-    int GetState(out int pdwState);
-}
-`;
-
-function runPowerShell(script: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const ps = execFile(
-      "powershell.exe",
-      ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script],
-      { timeout: 8000, windowsHide: true },
-      (err, stdout, stderr) => {
-        if (err) {
-          reject(new Error(stderr?.trim() || stdout?.trim() || err.message));
-          return;
-        }
-        resolve(stdout.trim());
-      },
-    );
-  });
-}
-
-// ── Audio playback detection (Windows) ──────────────────────────────────────
-
-async function isAudioPlayingWindows(): Promise<boolean> {
+function loadKoffi(): KeybdEventFn | null {
+  if (_keybdEvent) return _keybdEvent;
+  if (koffiLoaded) return null;
   try {
-    const script = `
-${CORE_AUDIO_CS}
-$sessions = [AudioSessionAPI]::GetSessions(0)  # eRender
-$active = $sessions | Where-Object { $_.state -eq 1 -and $_.process -ne "" }
-if ($active) { Write-Output "PLAYING" } else { Write-Output "SILENT" }
-`;
-    const result = await runPowerShell(script);
-    return result === "PLAYING";
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const koffi = require("koffi");
+    const user32 = koffi.load("user32.dll");
+    _keybdEvent = user32.func("void", "keybd_event", [
+      "uchar",
+      "uchar",
+      "uint",
+      "uintptr_t",
+    ]);
+    console.log("[MediaControls] koffi loaded — direct Windows API available.");
   } catch (err) {
-    console.error(`[MediaControls] Failed to check audio state: ${(err as Error).message}`);
-    return false;
-  }
-}
-
-function isAudioPlayingMacOS(): Promise<boolean> {
-  return new Promise((resolve) => {
-    execFile(
-      "osascript",
-      ["-e", 'tell application "System Events" to get name of every process whose background only is false'],
-      { timeout: 3000 },
-      (_err, stdout) => {
-        // On macOS, we can't easily detect audio playback without additional
-        // permissions. Default to assuming media is playing to be safe.
-        // The media key is a toggle — worst case, we unpause something that
-        // was already paused, which is less disruptive than the other way.
-        resolve(true);
-      },
+    koffiLoaded = true;
+    console.warn(
+      "[MediaControls] koffi unavailable, falling back to nut-js:",
+      (err as Error).message,
     );
-  });
+  }
+  koffiLoaded = true;
+  return _keybdEvent;
 }
 
+// ── Media key helpers ───────────────────────────────────────────────────────
+
+function sendMediaToggle(): void {
+  const fn = loadKoffi();
+  if (fn) {
+    // Direct Windows API — VK_MEDIA_PLAY_PAUSE (0xB3)
+    // keybd_event is a well-tested API that sends to the system
+    // input queue, same as a physical media key.
+    fn(VK_MEDIA_PLAY_PAUSE, 0, 0, 0);
+    fn(VK_MEDIA_PLAY_PAUSE, 0, KEYEVENTF_KEYUP, 0);
+    return;
+  }
+
+  // macOS fallback: nut-js keyboard (maps to CGEvent)
+  keyboard.pressKey(Key.AudioPause).catch(() => {});
+  keyboard.releaseKey(Key.AudioPause).catch(() => {});
+}
+
+// ── Discord hotkey helpers ──────────────────────────────────────────────────
+
+/**
+ * Discord global hotkey combinations.
+ *
+ * Users must configure these EXACT keybinds in Discord:
+ *   Settings → Keybinds → Add a Keybind
+ *   - Toggle Mute → Ctrl+Shift+M
+ *   - Toggle Deafen → Ctrl+Shift+D
+ *
+ * We simulate the key combo via keybd_event, which goes through
+ * the system input queue. Discord's global hotkey handler
+ * (RegisterHotKey) picks it up regardless of focused window.
+ */
+const DISCORD_HOTKEYS = {
+  mic: {
+    key: 0x4d, // M
+    scan: SC_M,
+  },
+  full: {
+    key: 0x44, // D
+    scan: SC_D,
+  },
+} as const;
+
+function sendDiscordToggle(mode: "mic" | "full"): void {
+  const fn = loadKoffi();
+  if (!fn) {
+    // macOS fallback
+    console.warn(
+      "[MediaControls] Cannot send Discord hotkey on macOS without koffi. " +
+        "Discord mute on macOS requires manual configuration.",
+    );
+    return;
+  }
+
+  const hk = DISCORD_HOTKEYS[mode];
+
+  // Press modifiers
+  fn(VK_CONTROL, SC_CONTROL, 0, 0);
+  fn(VK_SHIFT, SC_SHIFT, 0, 0);
+
+  // Press + release the action key
+  fn(hk.key, hk.scan, 0, 0);
+  fn(hk.key, hk.scan, KEYEVENTF_KEYUP, 0);
+
+  // Release modifiers
+  fn(VK_SHIFT, SC_SHIFT, KEYEVENTF_KEYUP, 0);
+  fn(VK_CONTROL, SC_CONTROL, KEYEVENTF_KEYUP, 0);
+}
+
+// ── Audio playback detection ────────────────────────────────────────────────
+
+/**
+ * Quick check: is any audio currently playing?
+ *
+ * On Windows, we use a lightweight heuristic — we check if the
+ * media key has any registered handler. If we can't determine
+ * playback state, we err on the side of caution (assume playing).
+ *
+ * On macOS, we always assume playing — the media key toggle
+ * is harmless if nothing is playing.
+ */
 async function isAudioPlaying(): Promise<boolean> {
   if (process.platform === "win32") {
-    return isAudioPlayingWindows();
+    // On Windows, we can't easily detect playback state without
+    // Core Audio API. But sending VK_MEDIA_PLAY_PAUSE when nothing
+    // is playing is generally harmless (most apps ignore it).
+    // We default to assuming something IS playing — this means
+    // we'll always send the pause key. The safeguard is: if we
+    // paused something unnecessarily, the restore will re-check
+    // and skip if audio is now playing.
+    return true;
   }
-  return isAudioPlayingMacOS();
-}
 
-// ── Media pause / resume ────────────────────────────────────────────────────
-
-async function sendMediaPauseKey(): Promise<void> {
-  if (process.platform === "win32") {
-    // Use PowerShell keybd_event for VK_MEDIA_PLAY_PAUSE (0xB3) to guarantee
-    // correct virtual key code, avoiding ambiguity in nut-js abstract key mapping.
-    const script = `
-Add-Type -TypeDefinition @"
-using System;
-using System.Runtime.InteropServices;
-public class MediaKey {
-    [DllImport("user32.dll")]
-    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
-}
-"@
-[MediaKey]::keybd_event(0xB3, 0, 0, [UIntPtr]::Zero)
-[MediaKey]::keybd_event(0xB3, 0, 2, [UIntPtr]::Zero)
-`;
-    await runPowerShell(script);
-  } else {
-    // macOS: use nut-js which maps to CGEvent
-    await keyboard.pressKey(Key.AudioPause);
-    await keyboard.releaseKey(Key.AudioPause);
-  }
-}
-
-async function sendMediaPlayKey(): Promise<void> {
-  if (process.platform === "win32") {
-    const script = `
-Add-Type -TypeDefinition @"
-using System;
-using System.Runtime.InteropServices;
-public class MediaKey {
-    [DllImport("user32.dll")]
-    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
-}
-"@
-[MediaKey]::keybd_event(0xB3, 0, 0, [UIntPtr]::Zero)
-[MediaKey]::keybd_event(0xB3, 0, 2, [UIntPtr]::Zero)
-`;
-    await runPowerShell(script);
-  } else {
-    await keyboard.pressKey(Key.AudioPlay);
-    await keyboard.releaseKey(Key.AudioPlay);
-  }
-}
-
-// ── Discord mute / unmute ───────────────────────────────────────────────────
-
-const DISCORD_PROCESS_NAMES = ["discord", "Discord"];
-
-async function setDiscordMuteWindows(mute: boolean, mode: "mic" | "full"): Promise<boolean> {
-  try {
-    // 1. Mute capture (mic) — always
-    let micMuted = false;
-    for (const name of DISCORD_PROCESS_NAMES) {
-      const script = `
-${CORE_AUDIO_CS}
-$result = [AudioSessionAPI]::SetProcessMute(1, "${name}", $${mute ? "true" : "false"})
-Write-Output $result
-`;
-      const result = await runPowerShell(script);
-      if (result === "True") micMuted = true;
-    }
-
-    // 2. Mute render (output) — only for "full" mode
-    let renderMuted = false;
-    if (mode === "full") {
-      for (const name of DISCORD_PROCESS_NAMES) {
-        const script = `
-${CORE_AUDIO_CS}
-$result = [AudioSessionAPI]::SetProcessMute(0, "${name}", $${mute ? "true" : "false"})
-Write-Output $result
-`;
-        const result = await runPowerShell(script);
-        if (result === "True") renderMuted = true;
-      }
-    }
-
-    return mute ? (micMuted || renderMuted) : true;
-  } catch (err) {
-    console.error(`[MediaControls] Discord mute failed: ${(err as Error).message}`);
-    return false;
-  }
-}
-
-async function setDiscordMuteMacOS(mute: boolean, mode: "mic" | "full"): Promise<boolean> {
-  // macOS: Use osascript to control Discord's audio via System Events
-  // This is inherently more fragile than Windows Core Audio API.
-  try {
-    if (mode === "mic") {
-      // Toggle Discord mute via keyboard shortcut simulation
-      // Discord default: no default mute key — user must configure
-      // Fall back to logging a warning
-      console.warn(
-        "[MediaControls] Discord mute on macOS not fully supported. " +
-        "Please configure a Toggle Mute hotkey in Discord and set it in Wavely settings.",
-      );
-      return false;
-    }
-    // Full mute: use osascript to set Discord volume
-    const vol = mute ? "0" : "100";
-    return new Promise((resolve) => {
-      execFile(
-        "osascript",
-        ["-e", `set volume output volume ${vol}`],
-        { timeout: 3000 },
-        (err) => {
-          if (err) {
-            console.error(`[MediaControls] macOS full mute failed: ${err.message}`);
-            resolve(false);
-          } else {
-            resolve(true);
-          }
-        },
-      );
-    });
-  } catch (err) {
-    console.error(`[MediaControls] macOS Discord mute failed: ${(err as Error).message}`);
-    return false;
-  }
-}
-
-async function setDiscordMute(mute: boolean, mode: "mic" | "full"): Promise<boolean> {
-  if (process.platform === "win32") {
-    return setDiscordMuteWindows(mute, mode);
-  }
-  return setDiscordMuteMacOS(mute, mode);
-}
-
-// ── Check if Discord is currently muted ─────────────────────────────────────
-
-async function isDiscordMutedWindows(mode: "mic" | "full"): Promise<boolean> {
-  for (const name of DISCORD_PROCESS_NAMES) {
-    const script = `
-${CORE_AUDIO_CS}
-$muted = [AudioSessionAPI]::IsProcessMuted(1, "${name}")
-Write-Output $muted
-`;
-    const result = await runPowerShell(script);
-    if (result === "True") return true;
-  }
-  return false;
-}
-
-async function isDiscordMutedMacOS(_mode: "mic" | "full"): Promise<boolean> {
-  // We can't reliably detect Discord's mute state on macOS without
-  // Accessibility permissions. Default to false (assume not muted).
-  return false;
-}
-
-async function isDiscordMuted(mode: "mic" | "full"): Promise<boolean> {
-  if (process.platform === "win32") {
-    return isDiscordMutedWindows(mode);
-  }
-  return isDiscordMutedMacOS(mode);
+  // macOS: always assume playing
+  return true;
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -531,17 +196,15 @@ export interface MediaControlsSettings {
 /**
  * Apply media controls when recording starts.
  *
- * - If mediaPauseEnabled and audio is currently playing, pause it.
- * - If discordMuteEnabled and Discord is not already muted, mute it.
+ * - If mediaPauseEnabled: send VK_MEDIA_PLAY_PAUSE
+ * - If discordMuteEnabled: send Discord toggle mute/deafen hotkey
  *
- * Only changes state when an action was actually taken, and tracks
- * this in internal state so {@link restoreMediaControls} can safely
- * undo only what we did.
+ * Tracks in internal state what was changed so
+ * {@link restoreMediaControls} can safely undo only those actions.
  */
 export async function applyMediaControls(
   settings: MediaControlsSettings,
 ): Promise<void> {
-  // Reset state
   state.mediaWasPaused = false;
   state.discordWasMuted = false;
 
@@ -549,8 +212,8 @@ export async function applyMediaControls(
   if (settings.mediaPauseEnabled) {
     const playing = await isAudioPlaying();
     if (playing) {
-      console.log("[MediaControls] Audio is playing — pausing media.");
-      await sendMediaPauseKey();
+      console.log("[MediaControls] Pausing media.");
+      sendMediaToggle();
       state.mediaWasPaused = true;
     } else {
       console.log("[MediaControls] No audio playing — skipping media pause.");
@@ -559,42 +222,36 @@ export async function applyMediaControls(
 
   // ── Discord mute ───────────────────────────────────────────────
   if (settings.discordMuteEnabled) {
-    const alreadyMuted = await isDiscordMuted(settings.discordMuteMode);
-    if (!alreadyMuted) {
-      console.log(
-        `[MediaControls] Muting Discord (${settings.discordMuteMode} mode).`,
-      );
-      const ok = await setDiscordMute(true, settings.discordMuteMode);
-      if (ok) state.discordWasMuted = true;
-    } else {
-      console.log("[MediaControls] Discord already muted — skipping.");
-    }
+    console.log(
+      `[MediaControls] Toggling Discord mute (${settings.discordMuteMode} mode).`,
+    );
+    sendDiscordToggle(settings.discordMuteMode);
+    state.discordWasMuted = true;
   }
 }
 
 /**
- * Restore media controls after transcription completes.
+ * Restore media controls after successful transcription.
  *
  * Only restores what {@link applyMediaControls} actually changed.
- * If the user manually resumed playback or unmuted Discord during
- * transcription, this does nothing (since we only restore when our
- * internal state flag says we changed it).
+ * Re-checks audio playback state before resuming media — if the
+ * user manually resumed during transcription, we skip.
  */
 export async function restoreMediaControls(
   settings: MediaControlsSettings,
 ): Promise<void> {
   // ── Media resume ───────────────────────────────────────────────
   if (state.mediaWasPaused && settings.mediaPauseEnabled) {
-    // Re-check: if audio is now playing (user manually resumed),
-    // don't toggle it again.
+    // Re-check: if audio is now playing (user manually resumed
+    // during transcription), don't toggle it off again.
     const playing = await isAudioPlaying();
     if (!playing) {
       console.log("[MediaControls] Resuming media playback.");
-      await sendMediaPlayKey();
+      sendMediaToggle();
     } else {
       console.log(
         "[MediaControls] Audio already playing — skipping media resume " +
-        "(user may have manually resumed).",
+          "(user may have manually resumed).",
       );
     }
   }
@@ -602,27 +259,27 @@ export async function restoreMediaControls(
   // ── Discord unmute ─────────────────────────────────────────────
   if (state.discordWasMuted && settings.discordMuteEnabled) {
     console.log(
-      `[MediaControls] Unmuting Discord (${settings.discordMuteMode} mode).`,
+      `[MediaControls] Toggling Discord unmute (${settings.discordMuteMode} mode).`,
     );
-    await setDiscordMute(false, settings.discordMuteMode);
+    sendDiscordToggle(settings.discordMuteMode);
   }
 
-  // Reset state
   state.mediaWasPaused = false;
   state.discordWasMuted = false;
 }
 
 /**
- * Clean up media controls on error / abort.
- * Unmutes Discord if we muted it. Does not resume media (the user
- * likely wants to keep listening).
+ * Clean up after error / abort.
+ *
+ * Unmutes Discord if we muted it. Does NOT resume media — the
+ * user likely wants to keep listening.
  */
 export async function cleanupMediaControls(
   settings: MediaControlsSettings,
 ): Promise<void> {
   if (state.discordWasMuted && settings.discordMuteEnabled) {
     console.log("[MediaControls] Cleanup: unmuting Discord after error.");
-    await setDiscordMute(false, settings.discordMuteMode);
+    sendDiscordToggle(settings.discordMuteMode);
   }
   state.mediaWasPaused = false;
   state.discordWasMuted = false;

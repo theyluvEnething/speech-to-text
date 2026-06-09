@@ -286,7 +286,7 @@
     "pauseMediaHint": "Pausiert automatisch YouTube, Spotify und andere Medien, wenn die Aufnahme beginnt. Wird nach der Transkription fortgesetzt.",
     "discord": "Discord",
     "muteDiscord": "Discord während der Transkription stummschalten",
-    "muteDiscordHint": "Schaltet dein Mikrofon in Discord stumm, damit andere dein Diktat nicht hören. Wird nach der Transkription automatisch aufgehoben.",
+    "muteDiscordHint": "Schaltet dein Mikrofon in Discord stumm, damit andere dein Diktat nicht hören. Erfordert einen Keybind in Discord: Einstellungen → Tastenkombinationen → Hinzufügen. Stummschaltung → Strg+Shift+M, Deafen → Strg+Shift+D.",
     "muteMode": "Stummschaltmodus",
     "muteModeHint": "Nur Mikro schaltet nur dein Mikrofon stumm. Vollständig schaltet auch die Audioausgabe von Discord stumm.",
     "micOnly": "Nur Mikro",
