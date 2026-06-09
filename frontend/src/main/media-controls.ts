@@ -1,188 +1,161 @@
 /**
  * Media and Discord audio controls during transcription.
  *
- * Windows: Uses koffi (pure-JS FFI) to call user32.dll directly —
- *   keybd_event for media keys and Discord hotkeys. No PowerShell,
- *   no C# compilation, no process spawn. Sub-millisecond calls.
+ * ## Media keys (YouTube, Spotify, etc.)
  *
- * macOS: Falls back to nut-js keyboard simulation for media keys.
+ * Sends VK_MEDIA_PLAY_PAUSE (0xB3) via SendInput — the modern
+ * Windows API — or keybd_event fallback. Behaves identically to
+ * a physical media key press.
  *
- * ## Discord approach (Windows)
+ * ## Discord mute
  *
- * Discord registers global hotkeys via RegisterHotKey. When we
- * simulate Ctrl+Shift+M (Toggle Mute) or Ctrl+Shift+D (Toggle
- * Deafen) via keybd_event, the system routes the keystroke through
- * the normal input pipeline and Discord's hotkey handler picks it
- * up — regardless of which window is focused.
+ * Simulates Ctrl+Shift+M (Toggle Mute) or Ctrl+Shift+D (Toggle
+ * Deafen) via SendInput. Discord's RegisterHotKey handler picks
+ * up system-level keystrokes regardless of focus.
  *
- * **The user must configure the matching keybind in Discord:**
+ * **User MUST configure matching keybinds in Discord:**
  *   Settings → Keybinds → Add a Keybind
  *   - Toggle Mute → Ctrl+Shift+M
  *   - Toggle Deafen → Ctrl+Shift+D
- *
- * ## Safeguard for media pause/resume
- *
- * State tracking ensures we only restore what we changed. If the
- * user manually resumes media during transcription, we detect it
- * (audio is playing again) and skip the restore to avoid an
- * unintended pause.
  */
 
-import { keyboard, Key } from "@nut-tree-fork/nut-js";
+import { execFile } from "child_process";
 
-keyboard.config.autoDelayMs = 5;
-
-// ── State tracking ──────────────────────────────────────────────────────────
+// ── State ───────────────────────────────────────────────────────────────────
 
 interface MediaState {
   mediaWasPaused: boolean;
   discordWasMuted: boolean;
 }
 
-const state: MediaState = {
-  mediaWasPaused: false,
-  discordWasMuted: false,
-};
+const s: MediaState = { mediaWasPaused: false, discordWasMuted: false };
 
-// ── Windows API bindings (koffi) ────────────────────────────────────────────
+// ── Key constants ───────────────────────────────────────────────────────────
 
-type KeybdEventFn = (bVk: number, bScan: number, dwFlags: number, dwExtraInfo: number) => void;
-
-// Constants
 const VK_MEDIA_PLAY_PAUSE = 0xb3;
 const VK_CONTROL = 0x11;
 const VK_SHIFT = 0x10;
+const VK_M = 0x4d;
+const VK_D = 0x44;
 const KEYEVENTF_KEYUP = 0x0002;
+const KEYEVENTF_EXTENDEDKEY = 0x0001;
 
-// Standard Windows scan codes for modifier keys
-const SC_CONTROL = 0x1d;
-const SC_SHIFT = 0x2a;
-const SC_M = 0x32;
-const SC_D = 0x20;
+// ── Logging ─────────────────────────────────────────────────────────────────
 
-let koffiLoaded = false;
-let _keybdEvent: KeybdEventFn | null = null;
+function L(msg: string): void {
+  console.log(`[MediaControls] ${msg}`);
+}
 
-function loadKoffi(): KeybdEventFn | null {
-  if (_keybdEvent) return _keybdEvent;
-  if (koffiLoaded) return null;
+// ── C# SendInput helper (embedded in PowerShell) ────────────────────────────
+//
+// SendInput is the official Windows API for injecting keystrokes.
+// It's more reliable than keybd_event and handles UIPI correctly.
+
+const SENDINPUT_CS = `
+[StructLayout(LayoutKind.Sequential)]
+public struct K { public ushort vk; public ushort sc; public uint fl; public uint tm; public IntPtr ex; }
+
+[StructLayout(LayoutKind.Sequential)]
+public struct I { public uint tp; public K ki; }
+
+[DllImport("user32.dll")]
+public static extern uint SendInput(uint n, I[] ii, int cb);
+
+public static void S(ushort vk, ushort sc, uint fl) {
+  I[] ii = new I[1];
+  ii[0].tp = 1;  // INPUT_KEYBOARD
+  ii[0].ki.vk = vk;
+  ii[0].ki.sc = sc;
+  ii[0].ki.fl = fl;
+  SendInput(1, ii, Marshal.SizeOf(typeof(I)));
+}`;
+
+function wrapCs(code: string): string {
+  return `Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public class X {
+${code}
+}
+"@`;
+}
+
+function runPs(script: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      "powershell.exe",
+      ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script],
+      { timeout: 5000, windowsHide: true },
+      (err, stdout, stderr) => {
+        if (err) {
+          reject(new Error(stderr?.trim() || stdout?.trim() || err.message));
+          return;
+        }
+        resolve(stdout.trim());
+      },
+    );
+  });
+}
+
+// ── Core: send a single keyboard event ──────────────────────────────────────
+
+async function sendEv(vk: number, sc: number, fl: number): Promise<void> {
+  // Try 1: koffi keybd_event (fast, sub-ms)
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const koffi = require("koffi");
     const user32 = koffi.load("user32.dll");
-    _keybdEvent = user32.func("void", "keybd_event", [
-      "uchar",
-      "uchar",
-      "uint",
-      "uintptr_t",
-    ]);
-    console.log("[MediaControls] koffi loaded — direct Windows API available.");
-  } catch (err) {
-    koffiLoaded = true;
-    console.warn(
-      "[MediaControls] koffi unavailable, falling back to nut-js:",
-      (err as Error).message,
-    );
+    const fn = user32.func("void", "keybd_event", ["uchar", "uchar", "uint", "uintptr_t"]);
+    fn(vk, sc, fl, 0);
+    return; // success
+  } catch {
+    // koffi not available, fall through to PowerShell
   }
-  koffiLoaded = true;
-  return _keybdEvent;
+
+  // Try 2: PowerShell SendInput (reliable, ~200ms)
+  const script = wrapCs(SENDINPUT_CS) + `\n[X]::S(${vk}, ${sc}, ${fl})`;
+  await runPs(script);
 }
 
-// ── Media key helpers ───────────────────────────────────────────────────────
-
-function sendMediaToggle(): void {
-  const fn = loadKoffi();
-  if (fn) {
-    // Direct Windows API — VK_MEDIA_PLAY_PAUSE (0xB3)
-    // keybd_event is a well-tested API that sends to the system
-    // input queue, same as a physical media key.
-    fn(VK_MEDIA_PLAY_PAUSE, 0, 0, 0);
-    fn(VK_MEDIA_PLAY_PAUSE, 0, KEYEVENTF_KEYUP, 0);
-    return;
-  }
-
-  // macOS fallback: nut-js keyboard (maps to CGEvent)
-  keyboard.pressKey(Key.AudioPause).catch(() => {});
-  keyboard.releaseKey(Key.AudioPause).catch(() => {});
+async function sendKey(vk: number, sc: number): Promise<void> {
+  const isMedia = vk === VK_MEDIA_PLAY_PAUSE;
+  const ext = isMedia ? KEYEVENTF_EXTENDEDKEY : 0;
+  const esc = isMedia ? 0xe0 : sc;
+  await sendEv(vk, esc, ext);
+  await sendEv(vk, esc, ext | KEYEVENTF_KEYUP);
 }
 
-// ── Discord hotkey helpers ──────────────────────────────────────────────────
+// ── Public: media toggle ────────────────────────────────────────────────────
 
-/**
- * Discord global hotkey combinations.
- *
- * Users must configure these EXACT keybinds in Discord:
- *   Settings → Keybinds → Add a Keybind
- *   - Toggle Mute → Ctrl+Shift+M
- *   - Toggle Deafen → Ctrl+Shift+D
- *
- * We simulate the key combo via keybd_event, which goes through
- * the system input queue. Discord's global hotkey handler
- * (RegisterHotKey) picks it up regardless of focused window.
- */
-const DISCORD_HOTKEYS = {
-  mic: {
-    key: 0x4d, // M
-    scan: SC_M,
-  },
-  full: {
-    key: 0x44, // D
-    scan: SC_D,
-  },
-} as const;
-
-function sendDiscordToggle(mode: "mic" | "full"): void {
-  const fn = loadKoffi();
-  if (!fn) {
-    // macOS fallback
-    console.warn(
-      "[MediaControls] Cannot send Discord hotkey on macOS without koffi. " +
-        "Discord mute on macOS requires manual configuration.",
-    );
-    return;
-  }
-
-  const hk = DISCORD_HOTKEYS[mode];
-
-  // Press modifiers
-  fn(VK_CONTROL, SC_CONTROL, 0, 0);
-  fn(VK_SHIFT, SC_SHIFT, 0, 0);
-
-  // Press + release the action key
-  fn(hk.key, hk.scan, 0, 0);
-  fn(hk.key, hk.scan, KEYEVENTF_KEYUP, 0);
-
-  // Release modifiers
-  fn(VK_SHIFT, SC_SHIFT, KEYEVENTF_KEYUP, 0);
-  fn(VK_CONTROL, SC_CONTROL, KEYEVENTF_KEYUP, 0);
+async function toggleMedia(): Promise<void> {
+  L("→ toggleMedia() — sending VK_MEDIA_PLAY_PAUSE (0xB3)");
+  await sendKey(VK_MEDIA_PLAY_PAUSE, 0);
+  L("  VK_MEDIA_PLAY_PAUSE sent ✓");
 }
 
-// ── Audio playback detection ────────────────────────────────────────────────
+// ── Public: Discord hotkey ──────────────────────────────────────────────────
 
-/**
- * Quick check: is any audio currently playing?
- *
- * On Windows, we use a lightweight heuristic — we check if the
- * media key has any registered handler. If we can't determine
- * playback state, we err on the side of caution (assume playing).
- *
- * On macOS, we always assume playing — the media key toggle
- * is harmless if nothing is playing.
- */
-async function isAudioPlaying(): Promise<boolean> {
-  if (process.platform === "win32") {
-    // On Windows, we can't easily detect playback state without
-    // Core Audio API. But sending VK_MEDIA_PLAY_PAUSE when nothing
-    // is playing is generally harmless (most apps ignore it).
-    // We default to assuming something IS playing — this means
-    // we'll always send the pause key. The safeguard is: if we
-    // paused something unnecessarily, the restore will re-check
-    // and skip if audio is now playing.
-    return true;
-  }
+async function toggleDiscord(mode: "mic" | "full"): Promise<void> {
+  const vk = mode === "mic" ? VK_M : VK_D;
+  const sc = mode === "mic" ? 0x32 : 0x20;
+  const label =
+    mode === "mic"
+      ? "Ctrl+Shift+M (Toggle Mute)"
+      : "Ctrl+Shift+D (Toggle Deafen)";
 
-  // macOS: always assume playing
-  return true;
+  L(`→ toggleDiscord("${mode}") — sending ${label}`);
+
+  // Modifiers down
+  await sendEv(VK_CONTROL, 0x1d, 0);
+  await sendEv(VK_SHIFT, 0x2a, 0);
+  // Action key press+release
+  await sendEv(vk, sc, 0);
+  await sendEv(vk, sc, KEYEVENTF_KEYUP);
+  // Modifiers up
+  await sendEv(VK_SHIFT, 0x2a, KEYEVENTF_KEYUP);
+  await sendEv(VK_CONTROL, 0x1d, KEYEVENTF_KEYUP);
+
+  L(`  ${label} sent ✓`);
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -193,94 +166,61 @@ export interface MediaControlsSettings {
   discordMuteMode: "mic" | "full";
 }
 
-/**
- * Apply media controls when recording starts.
- *
- * - If mediaPauseEnabled: send VK_MEDIA_PLAY_PAUSE
- * - If discordMuteEnabled: send Discord toggle mute/deafen hotkey
- *
- * Tracks in internal state what was changed so
- * {@link restoreMediaControls} can safely undo only those actions.
- */
 export async function applyMediaControls(
-  settings: MediaControlsSettings,
+  cfg: MediaControlsSettings,
 ): Promise<void> {
-  state.mediaWasPaused = false;
-  state.discordWasMuted = false;
+  L(
+    `=== applyMediaControls START === ` +
+    `mediaPause=${cfg.mediaPauseEnabled} discordMute=${cfg.discordMuteEnabled} mode=${cfg.discordMuteMode}`,
+  );
 
-  // ── Media pause ────────────────────────────────────────────────
-  if (settings.mediaPauseEnabled) {
-    const playing = await isAudioPlaying();
-    if (playing) {
-      console.log("[MediaControls] Pausing media.");
-      sendMediaToggle();
-      state.mediaWasPaused = true;
-    } else {
-      console.log("[MediaControls] No audio playing — skipping media pause.");
-    }
+  s.mediaWasPaused = false;
+  s.discordWasMuted = false;
+
+  if (cfg.mediaPauseEnabled) {
+    await toggleMedia();
+    s.mediaWasPaused = true;
+  } else {
+    L("  media pause disabled — skip");
   }
 
-  // ── Discord mute ───────────────────────────────────────────────
-  if (settings.discordMuteEnabled) {
-    console.log(
-      `[MediaControls] Toggling Discord mute (${settings.discordMuteMode} mode).`,
-    );
-    sendDiscordToggle(settings.discordMuteMode);
-    state.discordWasMuted = true;
+  if (cfg.discordMuteEnabled) {
+    await toggleDiscord(cfg.discordMuteMode);
+    s.discordWasMuted = true;
+  } else {
+    L("  discord mute disabled — skip");
   }
+
+  L(`=== applyMediaControls END (paused=${s.mediaWasPaused} muted=${s.discordWasMuted}) ===`);
 }
 
-/**
- * Restore media controls after successful transcription.
- *
- * Only restores what {@link applyMediaControls} actually changed.
- * Re-checks audio playback state before resuming media — if the
- * user manually resumed during transcription, we skip.
- */
 export async function restoreMediaControls(
-  settings: MediaControlsSettings,
+  cfg: MediaControlsSettings,
 ): Promise<void> {
-  // ── Media resume ───────────────────────────────────────────────
-  if (state.mediaWasPaused && settings.mediaPauseEnabled) {
-    // Re-check: if audio is now playing (user manually resumed
-    // during transcription), don't toggle it off again.
-    const playing = await isAudioPlaying();
-    if (!playing) {
-      console.log("[MediaControls] Resuming media playback.");
-      sendMediaToggle();
-    } else {
-      console.log(
-        "[MediaControls] Audio already playing — skipping media resume " +
-          "(user may have manually resumed).",
-      );
-    }
+  L(
+    `=== restoreMediaControls START === ` +
+    `wasPaused=${s.mediaWasPaused} wasMuted=${s.discordWasMuted}`,
+  );
+
+  if (s.mediaWasPaused && cfg.mediaPauseEnabled) {
+    await toggleMedia();
+  }
+  if (s.discordWasMuted && cfg.discordMuteEnabled) {
+    await toggleDiscord(cfg.discordMuteMode);
   }
 
-  // ── Discord unmute ─────────────────────────────────────────────
-  if (state.discordWasMuted && settings.discordMuteEnabled) {
-    console.log(
-      `[MediaControls] Toggling Discord unmute (${settings.discordMuteMode} mode).`,
-    );
-    sendDiscordToggle(settings.discordMuteMode);
-  }
-
-  state.mediaWasPaused = false;
-  state.discordWasMuted = false;
+  s.mediaWasPaused = false;
+  s.discordWasMuted = false;
+  L("=== restoreMediaControls END ===");
 }
 
-/**
- * Clean up after error / abort.
- *
- * Unmutes Discord if we muted it. Does NOT resume media — the
- * user likely wants to keep listening.
- */
 export async function cleanupMediaControls(
-  settings: MediaControlsSettings,
+  cfg: MediaControlsSettings,
 ): Promise<void> {
-  if (state.discordWasMuted && settings.discordMuteEnabled) {
-    console.log("[MediaControls] Cleanup: unmuting Discord after error.");
-    sendDiscordToggle(settings.discordMuteMode);
+  L(`=== cleanupMediaControls (wasMuted=${s.discordWasMuted}) ===`);
+  if (s.discordWasMuted && cfg.discordMuteEnabled) {
+    await toggleDiscord(cfg.discordMuteMode);
   }
-  state.mediaWasPaused = false;
-  state.discordWasMuted = false;
+  s.mediaWasPaused = false;
+  s.discordWasMuted = false;
 }
