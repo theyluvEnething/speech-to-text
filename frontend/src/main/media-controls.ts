@@ -67,7 +67,7 @@ EnumWindows(delegate(IntPtr h,IntPtr l){var sb=new StringBuilder(256);GetWindowT
 return found;}
 
 [DllImport("user32.dll")]public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc,IntPtr lParam);
-delegate bool EnumWindowsProc(IntPtr hWnd,IntPtr lParam);
+public delegate bool EnumWindowsProc(IntPtr hWnd,IntPtr lParam);
 [DllImport("user32.dll")]public static extern int GetWindowText(IntPtr hWnd,StringBuilder lpString,int nMaxCount);
 
 public static void DiscordHotkey(ushort actionVk){
@@ -125,7 +125,7 @@ function runScript(csharpBody: string, label: string): Promise<string> {
 async function toggleMedia(): Promise<void> {
   L("→ toggleMedia() — VK_MEDIA_PLAY_PAUSE");
   await runScript(
-    `[X]::S(${VK_MEDIA_PLAY_PAUSE},0,${KEYEVENTF_EXTENDEDKEY});[X]::S(${VK_MEDIA_PLAY_PAUSE},0,${KEYEVENTF_EXTENDEDKEY}|${KEYEVENTF_KEYUP});`,
+    `[X]::S(${VK_MEDIA_PLAY_PAUSE},0,${KEYEVENTF_EXTENDEDKEY});[X]::S(${VK_MEDIA_PLAY_PAUSE},0,${KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP});`,
     "media key",
   );
   L("  media key done");
