@@ -86,7 +86,7 @@ Console.Write("DC_OK");
 // ── PowerShell runner ───────────────────────────────────────────────────────
 
 function runScript(csharpBody: string, label: string): Promise<string> {
-  const script = `Add-Type -TypeDefinition @"\n${SHARED_CS}\n${csharpBody}\n"@`;
+  const script = `Add-Type -TypeDefinition @"\n${SHARED_CS}\n"@\n${csharpBody}`;
 
   L(`  [ps: ${label}]`);
 
