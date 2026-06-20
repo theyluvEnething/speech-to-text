@@ -1,10 +1,14 @@
 /**
  * Media and Discord controls during transcription.
  *
- * Media: Sends VK_MEDIA_PLAY_PAUSE via SendInput (system-wide).
- * Discord: Finds Discord's window, briefly activates it, sends
- *   Ctrl+Shift+M (Toggle Mute) or Ctrl+Shift+D (Toggle Deafen),
- *   then restores the previous foreground window.
+ * Media: pauses only sources that are actually playing and resumes exactly
+ *   those afterwards — never starts something that was stopped.
+ *   - Windows: System Media Transport Controls (SMTC) via WinRT in PowerShell.
+ *     Covers any SMTC-aware app (Spotify, browsers/YouTube, VLC, …).
+ *   - macOS: AppleScript control of Spotify and Apple Music.
+ * Discord (Windows only): briefly activates Discord's window, sends
+ *   Ctrl+Shift+M (Toggle Mute) or Ctrl+Shift+D (Toggle Deafen), then restores
+ *   the previous foreground window.
  *
  * Discord requires matching keybinds:
  *   Settings → Keybinds → Add: Toggle Mute → Ctrl+Shift+M
@@ -12,25 +16,32 @@
  */
 
 import { execFile } from "child_process";
+import {
+  parsePausedIds,
+  windowsPauseScript,
+  windowsResumeScript,
+  macPauseScript,
+  macResumeScript,
+} from "./media-scripts";
 
 // ── State ───────────────────────────────────────────────────────────────────
 
 interface MediaState {
-  mediaWasPaused: boolean;
-  discordWasMuted: boolean;
+  /** Ids of sources we paused, so restore resumes exactly those. */
+  pausedMediaIds: string[];
+  /** The mode we muted Discord with, or null if we didn't. */
+  discordMutedMode: "mic" | "full" | null;
 }
 
-const s: MediaState = { mediaWasPaused: false, discordWasMuted: false };
+const s: MediaState = { pausedMediaIds: [], discordMutedMode: null };
 
-// ── Key codes ───────────────────────────────────────────────────────────────
+const isWindows = process.platform === "win32";
+const isMac = process.platform === "darwin";
 
-const VK_MEDIA_PLAY_PAUSE = 0xb3;
-const VK_CONTROL = 0x11;
-const VK_SHIFT = 0x10;
+// ── Discord key codes (Windows C# below uses literals) ──────────────────────
+
 const VK_M = 0x4d;
 const VK_D = 0x44;
-const KEYEVENTF_KEYUP = 0x0002;
-const KEYEVENTF_EXTENDEDKEY = 0x0001;
 
 // ── Logging ─────────────────────────────────────────────────────────────────
 
@@ -38,9 +49,9 @@ function L(msg: string): void {
   console.log(`[MediaControls] ${msg}`);
 }
 
-// ── C# support (shared) ─────────────────────────────────────────────────────
+// ── Discord C# (Windows) ─────────────────────────────────────────────────────
 
-const SHARED_CS = `
+const DISCORD_CS = `
 using System;using System.Runtime.InteropServices;using System.Text;using System.Diagnostics;
 [StructLayout(LayoutKind.Sequential)]public struct KB{public ushort vk;public ushort sc;public uint fl;public uint tm;public IntPtr ex;}
 [StructLayout(LayoutKind.Sequential)]public struct MI{public int dx;public int dy;public uint md;public uint fl;public uint tm;public IntPtr ex;}
@@ -58,10 +69,8 @@ uint r=SendInput(1,ii,Marshal.SizeOf(typeof(IN)));
 if(r==0){int e=Marshal.GetLastWin32Error();Console.Error.Write("ERR:"+e);}}
 
 public static IntPtr FindDiscordWindow(){
-// Try process MainWindowHandle first
 var procs=Process.GetProcessesByName("discord");
 foreach(var p in procs){try{var h=p.MainWindowHandle;if(h!=IntPtr.Zero&&p.MainWindowTitle.ToLowerInvariant().Contains("discord"))return h;}catch{}}
-// Fallback: enum windows looking for title containing "Discord"
 IntPtr found=IntPtr.Zero;
 EnumWindows(delegate(IntPtr h,IntPtr l){var sb=new StringBuilder(256);GetWindowText(h,sb,256);if(sb.ToString().ToLowerInvariant().Contains("discord")){found=h;return false;}return true;},IntPtr.Zero);
 return found;}
@@ -75,7 +84,6 @@ IntPtr discordHwnd=FindDiscordWindow();
 if(discordHwnd==IntPtr.Zero){Console.Error.Write("NO_DISCORD_WINDOW");return;}
 IntPtr prev=GetForegroundWindow();
 if(prev!=discordHwnd){SetForegroundWindow(discordHwnd);Sleep(40);}
-// Send Ctrl+Shift+action
 S(0x11,0,0);S(0x10,0,0);S(actionVk,0,0);S(actionVk,0,2);S(0x10,0,2);S(0x11,0,2);
 Sleep(30);
 if(prev!=IntPtr.Zero&&prev!=discordHwnd){SetForegroundWindow(prev);}
@@ -83,60 +91,69 @@ Console.Write("DC_OK");
 }
 }`;
 
-// ── PowerShell runner ───────────────────────────────────────────────────────
+// ── Process runners ──────────────────────────────────────────────────────────
 
-function runScript(csharpBody: string, label: string): Promise<string> {
-  const script = `Add-Type -TypeDefinition @"\n${SHARED_CS}\n"@\n${csharpBody}`;
-
-  L(`  [ps: ${label}]`);
-
+function run(file: string, args: string[], label: string): Promise<string> {
+  L(`  [run: ${label}]`);
   return new Promise((resolve) => {
-    execFile(
-      "powershell.exe",
-      [
-        "-NoProfile",
-        "-NonInteractive",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-Command",
-        script,
-      ],
-      { timeout: 6000, windowsHide: true },
-      (err, stdout, stderr) => {
-        const out = stdout.trim();
-        const errOut = stderr.trim();
-        if (errOut) {
-          // Filter: only log actual errors, not the "DC_OK" output
-          const parts = errOut.split("\n").filter((p) => p.trim() && !p.includes("DC_OK"));
-          if (parts.length) L(`  [ps stderr] ${parts.join(" | ")}`);
-        }
-        if (out) L(`  [ps stdout] ${out}`);
-        if (err && !errOut.includes("DC_OK")) {
-          L(`  [ps FAILED] ${err.message}`);
-        }
-        resolve(out || errOut);
-      },
-    );
+    execFile(file, args, { timeout: 6000, windowsHide: true }, (err, stdout, stderr) => {
+      const out = stdout.trim();
+      const errOut = stderr.trim();
+      if (errOut) {
+        const parts = errOut.split("\n").filter((p) => p.trim() && !p.includes("DC_OK"));
+        if (parts.length) L(`  [stderr] ${parts.join(" | ")}`);
+      }
+      if (err && !errOut.includes("DC_OK")) L(`  [FAILED] ${err.message}`);
+      resolve(out || errOut);
+    });
   });
 }
 
-// ── Actions ─────────────────────────────────────────────────────────────────
-
-async function toggleMedia(): Promise<void> {
-  L("→ toggleMedia() — VK_MEDIA_PLAY_PAUSE");
-  await runScript(
-    `[X]::S(${VK_MEDIA_PLAY_PAUSE},0,${KEYEVENTF_EXTENDEDKEY});[X]::S(${VK_MEDIA_PLAY_PAUSE},0,${KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP});`,
-    "media key",
+function runPowerShell(script: string, label: string): Promise<string> {
+  return run(
+    "powershell.exe",
+    ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script],
+    label,
   );
-  L("  media key done");
 }
 
+function runOsascript(script: string, label: string): Promise<string> {
+  return run("osascript", ["-e", script], label);
+}
+
+// ── Media: pause / resume ─────────────────────────────────────────────────────
+
+async function pausePlayingMedia(): Promise<string[]> {
+  if (isWindows) return parsePausedIds(await runPowerShell(windowsPauseScript(), "smtc pause"));
+  if (isMac) return parsePausedIds(await runOsascript(macPauseScript(), "media pause"));
+  L("media pause not supported on this platform — skip");
+  return [];
+}
+
+async function resumeMedia(ids: string[]): Promise<void> {
+  if (!ids.length) return;
+  L(`→ resume media: ${ids.join(", ")}`);
+  if (isWindows) {
+    await runPowerShell(windowsResumeScript(ids), "smtc resume");
+  } else if (isMac) {
+    await runOsascript(macResumeScript(ids), "media resume");
+  }
+}
+
+// ── Discord: toggle mute / deafen ─────────────────────────────────────────────
+
 async function toggleDiscord(mode: "mic" | "full"): Promise<void> {
+  if (!isWindows) {
+    L("Discord control not supported on this platform — skip");
+    return;
+  }
+
   const vk = mode === "mic" ? VK_M : VK_D;
   const label = mode === "mic" ? "Ctrl+Shift+M" : "Ctrl+Shift+D";
   L(`→ toggleDiscord("${mode}") — ${label}`);
 
-  const result = await runScript(`[X]::DiscordHotkey(${vk});`, label);
+  const script = `Add-Type -TypeDefinition @"\n${DISCORD_CS}\n"@\n[X]::DiscordHotkey(${vk});`;
+  const result = await runPowerShell(script, label);
 
   if (result.includes("DC_OK")) {
     L(`  ${label} OK`);
@@ -155,55 +172,52 @@ export interface MediaControlsSettings {
   discordMuteMode: "mic" | "full";
 }
 
-export async function applyMediaControls(
-  cfg: MediaControlsSettings,
-): Promise<void> {
+export async function applyMediaControls(cfg: MediaControlsSettings): Promise<void> {
   L(`=== apply mediaPause=${cfg.mediaPauseEnabled} discordMute=${cfg.discordMuteEnabled} mode=${cfg.discordMuteMode}`);
 
-  s.mediaWasPaused = false;
-  s.discordWasMuted = false;
+  s.pausedMediaIds = [];
+  s.discordMutedMode = null;
 
   if (cfg.mediaPauseEnabled) {
-    await toggleMedia();
-    s.mediaWasPaused = true;
+    s.pausedMediaIds = await pausePlayingMedia();
+    L(`  paused ${s.pausedMediaIds.length} source(s): ${s.pausedMediaIds.join(", ") || "(none playing)"}`);
   } else {
     L("  media pause disabled — skip");
   }
 
   if (cfg.discordMuteEnabled) {
     await toggleDiscord(cfg.discordMuteMode);
-    s.discordWasMuted = true;
+    s.discordMutedMode = cfg.discordMuteMode;
   } else {
     L("  discord mute disabled — skip");
   }
 
-  L(`=== apply END paused=${s.mediaWasPaused} muted=${s.discordWasMuted}`);
+  L("=== apply END");
 }
 
-export async function restoreMediaControls(
-  cfg: MediaControlsSettings,
-): Promise<void> {
-  L(`=== restore wasPaused=${s.mediaWasPaused} wasMuted=${s.discordWasMuted}`);
-
-  if (s.mediaWasPaused && cfg.mediaPauseEnabled) {
-    await toggleMedia();
+/**
+ * Undo whatever apply() did, driven by recorded state rather than current
+ * config — so we always resume media we paused and unmute Discord with the
+ * same mode, even if a setting changed mid-recording.
+ */
+async function undo(): Promise<void> {
+  if (s.pausedMediaIds.length) {
+    await resumeMedia(s.pausedMediaIds);
   }
-  if (s.discordWasMuted && cfg.discordMuteEnabled) {
-    await toggleDiscord(cfg.discordMuteMode);
+  if (s.discordMutedMode) {
+    await toggleDiscord(s.discordMutedMode);
   }
+  s.pausedMediaIds = [];
+  s.discordMutedMode = null;
+}
 
-  s.mediaWasPaused = false;
-  s.discordWasMuted = false;
+export async function restoreMediaControls(): Promise<void> {
+  L(`=== restore paused=${s.pausedMediaIds.length} mutedDiscord=${s.discordMutedMode !== null}`);
+  await undo();
   L("=== restore END");
 }
 
-export async function cleanupMediaControls(
-  cfg: MediaControlsSettings,
-): Promise<void> {
-  L(`=== cleanup wasMuted=${s.discordWasMuted}`);
-  if (s.discordWasMuted && cfg.discordMuteEnabled) {
-    await toggleDiscord(cfg.discordMuteMode);
-  }
-  s.mediaWasPaused = false;
-  s.discordWasMuted = false;
+export async function cleanupMediaControls(): Promise<void> {
+  L(`=== cleanup paused=${s.pausedMediaIds.length} mutedDiscord=${s.discordMutedMode !== null}`);
+  await undo();
 }
