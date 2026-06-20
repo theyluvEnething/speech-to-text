@@ -16,8 +16,6 @@ contextBridge.exposeInMainWorld("wavely", {
     theme: string;
     hidePill: boolean;
     mediaPauseEnabled: boolean;
-    discordMuteEnabled: boolean;
-    discordMuteMode: "mic" | "full";
   }> =>
     ipcRenderer.invoke("settings:get"),
 

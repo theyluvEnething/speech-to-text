@@ -49,8 +49,6 @@ declare global {
       theme: string;
       hidePill: boolean;
       mediaPauseEnabled: boolean;
-      discordMuteEnabled: boolean;
-      discordMuteMode: "mic" | "full";
     }>;
     setSettings(settings: Record<string, string | boolean>): Promise<{ success: boolean }>;
     getPaused(): Promise<boolean>;

@@ -283,14 +283,7 @@
   "integrations": {
     "media": "Media",
     "pauseMedia": "Metti in pausa i media durante la trascrizione",
-    "pauseMediaHint": "Mette automaticamente in pausa YouTube, Spotify e altri media quando inizi a registrare. Riprende dopo la trascrizione.",
-    "discord": "Discord",
-    "muteDiscord": "Silenzia Discord durante la trascrizione",
-    "muteDiscordHint": "Silenzia il tuo microfono su Discord così gli altri non sentono la tua dettatura. Richiede un keybind in Discord: Impostazioni → Scorciatoie → Aggiungi. Disattiva microfono → Ctrl+Shift+M, Assorda → Ctrl+Shift+D.",
-    "muteMode": "Modalità silenzioso",
-    "muteModeHint": "Solo microfono silenzia solo il microfono. Completo silenzia anche l'uscita audio di Discord.",
-    "micOnly": "Solo microfono",
-    "fullMute": "Completo"
+    "pauseMediaHint": "Mette automaticamente in pausa YouTube, Spotify e altri media quando inizi a registrare. Riprende dopo la trascrizione."
   },
   "errors": {
     "backendUnreachable": "Backend non raggiungibile. Controlla la tua connessione e riprova.",

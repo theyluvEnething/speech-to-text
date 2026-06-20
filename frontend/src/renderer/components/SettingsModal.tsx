@@ -132,8 +132,6 @@ function SettingsModal(): React.ReactElement {
   const [copyToClipboard, setCopyToClipboard] = useState(false);
   const [hidePill, setHidePill] = useState(false);
   const [mediaPauseEnabled, setMediaPauseEnabled] = useState(false);
-  const [discordMuteEnabled, setDiscordMuteEnabled] = useState(false);
-  const [discordMuteMode, setDiscordMuteMode] = useState<"mic" | "full">("mic");
   const [appVersion, setAppVersion] = useState("");
   const debugMode = useStore((s) => s.debugMode);
   const setDebugModeState = useStore((s) => s.setDebugMode);
@@ -161,8 +159,6 @@ function SettingsModal(): React.ReactElement {
         setCopyToClipboard(s.copyToClipboard === true);
         setHidePill(s.hidePill === true);
         setMediaPauseEnabled(s.mediaPauseEnabled === true);
-        setDiscordMuteEnabled(s.discordMuteEnabled === true);
-        setDiscordMuteMode(s.discordMuteMode === "full" ? "full" : "mic");
         requestAnimationFrame(() => (initial.current = false));
       })
       .catch(() => (initial.current = false));
@@ -376,44 +372,6 @@ function SettingsModal(): React.ReactElement {
                       }}
                     />
                   </Row>
-                </div>
-                <GroupLabel>{t("integrations.discord")}</GroupLabel>
-                <div className={cn(WV_PANEL, "px-[18px]")}>
-                  <Row
-                    label={t("integrations.muteDiscord")}
-                    desc={t("integrations.muteDiscordHint")}
-                  >
-                    <Switch
-                      checked={discordMuteEnabled}
-                      onCheckedChange={(v) => {
-                        setDiscordMuteEnabled(v);
-                        save({ discordMuteEnabled: v });
-                      }}
-                    />
-                  </Row>
-                  {discordMuteEnabled && (
-                    <Row label={t("integrations.muteMode")} desc={t("integrations.muteModeHint")}>
-                      <div className="flex gap-1.5">
-                        {(["mic", "full"] as const).map((mode) => (
-                          <button
-                            key={mode}
-                            onClick={() => {
-                              setDiscordMuteMode(mode);
-                              save({ discordMuteMode: mode });
-                            }}
-                            className={cn(
-                              "px-4 py-2 rounded-[9px] border text-[12.5px] font-semibold capitalize transition-colors",
-                              discordMuteMode === mode
-                                ? "bg-acc-faint border-acc text-acc-strong"
-                                : "bg-raised border-line text-ink-3 hover:bg-hover hover:text-ink",
-                            )}
-                          >
-                            {mode === "mic" ? t("integrations.micOnly") : t("integrations.fullMute")}
-                          </button>
-                        ))}
-                      </div>
-                    </Row>
-                  )}
                 </div>
               </>
             )}

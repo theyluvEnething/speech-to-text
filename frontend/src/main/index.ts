@@ -153,8 +153,8 @@ function startRecording(): void {
   audio?.webContents.send("audio:start");
 
   // ── Apply media controls (fire & forget) ────────────────────────
-  // Pause media / mute Discord in the background. The PowerShell
-  // script takes ~50-100ms; it runs concurrently with audio capture.
+  // Pause any playing media in the background; runs concurrently with
+  // audio capture so it never blocks the recording start.
   const mcSettings = resolveMediaControlsSettings();
   applyMediaControls(mcSettings).catch((err) => {
     console.error(`[Wavely] Media controls apply failed: ${(err as Error).message}`);
@@ -182,7 +182,7 @@ function startRecording(): void {
         audio?.webContents.send("audio:stop");
       }
 
-      // Restore media controls (unmute Discord) on early failure
+      // Resume any paused media on early failure
       cleanupMediaControls().catch((cleanupErr) => {
         console.error(`[Wavely] Media controls cleanup failed: ${(cleanupErr as Error).message}`);
       });
@@ -230,8 +230,6 @@ function handleLevels(data: { rms: number; peak: number; elapsed: number; sample
 function resolveMediaControlsSettings(): MediaControlsSettings {
   return {
     mediaPauseEnabled: store.get("mediaPauseEnabled"),
-    discordMuteEnabled: store.get("discordMuteEnabled"),
-    discordMuteMode: store.get("discordMuteMode"),
   };
 }
 

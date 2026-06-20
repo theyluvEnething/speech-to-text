@@ -283,14 +283,7 @@
   "integrations": {
     "media": "メディア",
     "pauseMedia": "文字起こし中にメディアを一時停止",
-    "pauseMediaHint": "録音を開始すると、YouTubeやSpotifyなどのメディアを自動的に一時停止します。文字起こし完了後に再開します。",
-    "discord": "Discord",
-    "muteDiscord": "文字起こし中にDiscordをミュート",
-    "muteDiscordHint": "ディクテーション中に他の人に聞こえないように、Discordのマイクをミュートします。Discordでキーバインドの設定が必要です：設定 → キーバインド → 追加。ミュート切り替え → Ctrl+Shift+M、スピーカーをミュート → Ctrl+Shift+D。",
-    "muteMode": "ミュートモード",
-    "muteModeHint": "マイクのみはマイクだけをミュートします。完全ミュートはDiscordの音声出力もミュートします。",
-    "micOnly": "マイクのみ",
-    "fullMute": "完全ミュート"
+    "pauseMediaHint": "録音を開始すると、YouTubeやSpotifyなどのメディアを自動的に一時停止します。文字起こし完了後に再開します。"
   },
   "errors": {
     "backendUnreachable": "バックエンドに接続できません。接続を確認して再試行してください。",
