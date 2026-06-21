@@ -8,7 +8,7 @@ import { getProvider } from "../transcription/index";
 import type { ProviderName } from "../transcription/types";
 import { getTokenCache } from "../transcription/token-cache";
 import { getTranscriptionPrompt } from "../transcription/prompts";
-import { postProcessText } from "../transcription/deepseek";
+import { postProcessText } from "../transcription/post-process";
 import { pasteText } from "./paste";
 import { getAppWindowFocused } from "./state";
 import {
@@ -202,21 +202,19 @@ function startRecording(): void {
       }
     });
 
-  // Pre-fetch DeepSeek key if the active profile has text processing enabled.
-  // This runs in parallel with the transcription key pre-fetch — completely
-  // independent backend call.
+  // Pre-fetch the Groq key if the active profile post-processes text.
+  // Runs in parallel with the transcription key pre-fetch.
   if (preFetchProfile.textProcessingEnabled && preFetchProfile.systemPrompt) {
-    console.log("[Wavely] Pre-fetching DeepSeek API key (background)...");
+    console.log("[Wavely] Pre-fetching Groq key for post-processing (background)...");
     getTokenCache()
-      .get("deepseek")
+      .get("groq")
       .then(() => {
-        console.log("[Wavely] Pre-fetch complete — DeepSeek key ready.");
+        console.log("[Wavely] Pre-fetch complete — Groq post-processing key ready.");
       })
       .catch((err: Error) => {
-        // DeepSeek key fetch failed, but this is NOT fatal.
-        // The transcription itself still works — post-processing will
-        // simply fall back to raw text.
-        console.warn(`[Wavely] DeepSeek pre-fetch FAILED (non-fatal): ${err.message}`);
+        // Non-fatal: transcription still works; post-processing falls back
+        // to raw text if the key can't be fetched.
+        console.warn(`[Wavely] Groq post-process pre-fetch FAILED (non-fatal): ${err.message}`);
       });
   }
 }
@@ -358,11 +356,11 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
   provider.transcribe(webmBuffer, { model, language, prompt, pcmBuffer })
     .then(async (text) => {
       if (text) {
-        // ── Post-processing via DeepSeek ──────────────────────────
+        // ── Post-processing via Groq ──────────────────────────────
         const activeProfile = getActiveProfile();
         let finalText = text;
         if (activeProfile.textProcessingEnabled && activeProfile.systemPrompt) {
-          console.log("[Wavely] Post-processing text with DeepSeek...");
+          console.log("[Wavely] Post-processing text with Groq...");
           finalText = await postProcessText(text, activeProfile.systemPrompt);
         }
 

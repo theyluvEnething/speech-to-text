@@ -12,8 +12,8 @@ export interface TokenResponse {
   expires_at: number; // Unix seconds
 }
 
-/** All providers that can request tokens — includes post-processing. */
-export type TokenProvider = Exclude<ProviderName, "backend"> | "deepseek";
+/** All providers that can request tokens. */
+export type TokenProvider = Exclude<ProviderName, "backend">;
 
 interface CacheEntry {
   token: string;
@@ -29,7 +29,6 @@ const ENDPOINTS: Record<TokenProvider, string> = {
   groq: "/api/get-groq-key",
   openai: "/api/openai-client-secret",
   xai: "/api/xai-client-secret",
-  deepseek: "/api/get-deepseek-key",
 };
 
 /** Whether the endpoint uses GET or POST. */
@@ -38,7 +37,6 @@ const METHOD: Record<TokenProvider, "GET" | "POST"> = {
   groq: "GET",
   openai: "POST",
   xai: "POST",
-  deepseek: "GET",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
