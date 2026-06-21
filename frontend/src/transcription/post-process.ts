@@ -3,8 +3,12 @@ import { getTokenCache } from "./token-cache";
 /** Groq's OpenAI-compatible chat-completions endpoint. */
 const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-/** Fast, high-quality Groq model for the rewrite. Verify current on console.groq.com. */
-const POST_PROCESSING_MODEL = "llama-3.3-70b-versatile";
+/**
+ * Fast, high-quality Groq model for the rewrite. `openai/gpt-oss-120b` is
+ * Groq's recommended replacement after llama-3.3-70b-versatile was deprecated
+ * (2026-06-17). Verify current on console.groq.com if requests start failing.
+ */
+const POST_PROCESSING_MODEL = "openai/gpt-oss-120b";
 
 const ENFORCER_PROMPT = [
   "You transform the user's dictated text according to the instruction that",
