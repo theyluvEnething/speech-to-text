@@ -9,6 +9,7 @@ declare global {
     systemPrompt: string;
     textProcessingEnabled: boolean;
     presetId?: string;
+    transcriptionPrompt?: "general" | "medical";
     language?: string;
     model?: string;
   }

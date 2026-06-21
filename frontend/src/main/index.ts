@@ -7,7 +7,7 @@ import { registerIpcHandlers, store, getActiveProfile, saveConversation, uuid } 
 import { getProvider } from "../transcription/index";
 import type { ProviderName } from "../transcription/types";
 import { getTokenCache } from "../transcription/token-cache";
-import { getTranscriptionPrompt } from "../transcription/prompts";
+import { getTranscriptionPrompt, type TranscriptionVariant } from "../transcription/prompts";
 import { postProcessText } from "../transcription/post-process";
 import { pasteText } from "./paste";
 import { getAppWindowFocused } from "./state";
@@ -250,7 +250,7 @@ function resolveMediaControlsSettings(): MediaControlsSettings {
   };
 }
 
-function resolveTranscribeOptions(): { language: string; model: string; provider: ProviderName; profileId: string } {
+function resolveTranscribeOptions(): { language: string; model: string; provider: ProviderName; profileId: string; transcriptionPrompt: TranscriptionVariant } {
   const profile = getActiveProfile();
   const storedProvider = store.get("provider");
   const globalModel = store.get("model");
@@ -283,6 +283,7 @@ function resolveTranscribeOptions(): { language: string; model: string; provider
     model: profile.model || globalModel,
     provider: globalProvider,
     profileId: profile.id,
+    transcriptionPrompt: profile.transcriptionPrompt ?? "general",
   };
 }
 
@@ -338,12 +339,12 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
     return;
   }
 
-  const { language, model, provider: providerName, profileId } = resolveTranscribeOptions();
+  const { language, model, provider: providerName, profileId, transcriptionPrompt } = resolveTranscribeOptions();
   const langLabel = language || "auto";
 
   // Resolve the transcription prompt for the target language.
   // The prompt MUST match the audio language (research confirmed).
-  const prompt = getTranscriptionPrompt(language);
+  const prompt = getTranscriptionPrompt(language, transcriptionPrompt);
   console.log(`[Wavely] Transcription prompt: ${prompt.length} chars for language "${langLabel}"`);
 
   const durationS = durationSec.toFixed(1);
