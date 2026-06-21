@@ -121,6 +121,7 @@
     "transcription": "Transcription",
     "general": "General",
     "system": "System",
+    "integrations": "Integrations",
     "account": "Account",
     "privacy": "Data & Privacy",
     "pushToTalkKey": "Push-to-talk key",
@@ -280,6 +281,11 @@
     "cancel": "Cancel",
     "update": "Update",
     "downloadFailed": "Download failed"
+  },
+  "integrations": {
+    "media": "Media",
+    "pauseMedia": "Pause media while transcribing",
+    "pauseMediaHint": "Automatically pause YouTube, Spotify, and other media when you start recording. Resumes after transcription completes."
   },
   "errors": {
     "backendUnreachable": "Cannot reach backend. Check your connection and try again.",

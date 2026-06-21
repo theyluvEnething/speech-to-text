@@ -11,6 +11,7 @@ import {
   User as AccountIcon,
   ShieldCheck,
   Cloud,
+  Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore, type SettingsPane } from "@/store";
@@ -103,6 +104,7 @@ function SettingsModal(): React.ReactElement {
     { pane: "general", icon: GeneralIcon, label: t("settings.general"), group: "Settings" },
     { pane: "system", icon: Monitor, label: t("settings.system"), group: "Settings" },
     { pane: "transcription", icon: Hash, label: t("settings.transcription"), group: "Settings" },
+    { pane: "integrations", icon: Plug, label: t("settings.integrations"), group: "Settings" },
     { pane: "account", icon: AccountIcon, label: t("settings.account"), group: "Account" },
     { pane: "privacy", icon: ShieldCheck, label: t("settings.privacy"), group: "Account" },
   ];
@@ -129,6 +131,7 @@ function SettingsModal(): React.ReactElement {
   const [model, setModel] = useState("whisper-large-v3");
   const [copyToClipboard, setCopyToClipboard] = useState(false);
   const [hidePill, setHidePill] = useState(false);
+  const [mediaPauseEnabled, setMediaPauseEnabled] = useState(false);
   const [appVersion, setAppVersion] = useState("");
   const debugMode = useStore((s) => s.debugMode);
   const setDebugModeState = useStore((s) => s.setDebugMode);
@@ -155,6 +158,7 @@ function SettingsModal(): React.ReactElement {
         setModel(s.model || "whisper-large-v3");
         setCopyToClipboard(s.copyToClipboard === true);
         setHidePill(s.hidePill === true);
+        setMediaPauseEnabled(s.mediaPauseEnabled === true);
         requestAnimationFrame(() => (initial.current = false));
       })
       .catch(() => (initial.current = false));
@@ -346,6 +350,27 @@ function SettingsModal(): React.ReactElement {
                   </Row>
                   <Row label={t("settings.copyToClipboard")} desc={t("settings.copyToClipboardHint")}>
                     <Switch checked={copyToClipboard} onCheckedChange={(v) => { setCopyToClipboard(v); save({ copyToClipboard: v }); }} />
+                  </Row>
+                </div>
+              </>
+            )}
+
+            {pane === "integrations" && (
+              <>
+                <PaneTitle>{t("settings.integrations")}</PaneTitle>
+                <GroupLabel>{t("integrations.media")}</GroupLabel>
+                <div className={cn(WV_PANEL, "px-[18px]")}>
+                  <Row
+                    label={t("integrations.pauseMedia")}
+                    desc={t("integrations.pauseMediaHint")}
+                  >
+                    <Switch
+                      checked={mediaPauseEnabled}
+                      onCheckedChange={(v) => {
+                        setMediaPauseEnabled(v);
+                        save({ mediaPauseEnabled: v });
+                      }}
+                    />
                   </Row>
                 </div>
               </>

@@ -40,7 +40,17 @@ declare global {
   interface WavelyApi {
     platform: string;
     isPackaged(): Promise<boolean>;
-    getSettings(): Promise<{ hotkey: string; language: string; model: string; provider: string; copyToClipboard: boolean; appLanguage: string; theme: string; hidePill: boolean }>;
+    getSettings(): Promise<{
+      hotkey: string;
+      language: string;
+      model: string;
+      provider: string;
+      copyToClipboard: boolean;
+      appLanguage: string;
+      theme: string;
+      hidePill: boolean;
+      mediaPauseEnabled: boolean;
+    }>;
     setSettings(settings: Record<string, string | boolean>): Promise<{ success: boolean }>;
     getPaused(): Promise<boolean>;
     togglePaused(): Promise<boolean>;

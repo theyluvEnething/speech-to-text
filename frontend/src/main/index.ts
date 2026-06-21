@@ -11,6 +11,12 @@ import { getTranscriptionPrompt } from "../transcription/prompts";
 import { postProcessText } from "../transcription/deepseek";
 import { pasteText } from "./paste";
 import { getAppWindowFocused } from "./state";
+import {
+  applyMediaControls,
+  restoreMediaControls,
+  cleanupMediaControls,
+  type MediaControlsSettings,
+} from "./media-controls";
 
 type AppState = "idle" | "recording" | "processing" | "showing-result";
 
@@ -148,6 +154,14 @@ function startRecording(): void {
   sendOverlayState("recording");
   audio?.webContents.send("audio:start");
 
+  // ── Apply media controls (fire & forget) ────────────────────────
+  // Pause any playing media in the background; runs concurrently with
+  // audio capture so it never blocks the recording start.
+  const mcSettings = resolveMediaControlsSettings();
+  applyMediaControls(mcSettings).catch((err) => {
+    console.error(`[Wavely] Media controls apply failed: ${(err as Error).message}`);
+  });
+
   // ── Pre-fetch API keys during recording (fire & forget) ──────────
   // The round-trip to the backend (100-300ms) completes while the
   // user is still speaking. By the time they release the hotkey,
@@ -169,6 +183,13 @@ function startRecording(): void {
         audio?.webContents.send("audio:stop");
       }
 
+      // Resume any paused media on early failure
+      cleanupMediaControls().catch((cleanupErr) => {
+        console.error(`[Wavely] Media controls cleanup failed: ${(cleanupErr as Error).message}`);
+      });
+
+      // Classify the error and send the appropriate code to the overlay.
+      // The renderer resolves the actual text from i18next locale files.
       const msg = err.message.toLowerCase();
       if (msg.includes("cannot reach") || msg.includes("unreachable") || msg.includes("econnrefused")) {
         showTranscriptionError("backendUnreachable");
@@ -225,6 +246,12 @@ function handleLevels(data: { rms: number; peak: number; elapsed: number; sample
   overlay?.webContents.send("overlay:levels", { rms: data.rms, peak: data.peak });
 }
 
+function resolveMediaControlsSettings(): MediaControlsSettings {
+  return {
+    mediaPauseEnabled: store.get("mediaPauseEnabled"),
+  };
+}
+
 function resolveTranscribeOptions(): { language: string; model: string; provider: ProviderName; profileId: string } {
   const profile = getActiveProfile();
   const storedProvider = store.get("provider");
@@ -275,6 +302,9 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
     console.log("[Wavely] No audio captured.");
     state = "idle";
     sendOverlayState("idle");
+    cleanupMediaControls().catch((err) => {
+      console.error(`[Wavely] Media controls cleanup failed: ${(err as Error).message}`);
+    });
     return;
   }
 
@@ -291,6 +321,9 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
   if (durationSec < 0.75) {
     console.log(`[Wavely] Skipping — audio too short (${durationSec.toFixed(2)}s < 0.75s).`);
     showTranscriptionError("audioTooShort");
+    cleanupMediaControls().catch((err) => {
+      console.error(`[Wavely] Media controls cleanup failed: ${(err as Error).message}`);
+    });
     return;
   }
 
@@ -301,6 +334,9 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
       : `[Wavely] Skipping — audio is silent (peak ${peakDb.toFixed(1)} dB < -45 dB)`;
     console.log(msg);
     showTranscriptionError("audioEmpty");
+    cleanupMediaControls().catch((err) => {
+      console.error(`[Wavely] Media controls cleanup failed: ${(err as Error).message}`);
+    });
     return;
   }
 
@@ -353,14 +389,25 @@ function handleAudioBuffer(webmBuffer: ArrayBuffer, pcmBuffer?: ArrayBuffer): vo
           durationSec,
           createdAt: Date.now(),
         });
+
+        // Restore media controls after successful transcription
+        restoreMediaControls().catch((err) => {
+          console.error(`[Wavely] Media controls restore failed: ${(err as Error).message}`);
+        });
       } else {
         console.log("[Wavely] No transcript returned.\n");
         showTranscriptionError("unableToTranscribe");
+        cleanupMediaControls().catch((err) => {
+          console.error(`[Wavely] Media controls cleanup failed: ${(err as Error).message}`);
+        });
       }
     })
     .catch((err: Error) => {
       console.error(`[Wavely] Transcription failed: ${err.message}\n`);
       showTranscriptionError("unableToTranscribe", err.message);
+      cleanupMediaControls().catch((cleanupErr) => {
+        console.error(`[Wavely] Media controls cleanup failed: ${(cleanupErr as Error).message}`);
+      });
     });
 }
 

@@ -37,6 +37,7 @@ interface StoreSchema {
   hidePill: boolean;
   debugProximity: boolean;
   debugMode: boolean;
+  mediaPauseEnabled: boolean;
   profiles: Profile[];
   activeProfileId: string;
   recentProfileIds: string[];
@@ -56,6 +57,7 @@ export const store = new Store<StoreSchema>({
     hidePill: false,
     debugProximity: false,
     debugMode: false,
+    mediaPauseEnabled: false,
     profiles: [
       {
         id: "default",
@@ -140,6 +142,7 @@ export function registerIpcHandlers(
       appLanguage: store.get("appLanguage"),
       theme: store.get("theme"),
       hidePill: store.get("hidePill"),
+      mediaPauseEnabled: store.get("mediaPauseEnabled"),
     };
   });
 
@@ -187,6 +190,10 @@ export function registerIpcHandlers(
       if (settingsWin && !settingsWin.isDestroyed()) {
         settingsWin.webContents.send("settings:hide-pill-changed", settings['hidePill']);
       }
+    }
+
+    if (typeof settings['mediaPauseEnabled'] === "boolean") {
+      store.set("mediaPauseEnabled", settings['mediaPauseEnabled']);
     }
 
     return { success: true };
@@ -428,6 +435,7 @@ export function registerIpcHandlers(
       hidePill: false,
       debugProximity: false,
       debugMode: false,
+      mediaPauseEnabled: false,
       profiles: [
         {
           id: "default",

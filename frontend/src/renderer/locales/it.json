@@ -121,6 +121,7 @@
     "transcription": "Trascrizione",
     "general": "Generale",
     "system": "Sistema",
+    "integrations": "Integrazioni",
     "account": "Account",
     "privacy": "Dati e Privacy",
     "pushToTalkKey": "Tasto push-to-talk",
@@ -278,6 +279,11 @@
     "cancel": "Annulla",
     "update": "Aggiorna",
     "downloadFailed": "Download fallito"
+  },
+  "integrations": {
+    "media": "Media",
+    "pauseMedia": "Metti in pausa i media durante la trascrizione",
+    "pauseMediaHint": "Mette automaticamente in pausa YouTube, Spotify e altri media quando inizi a registrare. Riprende dopo la trascrizione."
   },
   "errors": {
     "backendUnreachable": "Backend non raggiungibile. Controlla la tua connessione e riprova.",

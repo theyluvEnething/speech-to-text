@@ -121,6 +121,7 @@
     "transcription": "文字起こし",
     "general": "一般",
     "system": "システム",
+    "integrations": "統合",
     "account": "アカウント",
     "privacy": "データとプライバシー",
     "pushToTalkKey": "プッシュトゥトークキー",
@@ -278,6 +279,11 @@
     "cancel": "キャンセル",
     "update": "アップデート",
     "downloadFailed": "ダウンロードに失敗しました"
+  },
+  "integrations": {
+    "media": "メディア",
+    "pauseMedia": "文字起こし中にメディアを一時停止",
+    "pauseMediaHint": "録音を開始すると、YouTubeやSpotifyなどのメディアを自動的に一時停止します。文字起こし完了後に再開します。"
   },
   "errors": {
     "backendUnreachable": "バックエンドに接続できません。接続を確認して再試行してください。",
