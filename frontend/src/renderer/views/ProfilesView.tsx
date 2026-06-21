@@ -39,7 +39,7 @@ function randomId(): string {
   });
 }
 
-const EMPTY: Profile = { id: "", name: "", color: "#83a9af", icon: "🎙️", systemPrompt: "", textProcessingEnabled: false, presetId: "", language: "", model: "" };
+const EMPTY: Profile = { id: "", name: "", color: "#83a9af", icon: "🎙️", systemPrompt: "", textProcessingEnabled: false, presetId: "", transcriptionPrompt: "general", language: "", model: "" };
 
 function ProfilesView(): React.ReactElement {
   const profiles = useStore((s) => s.profiles);
@@ -226,6 +226,30 @@ function ProfilesView(): React.ReactElement {
                 disabled={!editing.textProcessingEnabled}
                 className={!editing.textProcessingEnabled ? "opacity-50" : ""}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Transcription vocabulary</Label>
+              <div className="flex gap-1.5">
+                {([{ id: "general", label: "General" }, { id: "medical", label: "Medical" }] as const).map((opt) => {
+                  const active = (editing.transcriptionPrompt ?? "general") === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setEditing((p) => ({ ...p, transcriptionPrompt: opt.id }))}
+                      className={cn(
+                        "px-3 py-1.5 rounded-[9px] border text-[12.5px] font-semibold transition-colors",
+                        active
+                          ? "bg-acc-faint border-acc text-acc-strong"
+                          : "bg-raised border-line text-ink-3 hover:bg-hover hover:text-ink",
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
