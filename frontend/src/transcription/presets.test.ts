@@ -17,11 +17,12 @@ describe("presets", () => {
     expect(email.instruction.toLowerCase()).toContain("language");
   });
 
-  it("ai-prompt outputs plain text and asks clarifying questions when vague", () => {
+  it("ai-prompt allows light formatting, restrains heavy, and asks when vague", () => {
     const ai = getPreset("ai-prompt")!.instruction.toLowerCase();
     expect(ai).toMatch(/clarif|question/);
-    expect(ai).toMatch(/markdown/);
     expect(ai).toMatch(/vague/);
+    expect(ai).toMatch(/heading|bullet/);
+    expect(ai).toMatch(/restrained|heavy|light/);
   });
 
   it("getPreset returns undefined for unknown ids", () => {
