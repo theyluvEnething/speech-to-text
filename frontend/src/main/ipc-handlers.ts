@@ -3,6 +3,7 @@ import Store from "electron-store";
 import { randomUUID } from "crypto";
 import { updateHotkey } from "./hotkey";
 import { getSettingsWindow, getOverlayWindow, toggleOverlayTransparency } from "./windows";
+import { getPreset } from "../transcription/presets";
 
 interface Profile {
   id: string;
@@ -27,6 +28,26 @@ interface Conversation {
   createdAt: number;
 }
 
+/** Instruction for the AI-assisted medical profile — conservative cleanup. */
+const MEDICAL_CLEANUP_INSTRUCTION = [
+  "Clean up this medical dictation: fix punctuation and obvious speech-to-text",
+  "errors, and correct misheard drug, lab, and anatomical terms to their",
+  "standard spelling. Do NOT add, remove, or change any clinical facts, numbers,",
+  "doses, or units. Keep it concise and faithful. Output only the cleaned text.",
+].join(" ");
+
+/**
+ * Default profiles seeded on first run and back-filled into existing installs
+ * once (see ensureSeededProfiles). Two medical variants — fast/verbatim and
+ * AI-structured — plus email and prompt rewriting.
+ */
+const SEEDED_PROFILES: Profile[] = [
+  { id: "default-medicine", name: "Medicine", color: "#14b8a6", icon: "💊", systemPrompt: "", textProcessingEnabled: false, transcriptionPrompt: "medical" },
+  { id: "default-medicine-ai", name: "Medicine AI", color: "#6366f1", icon: "💊", systemPrompt: MEDICAL_CLEANUP_INSTRUCTION, textProcessingEnabled: true, transcriptionPrompt: "medical" },
+  { id: "default-email", name: "E-Mail", color: "#3b82f6", icon: "📨", systemPrompt: getPreset("email")!.instruction, textProcessingEnabled: true, presetId: "email", transcriptionPrompt: "general" },
+  { id: "default-prompt", name: "Prompts", color: "#a855f7", icon: "💻", systemPrompt: getPreset("ai-prompt")!.instruction, textProcessingEnabled: true, presetId: "ai-prompt", transcriptionPrompt: "general" },
+];
+
 interface StoreSchema {
   hotkey: string;
   language: string;
@@ -44,6 +65,7 @@ interface StoreSchema {
   activeProfileId: string;
   recentProfileIds: string[];
   conversations: Conversation[];
+  seededProfilesV2: boolean;
 }
 
 export const store = new Store<StoreSchema>({
@@ -100,8 +122,25 @@ export const store = new Store<StoreSchema>({
     activeProfileId: "default",
     recentProfileIds: ["default", "default-de", "default-en"],
     conversations: [],
+    seededProfilesV2: false,
   },
 });
+
+/**
+ * Back-fills the v2 default profiles into existing installs exactly once.
+ * Guarded by `seededProfilesV2` so a user's later deletion of them sticks.
+ */
+function ensureSeededProfiles(): void {
+  if (store.get("seededProfilesV2")) return;
+  const existing = store.get("profiles");
+  const have = new Set(existing.map((p) => p.id));
+  const missing = SEEDED_PROFILES.filter((p) => !have.has(p.id));
+  if (missing.length) {
+    store.set("profiles", [...existing, ...missing]);
+    console.log(`[Wavely] Seeded ${missing.length} default profile(s).`);
+  }
+  store.set("seededProfilesV2", true);
+}
 
 export function getActiveProfile(): Profile {
   const profiles = store.get("profiles");
@@ -133,6 +172,8 @@ export function registerIpcHandlers(
   onLevels: (data: { rms: number; peak: number; elapsed: number; samples: number; final?: boolean }) => void,
   onOverlayIdle: () => void,
 ): void {
+  ensureSeededProfiles();
+
   // ── Settings ──────────────────────────────────────────────
   ipcMain.handle("settings:get", () => {
     return {
@@ -474,10 +515,12 @@ export function registerIpcHandlers(
           textProcessingEnabled: false,
           language: "it",
         },
+        ...SEEDED_PROFILES,
       ],
       activeProfileId: "default",
       recentProfileIds: ["default", "default-de", "default-en"],
       conversations: [],
+      seededProfilesV2: true,
     });
     console.log("[Wavely] Full reset: all data restored to defaults.");
 
