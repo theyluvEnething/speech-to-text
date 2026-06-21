@@ -25,7 +25,6 @@ export const TRANSCRIPTION_PROMPTS: Record<string, string> = {
     '"ten milligrams"→10 mg, "one twenty over eighty"→120/80.',
     "Remove filler words like um, uh. Use [inaudible] if unclear.",
     "Spell proper nouns and technical terms correctly.",
-    "Terms: hemoglobin A1c, creatinine, metformin, amlodipine.",
   ].join(" "),
 
   de: [
@@ -36,7 +35,6 @@ export const TRANSCRIPTION_PROMPTS: Record<string, string> = {
     '"zehn Milligramm"→10 mg, "eins zwanzig über achtzig"→120/80.',
     "Entferne Füllwörter wie ähm, ehm. Bei Unklarheit [unverständlich].",
     "Eigennamen und Fachbegriffe korrekt schreiben.",
-    "Begriffe: Hämoglobin A1c, Kreatinin, Metformin, Amlodipin.",
   ].join(" "),
 
   it: [
@@ -47,7 +45,6 @@ export const TRANSCRIPTION_PROMPTS: Record<string, string> = {
     '"dieci milligrammi"→10 mg, "uno venti su ottanta"→120/80.',
     "Rimuovi parole di riempimento come um, ehm. Usa [incomprensibile] se poco chiaro.",
     "Nomi propri e termini tecnici scritti correttamente.",
-    "Termini: emoglobina A1c, creatinina, metformina, amlodipina.",
   ].join(" "),
 
   es: [
@@ -58,7 +55,6 @@ export const TRANSCRIPTION_PROMPTS: Record<string, string> = {
     '"diez miligramos"→10 mg, "ciento veinte sobre ochenta"→120/80.',
     "Elimina muletillas como um, eh. Usa [inaudible] si no está claro.",
     "Nombres propios y términos técnicos escritos correctamente.",
-    "Términos: hemoglobina A1c, creatinina, metformina, amlodipina.",
   ].join(" "),
 
   ja: [
@@ -69,7 +65,6 @@ export const TRANSCRIPTION_PROMPTS: Record<string, string> = {
     '「10ミリグラム」→10 mg、「120 over 80」→120/80。',
     "「えーと」「あのー」などのフィラーを削除。不明瞭な場合は[聞き取れず]。",
     "固有名詞と専門用語を正しく表記。",
-    "用語：ヘモグロビンA1c、クレアチニン、メトホルミン、アムロジピン。",
   ].join(" "),
 
   fr: [
@@ -80,7 +75,6 @@ export const TRANSCRIPTION_PROMPTS: Record<string, string> = {
     '"dix milligrammes"→10 mg, "cent vingt sur quatre-vingts"→120/80.',
     "Supprimez les mots de remplissage comme euh, hum. Utilisez [inaudible] si peu clair.",
     "Noms propres et termes techniques correctement orthographiés.",
-    "Termes : hémoglobine A1c, créatinine, metformine, amlodipine.",
   ].join(" "),
 
   ko: [
@@ -91,7 +85,6 @@ export const TRANSCRIPTION_PROMPTS: Record<string, string> = {
     '"10밀리그램"→10 mg, "120 over 80"→120/80.',
     "음, 어 같은 채우기 단어 제거. 불분명하면 [들리지 않음].",
     "고유명사와 전문용어 올바르게 표기.",
-    "용어: 헤모글로빈 A1c, 크레아티닌, 메트포르민, 암로디핀.",
   ].join(" "),
 
   zh: [
@@ -102,7 +95,6 @@ export const TRANSCRIPTION_PROMPTS: Record<string, string> = {
     '"10毫克"→10 mg，"120/80"→120/80。',
     "删除嗯、啊等填充词。不清晰时用[听不清]。",
     "专有名词和技术术语正确拼写。",
-    "术语：血红蛋白A1c、肌酐、二甲双胍、氨氯地平。",
   ].join(" "),
 
   auto: [
