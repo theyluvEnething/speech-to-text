@@ -11,6 +11,7 @@ interface Profile {
   icon: string;
   systemPrompt: string;
   textProcessingEnabled: boolean;
+  presetId?: string;
   language?: string;
   model?: string;
 }
