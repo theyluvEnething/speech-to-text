@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import ProfileIcon from "@/components/ProfileIcon";
 import { WV_CARD, WV_TITLE } from "@/styles/theme";
+import { PRESETS, getPreset } from "../../transcription/presets";
 
 const DEFAULT_PROFILE_ID = "default";
 const COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981", "#14b8a6", "#3b82f6", "#6366f1", "#a855f7", "#ec4899"];
@@ -38,7 +39,7 @@ function randomId(): string {
   });
 }
 
-const EMPTY: Profile = { id: "", name: "", color: "#83a9af", icon: "🎙️", systemPrompt: "", textProcessingEnabled: false, language: "", model: "" };
+const EMPTY: Profile = { id: "", name: "", color: "#83a9af", icon: "🎙️", systemPrompt: "", textProcessingEnabled: false, presetId: "", language: "", model: "" };
 
 function ProfilesView(): React.ReactElement {
   const profiles = useStore((s) => s.profiles);
@@ -188,23 +189,40 @@ function ProfilesView(): React.ReactElement {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Text processing prompt</Label>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <span className="text-[12px] text-ink-4">Enable</span>
-                  <input
-                    type="checkbox"
-                    checked={editing.textProcessingEnabled}
-                    onChange={(e) => setEditing((p) => ({ ...p, textProcessingEnabled: e.target.checked }))}
-                    className="w-4 h-4 rounded accent-acc cursor-pointer"
-                  />
-                </label>
+              <Label>Post-processing</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {[{ id: "", label: "Raw" }, ...PRESETS].map((opt) => {
+                  const active = opt.id
+                    ? editing.presetId === opt.id
+                    : !editing.textProcessingEnabled;
+                  return (
+                    <button
+                      key={opt.id || "raw"}
+                      type="button"
+                      onClick={() =>
+                        setEditing((p) =>
+                          opt.id
+                            ? { ...p, presetId: opt.id, textProcessingEnabled: true, systemPrompt: getPreset(opt.id)!.instruction }
+                            : { ...p, presetId: "", textProcessingEnabled: false },
+                        )
+                      }
+                      className={cn(
+                        "px-3 py-1.5 rounded-[9px] border text-[12.5px] font-semibold transition-colors",
+                        active
+                          ? "bg-acc-faint border-acc text-acc-strong"
+                          : "bg-raised border-line text-ink-3 hover:bg-hover hover:text-ink",
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
               <Textarea
                 value={editing.systemPrompt}
                 onChange={(e) => setEditing((p) => ({ ...p, systemPrompt: e.target.value }))}
-                placeholder="Optional. Correction instructions sent to the LLM after transcription. E.g.: The user is speaking German. Correct any English words that should be German, fix grammar, and improve coherence."
-                rows={4}
+                placeholder="Pick a preset above, then tweak the instruction the AI follows after transcription."
+                rows={5}
                 disabled={!editing.textProcessingEnabled}
                 className={!editing.textProcessingEnabled ? "opacity-50" : ""}
               />
