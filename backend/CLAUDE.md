@@ -161,7 +161,7 @@ Get provider keys from:
 |------|---------|
 | `index.js` | Express server — the only app code |
 | `Dockerfile` | Builds the Node.js container image |
-| `docker-compose.yml` | Runs the container with restart:always |
+| `docker-compose.yml` | Runs the container (127.0.0.1:3000 only, behind nginx+TLS at gurndinphilipp.com), restart:unless-stopped |
 | `.env` | API keys + secrets (never commit this) |
 
 ## First-Time Setup (already done)
