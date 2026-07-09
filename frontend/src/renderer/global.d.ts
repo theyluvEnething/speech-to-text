@@ -1,6 +1,14 @@
 export {};
 
 declare global {
+  interface ImportMetaEnv {
+    readonly VITE_CLERK_PUBLISHABLE_KEY?: string;
+  }
+
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+
   interface Profile {
     id: string;
     name: string;
