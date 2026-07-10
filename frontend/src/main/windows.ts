@@ -1,7 +1,12 @@
-import { app, BrowserWindow, screen, session, protocol, net } from "electron";
+import { app, BrowserWindow, screen, session, protocol, net, powerMonitor } from "electron";
 import { join } from "path";
 import { pathToFileURL } from "url";
 import { setAppWindowFocused } from "./state";
+import {
+  calculateOverlayBounds,
+  OVERLAY_WINDOW_HEIGHT,
+  OVERLAY_WINDOW_WIDTH,
+} from "../shared/overlay-layout";
 
 
 let settingsWindow: BrowserWindow | null = null;
@@ -107,16 +112,13 @@ export function createOverlayWindow(): BrowserWindow {
     return overlayWindow;
   }
 
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const FIXED_WIDTH = 460;
-  const FIXED_HEIGHT = 260;
-  const OVERLAY_BOTTOM_OFFSET = -24; // px from bottom of work area
+  const overlayBounds = calculateOverlayBounds(screen.getPrimaryDisplay().workArea);
 
   overlayWindow = new BrowserWindow({
-    width: FIXED_WIDTH,
-    height: FIXED_HEIGHT,
-    x: Math.round((screenWidth - FIXED_WIDTH) / 2),
-    y: screenHeight - OVERLAY_BOTTOM_OFFSET - FIXED_HEIGHT,
+    width: OVERLAY_WINDOW_WIDTH,
+    height: OVERLAY_WINDOW_HEIGHT,
+    x: overlayBounds.x,
+    y: overlayBounds.y,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -139,8 +141,19 @@ export function createOverlayWindow(): BrowserWindow {
   overlayWindow.setAlwaysOnTop(true, "screen-saver");
   setWindowClickThrough(overlayWindow);
 
+  const reanchorOverlay = () => {
+    positionOverlayWindow();
+  };
+
+  screen.on("display-metrics-changed", reanchorOverlay);
+  screen.on("display-added", reanchorOverlay);
+  screen.on("display-removed", reanchorOverlay);
+  powerMonitor.on("resume", reanchorOverlay);
+  powerMonitor.on("unlock-screen", reanchorOverlay);
+
   const alwaysOnTopTimer = setInterval(() => {
     if (overlayWindow && !overlayWindow.isDestroyed()) {
+      positionOverlayWindow();
       overlayWindow.setAlwaysOnTop(true, "screen-saver");
     } else {
       clearInterval(alwaysOnTopTimer);
@@ -148,13 +161,17 @@ export function createOverlayWindow(): BrowserWindow {
   }, 5000);
 
   overlayWindow.on("show", () => {
-    const { width: w, height: h } = screen.getPrimaryDisplay().workAreaSize;
-    overlayWindow?.setPosition(Math.round((w - FIXED_WIDTH) / 2), h - OVERLAY_BOTTOM_OFFSET - FIXED_HEIGHT);
+    positionOverlayWindow();
     overlayWindow?.setAlwaysOnTop(true, "screen-saver");
   });
 
   overlayWindow.on("closed", () => {
     clearInterval(alwaysOnTopTimer);
+    screen.off("display-metrics-changed", reanchorOverlay);
+    screen.off("display-added", reanchorOverlay);
+    screen.off("display-removed", reanchorOverlay);
+    powerMonitor.off("resume", reanchorOverlay);
+    powerMonitor.off("unlock-screen", reanchorOverlay);
     overlayWindow = null;
   });
 
@@ -193,6 +210,12 @@ export function createAudioWindow(): BrowserWindow {
 
 function setWindowClickThrough(win: BrowserWindow): void {
   win.setIgnoreMouseEvents(true, { forward: true });
+}
+
+function positionOverlayWindow(): void {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const bounds = calculateOverlayBounds(screen.getPrimaryDisplay().workArea);
+  overlayWindow.setBounds(bounds);
 }
 
 export function getOverlayWindow(): BrowserWindow | null {

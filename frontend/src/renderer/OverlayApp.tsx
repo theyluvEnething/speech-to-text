@@ -10,8 +10,14 @@ import { springPresets } from "./animations/presets";
 import { ProximityDebugOverlay } from "@/components/ProximityDebugOverlay";
 import OverlayNotification, { type OverlayNotificationData } from "@/components/overlay/OverlayNotification";
 import { useOverlayTheme } from "@/hooks/useOverlayTheme";
+import {
+  getOverlayProximityDimensions,
+  PILL_BOTTOM_MARGIN,
+  shouldDisableOverlayProximity,
+  type OverlayStatus,
+} from "../shared/overlay-layout";
 
-type PopupStatus = "idle" | "recording" | "transcribing" | "inserting";
+type PopupStatus = OverlayStatus;
 
 interface Profile {
   id: string;
@@ -333,22 +339,30 @@ function OverlayApp(): React.ReactElement {
   const [hidePill, setHidePill] = useState(false);
   const [debugProximity, setDebugProximity] = useState(false);
 
-  // Bottom margin for the pill - adjust this value to move the pill up/down
-  // Higher value = pill higher up, Lower value = pill lower down
-  const PILL_BOTTOM_MARGIN = 32; // 32px = pb-8
-
   const barRef = useRef<HTMLDivElement>(null);
 
   const isActive = status !== "idle";
-  const [proximityDims, setProximityDims] = useState({ width: 90, height: 30 });
-  const isNear = useProximity(barRef, proximityDims.width, proximityDims.height, menuOverrideActive || isOverNotification, false);
+  const [proximityDims, setProximityDims] = useState(() =>
+    getOverlayProximityDimensions(false),
+  );
+  const proximityDisabled = shouldDisableOverlayProximity({
+    hidePill,
+    status,
+    isOverNotification,
+    menuOverrideActive,
+  });
+  const isNear = useProximity(
+    barRef,
+    proximityDims.width,
+    proximityDims.height,
+    menuOverrideActive || isOverNotification,
+    proximityDisabled,
+  );
   const expanded = isActive || (status === "idle" && isNear);
 
   // Expand/shrink the cursor proximity zone based on whether the pill is open
   useEffect(() => {
-    setProximityDims(
-      expanded ? { width: 400, height: 52 } : { width: 90, height: 30 },
-    );
+    setProximityDims(getOverlayProximityDimensions(expanded));
   }, [expanded]);
 
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -504,13 +518,6 @@ function OverlayApp(): React.ReactElement {
       setMenuOverrideActive(true);
     }
   }, [isProfileMenuOpen]);
-
-  // When a notification is showing, force click-through off
-  useEffect(() => {
-    if (notification) {
-      window.overlay.setClickThrough(false);
-    }
-  }, [notification]);
 
   // Track whether the cursor is over the notification card, so the close
   // button stays clickable even when the cursor leaves the pill proximity zone.

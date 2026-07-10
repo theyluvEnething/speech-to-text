@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { getOverlayProximityDimensions } from "../../shared/overlay-layout";
 
 interface Rect {
   x: number;
@@ -50,8 +51,7 @@ export function ProximityDebugOverlay({
     rightButtons: null,
   });
 
-  const pillW = expanded ? 260 : 90;
-  const pillH = expanded ? 52 : 30;
+  const { width: pillW, height: pillH } = getOverlayProximityDimensions(expanded);
 
   const updateRects = useCallback(() => {
     // 1. Always calculate the dynamic Pill Rect
