@@ -394,6 +394,16 @@ app.post(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Health — unauthenticated liveness/readiness probe for Docker/Coolify.
+// Intentionally NOT behind requireApiSecret (a health check must not carry the
+// shared secret) and does no expensive work — just confirms the server serves.
+// ═══════════════════════════════════════════════════════════════════════════
+
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", service: "wavely-backend" });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Start
 // ═══════════════════════════════════════════════════════════════════════════
 
